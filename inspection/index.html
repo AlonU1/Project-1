@@ -842,75 +842,86 @@ function reportRecords(){
   const c=document.getElementById('rep-contractor').value;if(c!=='all')ds=ds.filter(d=>d.contractor===c);
   return ds.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 }
-function buildReport(){
-  const p=curProject(),ds=reportRecords();
-  const inspector=document.getElementById('rep-inspector').value.trim();
-  const conSel=document.getElementById('rep-contractor').value;
-  const sigImg=getSig();
-  const rows=ds.map((d,i)=>{
-    const photos=(d.photos||[]).map(ph=>`<img src="${ph.data}" style="width:150px;height:112px;object-fit:cover;border:1px solid #ccc;border-radius:6px;margin:3px"><div style="font-size:10px;color:#666;text-align:center;width:150px;display:inline-block">${ph.kind==='after'?'אחרי':'לפני'}</div>`).join('');
-    return `<tr style="page-break-inside:avoid">
-      <td style="border:1px solid #ccc;padding:7px;text-align:center;font-weight:700">${i+1}</td>
-      <td style="border:1px solid #ccc;padding:7px">
-        <div style="font-weight:700;font-size:14px">${esc(d.desc)||''}</div>
-        <div style="font-size:12px;color:#555;margin-top:3px">${typeOf(d.type).icon} ${typeOf(d.type).label} · ${esc(d.category||'')}${d.area?' · '+esc(d.area):''}${d.location?' · '+esc(d.location):''}${d.type==='defect'?' · חומרה: '+esc(d.severity||''):''}</div>
-        ${d.contractor?`<div style="font-size:12px;color:#555">👷 ${esc(d.contractor)}</div>`:''}
-        ${d.notes?`<div style="font-size:12px;color:#333;margin-top:3px">${esc(d.notes)}</div>`:''}
-        ${d.gps?`<div style="font-size:11px;color:#2d6cdf">📍 ${d.gps.lat}, ${d.gps.lng}</div>`:''}
-        ${d.voice?`<div style="font-size:11px;color:#7b3fb0">🎤 הערה קולית מצורפת באפליקציה</div>`:''}
-        ${photos?`<div style="margin-top:6px">${photos}</div>`:''}
-      </td>
-      <td style="border:1px solid #ccc;padding:7px;text-align:center;white-space:nowrap">${d.due?formatD(d.due):'—'}</td>
-      <td style="border:1px solid #ccc;padding:7px;text-align:center;color:#fff;background:${STCOLOR[d.status]||'#777'};font-weight:700">${statusOf(d.status).label}</td>
-    </tr>`;
-  }).join('');
-  return `<div style="direction:rtl;font-family:'Segoe UI',Arial,sans-serif;color:#111">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1b2a4a;padding-bottom:12px;margin-bottom:14px">
-      <div><div style="font-size:22px;font-weight:800;color:#1b2a4a">דוח פיקוח ליקויים</div>
-      <div style="font-size:14px;margin-top:4px">${esc(p.name)}${p.address?' · '+esc(p.address):''}</div>
-      ${p.client?`<div style="font-size:12px;color:#555">מזמין: ${esc(p.client)}</div>`:''}
-      ${conSel!=='all'?`<div style="font-size:13px;color:#333;margin-top:3px">לכבוד הקבלן: <b>${esc(conSel)}</b></div>`:''}</div>
-      <div style="text-align:left;font-size:12px;color:#555">תאריך: ${formatD(todayStr())}<br>סה"כ רשומות: ${ds.length}</div>
+function repHeaderHTML(){
+  const p=curProject(),ds=reportRecords(),conSel=document.getElementById('rep-contractor').value;
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1b2a4a;padding-bottom:12px;margin-bottom:14px">
+    <div><div style="font-size:22px;font-weight:800;color:#1b2a4a">דוח פיקוח ליקויים</div>
+    <div style="font-size:14px;margin-top:4px">${esc(p.name)}${p.address?' · '+esc(p.address):''}</div>
+    ${p.client?`<div style="font-size:12px;color:#555">מזמין: ${esc(p.client)}</div>`:''}
+    ${conSel!=='all'?`<div style="font-size:13px;color:#333;margin-top:3px">לכבוד הקבלן: <b>${esc(conSel)}</b></div>`:''}</div>
+    <div style="text-align:left;font-size:12px;color:#555">תאריך: ${formatD(todayStr())}<br>סה"כ רשומות: ${ds.length}</div>
+  </div>`;
+}
+function repRecordHTML(d,i){
+  const photos=(d.photos||[]).map(ph=>`<span style="display:inline-block;margin:3px;text-align:center;vertical-align:top"><img src="${ph.data}" style="width:148px;height:111px;object-fit:cover;border:1px solid #ccc;border-radius:6px"><br><span style="font-size:10px;color:#666">${ph.kind==='after'?'אחרי':'לפני'}</span></span>`).join('');
+  return `<div style="border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="font-weight:800;font-size:15px;flex:1"><span style="display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;background:#1b2a4a;color:#fff;border-radius:6px;margin-left:6px;font-size:12px">${i+1}</span>${esc(d.desc)||''}</div>
+      <span style="color:#fff;background:${STCOLOR[d.status]||'#777'};font-weight:700;padding:3px 10px;border-radius:6px;font-size:12px;white-space:nowrap">${statusOf(d.status).label}</span>
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="background:#2d6cdf;color:#fff">
-        <th style="border:1px solid #2d6cdf;padding:8px;width:36px">#</th>
-        <th style="border:1px solid #2d6cdf;padding:8px;text-align:right">פירוט הרשומה</th>
-        <th style="border:1px solid #2d6cdf;padding:8px;width:80px">יעד</th>
-        <th style="border:1px solid #2d6cdf;padding:8px;width:78px">סטטוס</th>
-      </tr></thead><tbody>${rows}</tbody>
-    </table>
-    <div style="display:flex;justify-content:space-between;margin-top:34px;gap:30px">
+    <div style="font-size:12px;color:#555;margin-top:5px">${typeOf(d.type).icon} ${typeOf(d.type).label} · ${esc(d.category||'')}${d.area?' · '+esc(d.area):''}${d.location?' · '+esc(d.location):''}${d.type==='defect'?' · חומרה: '+esc(d.severity||''):''}${d.due?' · יעד: '+formatD(d.due):''}</div>
+    ${d.contractor?`<div style="font-size:12px;color:#555">👷 ${esc(d.contractor)}${d.phone?' · '+esc(d.phone):''}</div>`:''}
+    ${d.notes?`<div style="font-size:12px;color:#333;margin-top:4px">${esc(d.notes)}</div>`:''}
+    ${d.gps?`<div style="font-size:11px;color:#2d6cdf">📍 ${d.gps.lat}, ${d.gps.lng}</div>`:''}
+    ${d.voice?`<div style="font-size:11px;color:#7b3fb0">🎤 הערה קולית מצורפת באפליקציה</div>`:''}
+    ${photos?`<div style="margin-top:6px">${photos}</div>`:''}
+  </div>`;
+}
+function repSignatureHTML(){
+  const inspector=document.getElementById('rep-inspector').value.trim(),sigImg=getSig();
+  return `<div style="margin-top:24px">
+    <div style="display:flex;justify-content:space-between;gap:30px">
       <div style="flex:1;text-align:center">
         <div style="font-size:13px;color:#555;margin-bottom:4px">חתימת המפקח${inspector?' — '+esc(inspector):''}</div>
-        ${sigImg?`<img src="${sigImg}" style="height:60px">`:''}
+        ${sigImg?`<img src="${sigImg}" style="height:58px">`:'<div style="height:58px"></div>'}
         <div style="border-top:1px solid #111;margin-top:6px"></div>
       </div>
       <div style="flex:1;text-align:center">
         <div style="font-size:13px;color:#555;margin-bottom:4px">חתימת הקבלן / האחראי</div>
-        <div style="height:60px"></div><div style="border-top:1px solid #111;margin-top:6px"></div>
+        <div style="height:58px"></div><div style="border-top:1px solid #111;margin-top:6px"></div>
       </div>
     </div>
-    <div style="text-align:center;font-size:10px;color:#999;margin-top:18px">הופק באפליקציית פיקוח אתר · ${formatD(todayStr())}</div>
+    <div style="text-align:center;font-size:10px;color:#999;margin-top:16px">הופק באפליקציית פיקוח אתר · ${formatD(todayStr())}</div>
   </div>`;
+}
+// single tall container — used for the WhatsApp image share
+function buildReport(){
+  const ds=reportRecords();
+  return `<div style="direction:rtl;font-family:'Segoe UI',Arial,sans-serif;color:#111">${repHeaderHTML()}${ds.map((d,i)=>repRecordHTML(d,i)).join('')}${repSignatureHTML()}</div>`;
+}
+// paginated into A4 pages so no record is split across a page — used for the PDF
+function buildReportPages(){
+  const PAGEW=820,PAGEH=Math.round(820*297/210),PAD=30;
+  const host=document.getElementById('printArea');host.innerHTML='';
+  const ds=reportRecords();
+  const blocks=[repHeaderHTML()].concat(ds.map((d,i)=>repRecordHTML(d,i))).concat([repSignatureHTML()]);
+  const newPage=()=>{const pg=document.createElement('div');pg.style.cssText=`width:${PAGEW}px;min-height:${PAGEH}px;background:#fff;color:#111;padding:${PAD}px;box-sizing:border-box;direction:rtl;font-family:'Segoe UI',Arial,sans-serif`;host.appendChild(pg);return pg;};
+  let page=newPage();
+  blocks.forEach(html=>{
+    const tmp=document.createElement('div');tmp.innerHTML=html;const block=tmp.firstElementChild;
+    page.appendChild(block);
+    if(page.offsetHeight>PAGEH && page.childElementCount>1){page.removeChild(block);page=newPage();page.appendChild(block);}
+  });
+  return Array.from(host.children);
 }
 async function doPrint(){
   if(!window.jspdf||typeof html2canvas==='undefined'){toast('ספריית ה-PDF לא נטענה');return;}
-  document.getElementById('printArea').innerHTML=buildReport();
+  if(!reportRecords().length){toast('אין רשומות לדוח');return;}
   toast('מכין PDF…');
   try{
-    const canvas=await html2canvas(document.getElementById('printArea'),{scale:2,backgroundColor:'#ffffff',windowWidth:820});
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF('p','mm','a4');
-    const pw=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight();
-    const imgW=pw,imgH=canvas.height*imgW/canvas.width;
-    const imgData=canvas.toDataURL('image/jpeg',0.92);
-    let heightLeft=imgH,pos=0;
-    pdf.addImage(imgData,'JPEG',0,pos,imgW,imgH);
-    heightLeft-=pageH;
-    while(heightLeft>0){pos-=pageH;pdf.addPage();pdf.addImage(imgData,'JPEG',0,pos,imgW,imgH);heightLeft-=pageH;}
-    const p=curProject();
-    pdf.save(`דוח_פיקוח_${p?p.name:''}_${todayStr()}.pdf`);
+    const pages=buildReportPages();
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    for(let i=0;i<pages.length;i++){
+      const canvas=await html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff'});
+      const imgData=canvas.toDataURL('image/jpeg',0.92);
+      let w=pw,h=canvas.height*pw/canvas.width;
+      if(h>ph){h=ph;w=canvas.width*h/canvas.height;}
+      if(i)pdf.addPage();
+      pdf.addImage(imgData,'JPEG',(pw-w)/2,0,w,h);
+    }
+    const p=curProject();pdf.save(`דוח_פיקוח_${p?p.name:''}_${todayStr()}.pdf`);
+    document.getElementById('printArea').innerHTML='';
     closeReport();
   }catch(e){toast('יצירת ה-PDF נכשלה');}
 }
