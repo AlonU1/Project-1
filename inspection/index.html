@@ -309,11 +309,13 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
     <div class="sheet-head"><h2>☁️ סנכרון לענן (Google Sheets)</h2><button class="x" onclick="closeSync()">×</button></div>
     <div class="form">
       <div class="field"><label>כתובת ה-Web App (מ-Apps Script)</label><input id="sync-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="field"><label>קישור לגיליון (לצפייה ישירה)</label><input id="sync-sheet" placeholder="https://docs.google.com/spreadsheets/d/.../edit"></div>
       <div class="hint" id="sync-status"></div>
       <div class="form-actions">
-        <button class="btn btn-ghost" onclick="saveSyncUrl()">שמור כתובת</button>
+        <button class="btn btn-ghost" onclick="saveSyncUrl()">שמור</button>
         <button class="btn btn-save" onclick="syncNow(true)">🔄 סנכרן עכשיו</button>
       </div>
+      <button class="btn" style="background:#0f9d58;color:#fff;width:100%;margin-top:10px" onclick="openSheet()">📊 פתח את הגיליון</button>
       <div class="field" style="margin-top:16px">
         <label>איך מגדירים? (פעם אחת, ~5 דק׳)</label>
         <div class="hint" style="line-height:1.8">
@@ -742,12 +744,17 @@ function importData(input){
 function loadNormalize(){(store.defects||[]).forEach(d=>{if(!d.type)d.type='defect';if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});}delete d.photoBefore;delete d.photoAfter;delete d.photo;});}
 
 /* ===== cloud sync (Google Sheets via Apps Script) ===== */
-const SYNC_KEY='inspection_sync_url';
-let syncUrl=localStorage.getItem(SYNC_KEY)||'';
+const SYNC_KEY='inspection_sync_url',SHEET_KEY='inspection_sheet_url';
+let syncUrl=localStorage.getItem(SYNC_KEY)||'',sheetUrl=localStorage.getItem(SHEET_KEY)||'';
 let syncing=false;
-function openSync(){document.getElementById('sync-url').value=syncUrl;updateSyncStatus();showOverlay('syncOverlay');}
+function openSync(){document.getElementById('sync-url').value=syncUrl;document.getElementById('sync-sheet').value=sheetUrl;updateSyncStatus();showOverlay('syncOverlay');}
 function closeSync(){hideOverlay('syncOverlay');}
-function saveSyncUrl(){syncUrl=document.getElementById('sync-url').value.trim();localStorage.setItem(SYNC_KEY,syncUrl);toast(syncUrl?'נשמר ✓':'הכתובת נמחקה');updateSyncStatus();updateSyncBadge();if(syncUrl)syncNow(true);}
+function saveSyncUrl(){
+  syncUrl=document.getElementById('sync-url').value.trim();localStorage.setItem(SYNC_KEY,syncUrl);
+  sheetUrl=document.getElementById('sync-sheet').value.trim();localStorage.setItem(SHEET_KEY,sheetUrl);
+  toast('נשמר ✓');updateSyncStatus();updateSyncBadge();if(syncUrl)syncNow(true);
+}
+function openSheet(){if(sheetUrl)window.open(sheetUrl,'_blank');else toast('הדבק קודם את קישור הגיליון ושמור');}
 function pendingCount(){return store.defects.filter(d=>!d.synced).length+((store.pendingDeletes||[]).length);}
 function updateSyncBadge(){const b=document.getElementById('syncBtn');if(!b)return;const pend=pendingCount();b.textContent='☁️'+(pend?' '+pend:'');}
 function updateSyncStatus(){const el=document.getElementById('sync-status');if(!el)return;const pend=pendingCount();el.innerHTML=(syncUrl?'מחובר. ':'לא מוגדר עדיין. ')+(store.lastSync?`סונכרן: ${new Date(store.lastSync).toLocaleString('he-IL')}. `:'')+(pend?`<b>${pend} ממתינות</b>`:(syncUrl?'הכל מסונכרן ✓':''));}
