@@ -303,6 +303,31 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
   </div>
 </div>
 
+<!-- ===== Cloud sync modal ===== -->
+<div class="overlay" id="syncOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>☁️ סנכרון לענן (Google Sheets)</h2><button class="x" onclick="closeSync()">×</button></div>
+    <div class="form">
+      <div class="field"><label>כתובת ה-Web App (מ-Apps Script)</label><input id="sync-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="hint" id="sync-status"></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="saveSyncUrl()">שמור כתובת</button>
+        <button class="btn btn-save" onclick="syncNow(true)">🔄 סנכרן עכשיו</button>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>איך מגדירים? (פעם אחת, ~5 דק׳)</label>
+        <div class="hint" style="line-height:1.8">
+          1. צור גיליון חדש ב-Google Sheets.<br>
+          2. תפריט <b>Extensions ← Apps Script</b>.<br>
+          3. הדבק את הקוד מהקובץ <b>inspection/sync/AppsScript.gs</b> שבריפו.<br>
+          4. <b>Deploy ← New deployment ← Web app</b>. הגדר: Execute as = <b>Me</b>, Who has access = <b>Anyone</b>.<br>
+          5. אשר הרשאות, העתק את כתובת ה-Web app (מסתיימת ב-<b>/exec</b>) והדבק למעלה.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 
 <script src="vendor/exceljs.min.js"></script>
@@ -328,6 +353,7 @@ function loadStore(){
     }catch(e){}
   }
   if(!s.phones)s.phones={};
+  if(!s.pendingDeletes)s.pendingDeletes=[];
   (s.defects||[]).forEach(d=>{
     if(!d.type)d.type='defect';
     if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});if(d.photo)d.photos.push({id:uid(),data:d.photo,kind:'before'});}
@@ -363,7 +389,8 @@ function renderProjects(){
   document.getElementById('backBtn').style.display='none';
   document.getElementById('hTitle').textContent='הפרויקטים שלי';
   document.getElementById('hSub').textContent=store.projects.length?`${store.projects.length} פרויקטים`:'';
-  document.getElementById('hBtns').innerHTML=`<button class="btn-h" onclick="backupData()">💾 גיבוי</button><button class="btn-h" onclick="document.getElementById('importFile').click()">📂 שחזור</button>`;
+  document.getElementById('hBtns').innerHTML=`<button class="btn-h" id="syncBtn" onclick="openSync()">☁️</button><button class="btn-h" onclick="backupData()">💾</button><button class="btn-h" onclick="document.getElementById('importFile').click()">📂</button>`;
+  updateSyncBadge();
   document.getElementById('stats').style.display='none';
   document.getElementById('filters').style.display='none';
   document.getElementById('fab').innerHTML='＋ פרויקט חדש';
@@ -461,7 +488,7 @@ function saveProject(e){
 }
 function deleteProject(){
   const id=document.getElementById('p-id').value,n=defectsOf(id).length;
-  if(confirm(`למחוק את הפרויקט${n?` ואת ${n} הרשומות שבו`:''}? פעולה בלתי הפיכה.`)){store.projects=store.projects.filter(x=>x.id!==id);store.defects=store.defects.filter(d=>d.projectId!==id);save();closeProj();goHome();}
+  if(confirm(`למחוק את הפרויקט${n?` ואת ${n} הרשומות שבו`:''}? פעולה בלתי הפיכה.`)){defectsOf(id).forEach(d=>queueDelete(d.id));store.projects=store.projects.filter(x=>x.id!==id);store.defects=store.defects.filter(d=>d.projectId!==id);save();closeProj();goHome();syncNow(false);}
 }
 function closeProj(){hideOverlay('projOverlay');}
 
@@ -516,7 +543,7 @@ function persistRecord(){
     desc:desc,area:area,location:document.getElementById('d-loc').value.trim(),
     category:document.getElementById('d-cat').value,contractor:contractor,phone:phone,
     severity:getRadio('sev'),status:getRadio('status'),due:document.getElementById('d-due').value,
-    notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS};
+    notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS,synced:false};
   const p=curProject();
   if(area&&p&&!(p.areas||[]).includes(area)){p.areas=p.areas||[];p.areas.push(area);}
   if(contractor&&phone)store.phones[contractor]=phone;
@@ -525,7 +552,7 @@ function persistRecord(){
   lastCtx={area:rec.area,location:rec.location,type:rec.type,category:rec.category,contractor:rec.contractor,phone:rec.phone,due:rec.due};
   return rec;
 }
-function saveDefect(e){e.preventDefault();if(persistRecord()){closeDef();render();}}
+function saveDefect(e){e.preventDefault();if(persistRecord()){closeDef();render();syncNow(false);}}
 function saveAndNext(){
   const rec=persistRecord();if(!rec)return;
   batchCount++;render(); // refresh the list behind the open form
@@ -540,8 +567,10 @@ function saveAndNext(){
   const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
   document.getElementById('d-desc').focus();
   toast(`נשמר ✓ — ${batchCount} באצווה`);
+  syncNow(false);
 }
-function deleteDefect(){const id=document.getElementById('d-id').value;if(confirm('למחוק את הרשומה לצמיתות?')){store.defects=store.defects.filter(x=>x.id!==id);save();closeDef();render();}}
+function deleteDefect(){const id=document.getElementById('d-id').value;if(confirm('למחוק את הרשומה לצמיתות?')){queueDelete(id);store.defects=store.defects.filter(x=>x.id!==id);save();closeDef();render();syncNow(false);}}
+function queueDelete(id){const rec=store.defects.find(x=>x.id===id);if(rec&&rec.synced){store.pendingDeletes=store.pendingDeletes||[];if(!store.pendingDeletes.includes(id))store.pendingDeletes.push(id);}}
 
 /* ===== gallery ===== */
 function addPhotos(input,kind){
@@ -712,10 +741,36 @@ function importData(input){
 }
 function loadNormalize(){(store.defects||[]).forEach(d=>{if(!d.type)d.type='defect';if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});}delete d.photoBefore;delete d.photoAfter;delete d.photo;});}
 
+/* ===== cloud sync (Google Sheets via Apps Script) ===== */
+const SYNC_KEY='inspection_sync_url';
+let syncUrl=localStorage.getItem(SYNC_KEY)||'';
+let syncing=false;
+function openSync(){document.getElementById('sync-url').value=syncUrl;updateSyncStatus();showOverlay('syncOverlay');}
+function closeSync(){hideOverlay('syncOverlay');}
+function saveSyncUrl(){syncUrl=document.getElementById('sync-url').value.trim();localStorage.setItem(SYNC_KEY,syncUrl);toast(syncUrl?'נשמר ✓':'הכתובת נמחקה');updateSyncStatus();updateSyncBadge();if(syncUrl)syncNow(true);}
+function pendingCount(){return store.defects.filter(d=>!d.synced).length+((store.pendingDeletes||[]).length);}
+function updateSyncBadge(){const b=document.getElementById('syncBtn');if(!b)return;const pend=pendingCount();b.textContent='☁️'+(pend?' '+pend:'');}
+function updateSyncStatus(){const el=document.getElementById('sync-status');if(!el)return;const pend=pendingCount();el.innerHTML=(syncUrl?'מחובר. ':'לא מוגדר עדיין. ')+(store.lastSync?`סונכרן: ${new Date(store.lastSync).toLocaleString('he-IL')}. `:'')+(pend?`<b>${pend} ממתינות</b>`:(syncUrl?'הכל מסונכרן ✓':''));}
+async function postSync(payload){await fetch(syncUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}
+async function syncNow(manual){
+  if(!syncUrl){if(manual)toast('הגדר קודם כתובת סנכרון (☁️)');return;}
+  if(syncing)return;
+  if(!navigator.onLine){if(manual)toast('אין חיבור — יסונכרן אוטומטית כשתחזור רשת');return;}
+  syncing=true;updateSyncBadge();
+  try{
+    for(const id of (store.pendingDeletes||[]).slice()){await postSync({action:'delete',id});store.pendingDeletes=store.pendingDeletes.filter(x=>x!==id);save();}
+    const dirty=store.defects.filter(d=>!d.synced);
+    for(const d of dirty){const p=store.projects.find(x=>x.id===d.projectId)||{};await postSync({action:'upsert',record:d,project:{id:p.id,name:p.name,address:p.address,client:p.client}});d.synced=true;d.syncedAt=Date.now();save();updateSyncBadge();}
+    store.lastSync=Date.now();save();
+    if(manual)toast('הסנכרון הושלם ✓');
+  }catch(e){if(manual)toast('הסנכרון נכשל — ננסה שוב מאוחר יותר');}
+  syncing=false;updateSyncBadge();updateSyncStatus();
+}
+
 /* ===== overlay helpers ===== */
 function showOverlay(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
 function hideOverlay(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
-['projOverlay','defOverlay','markupOverlay','reportOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
+['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
 
 /* ===== excel export ===== */
 async function exportExcel(){
@@ -879,6 +934,10 @@ const imp=document.createElement('input');imp.type='file';imp.accept='applicatio
 
 /* service worker */
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+/* auto-sync: when connectivity returns, and shortly after load */
+window.addEventListener('online',()=>syncNow(false));
+if(syncUrl)setTimeout(()=>syncNow(false),1800);
 
 initForm();render();
 </script>
