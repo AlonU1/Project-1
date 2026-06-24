@@ -1,11 +1,12 @@
 // Service Worker — offline support for the inspection app
-const CACHE = 'inspection-v7';
+const CACHE = 'inspection-v8';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './vendor/exceljs.min.js',
   './vendor/html2canvas.min.js',
+  './vendor/jspdf.umd.min.js',
 ];
 
 self.addEventListener('install', e => {
