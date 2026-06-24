@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1b2a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>דוחות פיקוח — מעקב ליקויים</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --navy:#1b2a4a; --navy-d:#13203a; --blue:#2d6cdf; --accent:#e67e22;
+  --bg:#f4f6fb; --card:#ffffff; --text:#1d2433; --muted:#6b7488;
+  --border:#e3e7f0; --radius:14px; --shadow:0 2px 12px rgba(20,30,60,.08);
+  --open:#e74c3c; --prog:#f39c12; --recheck:#9b59b6; --done:#27ae60;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);
+  padding-bottom:90px;line-height:1.5;-webkit-text-size-adjust:100%}
+/* ---- Header ---- */
+header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;
+  padding:14px 16px;position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.h-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h-top h1{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.h-top h1 .logo{background:var(--accent);width:30px;height:30px;border-radius:8px;
+  display:grid;place-items:center;font-size:1rem}
+.btn-export{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;
+  padding:7px 12px;border-radius:9px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-export:active{background:rgba(255,255,255,.28)}
+/* ---- Stats ---- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.stat{background:rgba(255,255,255,.1);border-radius:10px;padding:8px 4px;text-align:center}
+.stat b{display:block;font-size:1.3rem;line-height:1.1}
+.stat span{font-size:.65rem;opacity:.85}
+/* ---- Filters ---- */
+.filters{padding:12px 16px 4px;display:flex;flex-direction:column;gap:10px}
+.search{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:11px;
+  font-size:.95rem;background:var(--card)}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:7px 13px;border-radius:20px;border:1px solid var(--border);
+  background:var(--card);font-size:.82rem;cursor:pointer;font-weight:600;color:var(--muted)}
+.chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* ---- List ---- */
+.list{padding:8px 16px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px;margin-bottom:11px;border-right:5px solid var(--border);cursor:pointer;position:relative}
+.card.s-open{border-right-color:var(--open)}
+.card.s-prog{border-right-color:var(--prog)}
+.card.s-recheck{border-right-color:var(--recheck)}
+.card.s-done{border-right-color:var(--done)}
+.card.s-done{opacity:.72}
+.c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.c-loc{font-size:.78rem;color:var(--muted);font-weight:600}
+.c-title{font-weight:700;font-size:1rem;margin:3px 0 8px}
+.badge{display:inline-block;padding:3px 9px;border-radius:7px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.b-status{color:#fff}
+.st-open{background:var(--open)}.st-prog{background:var(--prog)}
+.st-recheck{background:var(--recheck)}.st-done{background:var(--done)}
+.c-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:.72rem;background:var(--bg);color:var(--muted);padding:3px 9px;border-radius:7px;font-weight:600}
+.tag.sev-גבוהה,.tag.sev-קריטית{background:#fdecea;color:#c0392b}
+.tag.sev-בינונית{background:#fef5e7;color:#b9770e}
+.c-thumb{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:0 0 auto}
+.c-overdue{color:var(--open);font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}
+.empty .big{font-size:3rem;margin-bottom:10px}
+/* ---- FAB ---- */
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);
+  color:#fff;border:none;border-radius:30px;padding:15px 26px;font-size:1rem;font-weight:700;
+  box-shadow:0 6px 20px rgba(230,126,34,.45);cursor:pointer;z-index:25;display:flex;align-items:center;gap:8px}
+.fab:active{transform:translateX(-50%) scale(.96)}
+/* ---- Modal ---- */
+.overlay{position:fixed;inset:0;background:rgba(15,22,40,.55);z-index:40;display:none;
+  align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:94vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;animation:up .25s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-head{position:sticky;top:0;background:var(--navy);color:#fff;padding:15px 18px;
+  display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:2}
+.sheet-head h2{font-size:1.05rem}
+.x{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1}
+.form{padding:16px 18px 24px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--border);
+  border-radius:11px;font-size:.95rem;background:var(--card);font-family:inherit}
+.field textarea{min-height:78px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{flex:1;min-width:60px}
+.seg input{display:none}
+.seg span{display:block;text-align:center;padding:10px 4px;border:1px solid var(--border);
+  border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;background:var(--card)}
+.seg input:checked+span{background:var(--navy);color:#fff;border-color:var(--navy)}
+.photo-box{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.photo-btn{background:var(--card);border:1.5px dashed var(--blue);color:var(--blue);padding:12px 16px;
+  border-radius:11px;font-weight:600;cursor:pointer;font-size:.9rem}
+.photo-prev{position:relative;width:78px;height:78px}
+.photo-prev img{width:78px;height:78px;object-fit:cover;border-radius:11px}
+.photo-prev .del{position:absolute;top:-7px;left:-7px;background:var(--open);color:#fff;border:none;
+  width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:.9rem;line-height:1}
+.form-actions{display:flex;gap:10px;margin-top:8px}
+.btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+.btn-save{background:var(--accent);color:#fff}
+.btn-del{background:#fdecea;color:var(--open);flex:0 0 auto;padding:14px 18px}
+.btn-ghost{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.hint{font-size:.72rem;color:var(--muted);margin-top:5px}
+@media(min-width:560px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:90vh}
+  .sheet-head{border-radius:20px 20px 0 0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <h1><span class="logo">🏗️</span> פיקוח ליקויים</h1>
+    <button class="btn-export" onclick="exportExcel()">⬇️ ייצוא לאקסל</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="filters">
+  <input class="search" id="search" placeholder="🔍 חיפוש לפי תיאור, מיקום, קבלן…" oninput="render()">
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="list" id="list"></div>
+
+<button class="fab" onclick="openForm()">＋ ליקוי חדש</button>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">ליקוי חדש</h2>
+      <button class="x" onclick="closeForm()">×</button>
+    </div>
+    <form class="form" id="form" onsubmit="saveDefect(event)">
+      <input type="hidden" id="f-id">
+      <div class="field">
+        <label>תיאור הליקוי *</label>
+        <textarea id="f-desc" required placeholder="למשל: סדק בקיר ממ&quot;ד, רטיבות בתקרה…"></textarea>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>אתר / פרויקט</label>
+          <input id="f-site" list="sites" placeholder="שם הפרויקט">
+          <datalist id="sites"></datalist>
+        </div>
+        <div class="field">
+          <label>מיקום באתר</label>
+          <input id="f-loc" placeholder="קומה 3 / דירה 12">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>קטגוריה</label>
+          <select id="f-cat"></select>
+        </div>
+        <div class="field">
+          <label>קבלן / אחראי</label>
+          <input id="f-contractor" list="contractors" placeholder="שם הקבלן">
+          <datalist id="contractors"></datalist>
+        </div>
+      </div>
+      <div class="field">
+        <label>חומרה</label>
+        <div class="seg" id="seg-sev"></div>
+      </div>
+      <div class="field">
+        <label>סטטוס</label>
+        <div class="seg" id="seg-status"></div>
+      </div>
+      <div class="field">
+        <label>תאריך יעד לתיקון</label>
+        <input type="date" id="f-due">
+      </div>
+      <div class="field">
+        <label>תמונה</label>
+        <div class="photo-box">
+          <label class="photo-btn">📷 צלם / העלה
+            <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this)">
+          </label>
+          <div id="photo-prev"></div>
+        </div>
+        <div class="hint">התמונה נשמרת מקומית בטלפון בלבד.</div>
+      </div>
+      <div class="field">
+        <label>הערות נוספות</label>
+        <textarea id="f-notes" placeholder="תיעוד טיפול, מי תיקן, הערות לתיקון חוזר…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-del" id="delBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
+        <button type="submit" class="btn btn-save">שמירה</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const CATS = ['חשמל','אינסטלציה','גמר/צבע','שלד ובטון','אלומיניום','ריצוף וחיפוי','איטום ורטיבות','גבס','בטיחות','אחר'];
+const SEVS = ['נמוכה','בינונית','גבוהה','קריטית'];
+const STATUSES = [
+  {key:'open',    label:'פתוח',        cls:'open'},
+  {key:'prog',    label:'בטיפול',      cls:'prog'},
+  {key:'recheck', label:'לתיקון חוזר', cls:'recheck'},
+  {key:'done',    label:'סגור',        cls:'done'},
+];
+const KEY='inspection_defects_v1';
+let defects = load();
+let filter = 'all';
+let curPhoto = null;
+
+function load(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(defects)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function statusOf(k){ return STATUSES.find(s=>s.key===k)||STATUSES[0]; }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- Build static form controls ---------- */
+function initForm(){
+  document.getElementById('f-cat').innerHTML = CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('seg-sev').innerHTML = SEVS.map((s,i)=>
+    `<label><input type="radio" name="sev" value="${s}" ${i===1?'checked':''}><span>${s}</span></label>`).join('');
+  document.getElementById('seg-status').innerHTML = STATUSES.map((s,i)=>
+    `<label><input type="radio" name="status" value="${s.key}" ${i===0?'checked':''}><span>${s.label}</span></label>`).join('');
+}
+
+/* ---------- Render list + stats + filters ---------- */
+function render(){
+  const counts = {all:defects.length};
+  STATUSES.forEach(s=>counts[s.key]=defects.filter(d=>d.status===s.key).length);
+  const overdue = defects.filter(isOverdue).length;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${counts.all}</b><span>סה"כ</span></div>
+    <div class="stat"><b>${counts.open+counts.prog+counts.recheck}</b><span>פתוחים</span></div>
+    <div class="stat"><b>${overdue}</b><span>באיחור</span></div>
+    <div class="stat"><b>${counts.done}</b><span>נסגרו</span></div>`;
+
+  const chipDefs = [{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label})));
+  document.getElementById('chips').innerHTML = chipDefs.map(c=>
+    `<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
+
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  let items = defects.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(filter!=='all') items = items.filter(d=>d.status===filter);
+  if(q) items = items.filter(d=>[d.desc,d.location,d.site,d.contractor,d.category].join(' ').toLowerCase().includes(q));
+
+  const list = document.getElementById('list');
+  if(!items.length){
+    list.innerHTML = `<div class="empty"><div class="big">📋</div>
+      ${defects.length? 'אין ליקויים שתואמים לסינון.' : 'עדיין אין ליקויים.<br>לחץ על «ליקוי חדש» כדי להתחיל.'}</div>`;
+    refreshLists(); return;
+  }
+  list.innerHTML = items.map(d=>{
+    const st = statusOf(d.status);
+    const od = isOverdue(d);
+    return `<div class="card s-${st.cls}" onclick="openForm('${d.id}')">
+      <div class="c-head">
+        <div style="flex:1">
+          <div class="c-loc">${esc(d.site||'—')}${d.location?' · '+esc(d.location):''}</div>
+          <div class="c-title">${esc(d.desc)||'(ללא תיאור)'}</div>
+        </div>
+        ${d.photo?`<img class="c-thumb" src="${d.photo}">`:''}
+      </div>
+      <div><span class="badge b-status st-${st.cls}">${st.label}</span></div>
+      <div class="c-meta">
+        <span class="tag">${esc(d.category||'')}</span>
+        <span class="tag sev-${d.severity}">חומרה: ${esc(d.severity||'')}</span>
+        ${d.contractor?`<span class="tag">👷 ${esc(d.contractor)}</span>`:''}
+        ${d.due?`<span class="tag ${od?'c-overdue':''}">📅 ${formatD(d.due)}${od?' (באיחור)':''}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  refreshLists();
+}
+function isOverdue(d){ return d.due && d.status!=='done' && d.due < todayStr(); }
+function todayStr(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+function formatD(s){ if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+function setFilter(k){ filter=k; render(); }
+function refreshLists(){
+  const sites=[...new Set(defects.map(d=>d.site).filter(Boolean))];
+  const cons=[...new Set(defects.map(d=>d.contractor).filter(Boolean))];
+  document.getElementById('sites').innerHTML=sites.map(s=>`<option value="${esc(s)}">`).join('');
+  document.getElementById('contractors').innerHTML=cons.map(s=>`<option value="${esc(s)}">`).join('');
+}
+
+/* ---------- Form open/close/save ---------- */
+function openForm(id){
+  const f=document.getElementById('form'); f.reset(); curPhoto=null;
+  document.getElementById('photo-prev').innerHTML='';
+  const d = id ? defects.find(x=>x.id===id) : null;
+  document.getElementById('sheetTitle').textContent = d?'עריכת ליקוי':'ליקוי חדש';
+  document.getElementById('delBtn').style.display = d?'block':'none';
+  document.getElementById('f-id').value = d?d.id:'';
+  if(d){
+    document.getElementById('f-desc').value=d.desc||'';
+    document.getElementById('f-site').value=d.site||'';
+    document.getElementById('f-loc').value=d.location||'';
+    document.getElementById('f-cat').value=d.category||CATS[0];
+    document.getElementById('f-contractor').value=d.contractor||'';
+    document.getElementById('f-due').value=d.due||'';
+    document.getElementById('f-notes').value=d.notes||'';
+    setRadio('sev', d.severity||'בינונית');
+    setRadio('status', d.status||'open');
+    if(d.photo){ curPhoto=d.photo; showPhoto(); }
+  } else {
+    setRadio('sev','בינונית'); setRadio('status','open');
+  }
+  document.getElementById('overlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function setRadio(name,val){ const el=document.querySelector(`input[name="${name}"][value="${val}"]`); if(el)el.checked=true; }
+function closeForm(){ document.getElementById('overlay').classList.remove('show'); document.body.style.overflow=''; }
+function getRadio(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+
+function saveDefect(e){
+  e.preventDefault();
+  const id=document.getElementById('f-id').value;
+  const rec={
+    id: id||uid(),
+    desc: document.getElementById('f-desc').value.trim(),
+    site: document.getElementById('f-site').value.trim(),
+    location: document.getElementById('f-loc').value.trim(),
+    category: document.getElementById('f-cat').value,
+    contractor: document.getElementById('f-contractor').value.trim(),
+    severity: getRadio('sev'),
+    status: getRadio('status'),
+    due: document.getElementById('f-due').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    photo: curPhoto,
+  };
+  if(id){
+    const i=defects.findIndex(x=>x.id===id);
+    rec.createdAt=defects[i].createdAt; defects[i]=rec;
+  } else { rec.createdAt=Date.now(); defects.push(rec); }
+  try{ save(); }catch(err){ alert('האחסון מלא (יותר מדי תמונות). מחק ליקויים ישנים או ייצא לאקסל.'); }
+  closeForm(); render();
+}
+function deleteDefect(){
+  const id=document.getElementById('f-id').value;
+  if(id && confirm('למחוק את הליקוי לצמיתות?')){
+    defects=defects.filter(x=>x.id!==id); save(); closeForm(); render();
+  }
+}
+
+/* ---------- Photo (compressed) ---------- */
+function addPhoto(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1100; let{width:w,height:h}=img;
+      if(w>max||h>max){ const r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      curPhoto=cv.toDataURL('image/jpeg',0.7); showPhoto();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function showPhoto(){
+  document.getElementById('photo-prev').innerHTML = curPhoto ?
+    `<div class="photo-prev"><img src="${curPhoto}"><button type="button" class="del" onclick="removePhoto()">×</button></div>` : '';
+}
+function removePhoto(){ curPhoto=null; showPhoto(); }
+
+/* ---------- Excel export ---------- */
+function exportExcel(){
+  if(!defects.length){ alert('אין נתונים לייצוא.'); return; }
+  const rows = defects.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map((d,i)=>({
+    'מס׳': i+1,
+    'אתר/פרויקט': d.site||'',
+    'מיקום': d.location||'',
+    'תיאור הליקוי': d.desc||'',
+    'קטגוריה': d.category||'',
+    'חומרה': d.severity||'',
+    'קבלן/אחראי': d.contractor||'',
+    'סטטוס': statusOf(d.status).label,
+    'תאריך יעד': d.due?formatD(d.due):'',
+    'באיחור': isOverdue(d)?'כן':'',
+    'תאריך פתיחה': d.createdAt?formatD(new Date(d.createdAt).toISOString().slice(0,10)):'',
+    'הערות': d.notes||'',
+    'תמונה': d.photo?'יש':'',
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:16},{wch:14},{wch:40},{wch:12},{wch:9},{wch:14},{wch:11},{wch:11},{wch:7},{wch:11},{wch:30},{wch:7}];
+  if(!ws['!margins'])ws['!margins']={};
+  const wb=XLSX.utils.book_new();
+  wb.Workbook={Views:[{RTL:true}]};
+  XLSX.utils.book_append_sheet(wb,ws,'ליקויים');
+  const date=todayStr();
+  XLSX.writeFile(wb,`דוח_ליקויים_${date}.xlsx`);
+}
+
+initForm(); render();
+</script>
+</body>
+</html>
