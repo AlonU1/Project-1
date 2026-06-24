@@ -1,5 +1,5 @@
 // Service Worker — offline support for the inspection app
-const CACHE = 'inspection-v9';
+const CACHE = 'inspection-v10';
 const ASSETS = [
   './',
   './index.html',

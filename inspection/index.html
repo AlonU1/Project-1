@@ -128,6 +128,31 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
 .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:.88rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1}
+/* selection + bulk */
+.card.sel{outline:3px solid var(--blue);outline-offset:-1px}
+.card .selmark{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;display:none;align-items:center;justify-content:center;font-size:.85rem;font-weight:700}
+.card.sel .selmark{display:flex}
+#bulkBar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:#fff;padding:10px 14px;display:none;align-items:center;gap:10px;z-index:35;flex-wrap:wrap;box-shadow:0 -2px 12px rgba(0,0,0,.25)}
+#bulkBar.show{display:flex}
+#bulk-count{font-weight:700;font-size:.85rem;white-space:nowrap}
+#bulk-actions{display:flex;gap:6px;flex:1;flex-wrap:wrap;justify-content:center}
+#bulk-actions button{background:rgba(255,255,255,.16);border:none;color:#fff;padding:7px 10px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer}
+#bulkBar>button:last-child{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:7px 12px;border-radius:8px;cursor:pointer}
+/* area groups */
+.area-group{margin-bottom:6px}
+.area-head{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:8px;cursor:pointer;font-weight:700;box-shadow:var(--shadow)}
+.area-head .cnt{font-size:.75rem;color:var(--muted);font-weight:600}
+.area-group.closed .area-body{display:none}
+.area-head .arrow{transition:transform .2s}
+.area-group.closed .area-head .arrow{transform:rotate(-90deg)}
+/* dashboard bars */
+.dash-sec{margin-bottom:18px}
+.dash-sec h3{font-size:.95rem;margin-bottom:9px;color:var(--navy)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem}
+.bar-row .bl{width:88px;flex:0 0 auto;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:6px;height:18px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px}
+.bar-row .bv{width:30px;text-align:left;font-weight:700;flex:0 0 auto}
 /* markup editor */
 .mk-tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
 .mk-tools button{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:8px 11px;font-size:.85rem;cursor:pointer;font-weight:600}
@@ -161,6 +186,7 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
   <div class="stats" id="stats" style="display:none"></div>
 </header>
 <div class="banner" id="secBanner">⚠️ GPS, מיקרופון והכתבה פעילים רק ב-HTTPS. <a href="#" onclick="alert('העלה את התיקייה ל-GitHub Pages או לכל שרת HTTPS.');return false">פרטים</a></div>
+<div class="banner" id="remBanner" style="background:#fde8e8;color:#a01818;display:none"></div>
 
 <div class="filters" id="filters" style="display:none">
   <div class="f-row">
@@ -168,6 +194,7 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
     <select class="search" id="typeFilter" onchange="render()"></select>
   </div>
   <div class="chips" id="chips"></div>
+  <div class="chips" id="proj-tools"></div>
 </div>
 
 <div class="list" id="list"></div>
@@ -212,7 +239,7 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
       <input type="hidden" id="d-id">
       <div class="field"><label>סוג הרשומה</label><div class="seg" id="seg-type"></div></div>
       <div class="field">
-        <div class="lbl-row"><label>תיאור *</label><button type="button" class="mini-btn" id="dict-desc" onclick="dictate('d-desc','dict-desc')">🎤 הכתבה</button></div>
+        <div class="lbl-row"><label>תיאור *</label><span style="display:flex;gap:6px"><button type="button" class="mini-btn" onclick="openTemplates()">📋 תבנית</button><button type="button" class="mini-btn" id="dict-desc" onclick="dictate('d-desc','dict-desc')">🎤 הכתבה</button></span></div>
         <textarea id="d-desc" required placeholder="סדק בקיר, התקנת מעקה, אישור יציקה…"></textarea>
       </div>
       <div class="row2">
@@ -256,6 +283,7 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-del" id="dDelBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
+        <button type="button" class="btn btn-ghost" id="dDupBtn" onclick="duplicateDefect()" style="display:none">⧉ שכפל</button>
         <button type="button" class="btn btn-ghost" onclick="saveAndNext()">💾 שמור + עוד</button>
         <button type="submit" class="btn btn-save">שמירה</button>
       </div>
@@ -284,6 +312,15 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
   <div class="sheet">
     <div class="sheet-head"><h2>הפקת דוח לקבלן</h2><button class="x" onclick="closeReport()">×</button></div>
     <div class="form">
+      <div class="row2">
+        <div class="field"><label>שם המשרד / חברה (לכותרת)</label><input id="rep-org" placeholder="שם לכותרת הדוח"></div>
+        <div class="field"><label>לוגו</label>
+          <div class="photo-box">
+            <label class="photo-btn">🖼️ העלה לוגו<input type="file" accept="image/*" style="display:none" onchange="setLogo(this)"></label>
+            <div id="logo-prev"></div>
+          </div>
+        </div>
+      </div>
       <div class="field"><label>היקף הדוח</label><div class="seg" id="rep-scope"></div></div>
       <div class="field"><label>סינון לפי קבלן</label><select id="rep-contractor" onchange="repContractorChange()"></select></div>
       <div class="row2">
@@ -330,6 +367,36 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
   </div>
 </div>
 
+<!-- ===== Templates picker ===== -->
+<div class="overlay" id="tplOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>📋 תבניות ליקויים</h2><button class="x" onclick="closeTemplates()">×</button></div>
+    <div class="form">
+      <div class="hint">בחר תבנית למילוי מהיר של התיאור והקטגוריה:</div>
+      <div id="tpl-list" style="display:flex;flex-direction:column;gap:8px;margin:10px 0"></div>
+      <div class="add-row">
+        <input id="tpl-new" placeholder="הוסף תבנית חדשה (תיאור)">
+        <button type="button" onclick="addTemplateManual()">הוסף</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Dashboard ===== -->
+<div class="overlay" id="dashOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>📊 דשבורד</h2><button class="x" onclick="closeDash()">×</button></div>
+    <div class="form" id="dash-body"></div>
+  </div>
+</div>
+
+<!-- ===== Bulk action bar ===== -->
+<div id="bulkBar">
+  <span id="bulk-count">0 נבחרו</span>
+  <div id="bulk-actions"></div>
+  <button onclick="exitSelect()">ביטול</button>
+</div>
+
 <div id="printArea"></div>
 
 <script src="vendor/exceljs.min.js"></script>
@@ -346,6 +413,19 @@ let store=loadStore();
 let view='projects',curProjectId=null,filter='all';
 let curPhotos=[],curVoice=null,curGPS=null,editAreas=[];
 let lastCtx=null,batchCount=0;
+let groupByArea=false,selectMode=false,selected=new Set(),closedAreas=new Set();
+const DEFAULT_TEMPLATES=[
+  {desc:'סדק בקיר',category:'שלד ובטון'},
+  {desc:'רטיבות / נזילה',category:'איטום ורטיבות'},
+  {desc:'צבע לא אחיד / כתמים',category:'גמר/צבע'},
+  {desc:'חסר / פגום מעקה בטיחות',category:'בטיחות'},
+  {desc:'אריח שבור / חלול',category:'ריצוף וחיפוי'},
+  {desc:'דלת / חלון לא נסגר כראוי',category:'אלומיניום'},
+  {desc:'נקודת חשמל חסרה / לא תקינה',category:'חשמל'},
+  {desc:'נזילה בצנרת',category:'אינסטלציה'},
+  {desc:'סדק / פגם בגבס',category:'גבס'},
+  {desc:'ליקוי גמר כללי',category:'גמר/צבע'},
+];
 
 function loadStore(){
   let s=null;try{s=JSON.parse(localStorage.getItem(KEY));}catch(e){}
@@ -357,6 +437,8 @@ function loadStore(){
   }
   if(!s.phones)s.phones={};
   if(!s.pendingDeletes)s.pendingDeletes=[];
+  if(!s.templates)s.templates=[];
+  if(!s.reportSettings)s.reportSettings={orgName:'',logo:''};
   (s.defects||[]).forEach(d=>{
     if(!d.type)d.type='defect';
     if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});if(d.photo)d.photos.push({id:uid(),data:d.photo,kind:'before'});}
@@ -384,8 +466,8 @@ function initForm(){
 }
 
 /* ===== routing ===== */
-function goHome(){view='projects';curProjectId=null;filter='all';render();scrollTo(0,0);}
-function openProject(id){view='project';curProjectId=id;filter='all';lastCtx=null;batchCount=0;document.getElementById('search').value='';document.getElementById('typeFilter').value='all';render();scrollTo(0,0);}
+function goHome(){view='projects';curProjectId=null;filter='all';selectMode=false;selected.clear();document.getElementById('bulkBar').classList.remove('show');render();scrollTo(0,0);}
+function openProject(id){view='project';curProjectId=id;filter='all';lastCtx=null;batchCount=0;selectMode=false;selected.clear();groupByArea=false;closedAreas.clear();document.getElementById('bulkBar').classList.remove('show');document.getElementById('search').value='';document.getElementById('typeFilter').value='all';render();scrollTo(0,0);}
 function render(){view==='projects'?renderProjects():renderProject();}
 
 function renderProjects(){
@@ -396,7 +478,7 @@ function renderProjects(){
   updateSyncBadge();
   document.getElementById('stats').style.display='none';
   document.getElementById('filters').style.display='none';
-  document.getElementById('fab').innerHTML='＋ פרויקט חדש';
+  const fab=document.getElementById('fab');fab.innerHTML='＋ פרויקט חדש';fab.style.display='flex';
   const list=document.getElementById('list');
   if(!store.projects.length){list.innerHTML=`<div class="empty"><div class="big">🏢</div>אין עדיין פרויקטים.<br>לחץ «פרויקט חדש» כדי להתחיל.</div>`;return;}
   list.innerHTML=store.projects.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(p=>{
@@ -414,7 +496,7 @@ function renderProject(){
   document.getElementById('backBtn').style.display='block';
   document.getElementById('hTitle').textContent=p.name;
   document.getElementById('hSub').textContent=p.address||'';
-  document.getElementById('hBtns').innerHTML=`<button class="btn-h" onclick="openReport()">📄 דוח</button><button class="btn-h" onclick="exportExcel()">⬇️ אקסל</button><button class="btn-h" onclick="openProj('${p.id}')">⚙️</button>`;
+  document.getElementById('hBtns').innerHTML=`<button class="btn-h" onclick="openDash()">📊</button><button class="btn-h" onclick="openReport()">📄</button><button class="btn-h" onclick="exportExcel()">⬇️</button><button class="btn-h" onclick="openProj('${p.id}')">⚙️</button>`;
   document.getElementById('fab').innerHTML='＋ רשומה חדשה';
   const counts={all:ds.length};STATUSES.forEach(s=>counts[s.key]=ds.filter(d=>d.status===s.key).length);
   const overdue=ds.filter(isOverdue).length;
@@ -423,36 +505,67 @@ function renderProject(){
   document.getElementById('filters').style.display='flex';
   const chipDefs=[{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label})));
   document.getElementById('chips').innerHTML=chipDefs.map(c=>`<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
+  document.getElementById('proj-tools').innerHTML=`<div class="chip ${groupByArea?'active':''}" onclick="toggleGroup()">⬚ לפי אזור</div><div class="chip ${selectMode?'active':''}" onclick="selectMode?exitSelect():enterSelect()">✓ בחירה מרובה</div>`;
   const q=document.getElementById('search').value.trim().toLowerCase(),tf=document.getElementById('typeFilter').value;
   let items=ds.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   if(filter!=='all')items=items.filter(d=>d.status===filter);
   if(tf!=='all')items=items.filter(d=>(d.type||'defect')===tf);
   if(q)items=items.filter(d=>[d.desc,d.area,d.location,d.contractor,d.category].join(' ').toLowerCase().includes(q));
   const list=document.getElementById('list');
-  if(!items.length){list.innerHTML=`<div class="empty"><div class="big">📋</div>${ds.length?'אין רשומות שתואמות לסינון.':'אין עדיין רשומות בפרויקט.<br>לחץ «רשומה חדשה».'}</div>`;refreshDataLists();return;}
-  list.innerHTML=items.map(d=>{
-    const st=statusOf(d.status),ty=typeOf(d.type),od=isOverdue(d);
-    const before=(d.photos||[]).find(x=>x.kind==='before'),after=(d.photos||[]).find(x=>x.kind==='after');
-    return `<div class="card s-${st.cls}" onclick="openDef('${d.id}')">
-      <div class="c-head"><div style="flex:1">
-        <div class="c-loc">${esc(d.area||'—')}${d.location?' · '+esc(d.location):''}</div>
-        <div class="c-title">${esc(d.desc)||'(ללא תיאור)'}</div></div>
-        <div class="thumbs">${before?`<img class="c-thumb" src="${before.data}">`:''}${after?`<img class="c-thumb after" src="${after.data}">`:''}</div></div>
-      <div><span class="badge b-status st-${st.cls}">${st.label}</span></div>
-      <div class="c-meta">
-        <span class="tag tag-type">${ty.icon} ${ty.label}</span>
-        <span class="tag">${esc(d.category||'')}</span>
-        ${d.type==='defect'?`<span class="tag sev-${d.severity}">חומרה: ${esc(d.severity||'')}</span>`:''}
-        ${d.contractor?`<span class="tag">👷 ${esc(d.contractor)}</span>`:''}
-        ${d.due?`<span class="tag ${od?'c-overdue':''}">📅 ${formatD(d.due)}${od?' (באיחור)':''}</span>`:''}
-        ${(d.photos&&d.photos.length>1)?`<span class="tag media">🖼️ ${d.photos.length}</span>`:''}
-        ${d.voice?`<span class="tag media">🎤</span>`:''}
-        ${after?`<span class="tag fixed">✓ תיקון</span>`:''}
-        ${d.gps?`<span class="tag gps">📍 GPS</span>`:''}
-      </div></div>`;
-  }).join('');
-  refreshDataLists();
+  if(!items.length){list.innerHTML=`<div class="empty"><div class="big">📋</div>${ds.length?'אין רשומות שתואמות לסינון.':'אין עדיין רשומות בפרויקט.<br>לחץ «רשומה חדשה».'}</div>`;updateBulkBar();refreshDataLists();return;}
+  if(groupByArea){
+    const groups={};items.forEach(d=>{const a=d.area||'— ללא אזור';(groups[a]=groups[a]||[]).push(d);});
+    list.innerHTML=Object.keys(groups).map(a=>{
+      const g=groups[a],closed=closedAreas.has(a)?' closed':'';
+      return `<div class="area-group${closed}">
+        <div class="area-head" onclick="toggleArea('${encodeURIComponent(a)}')"><span><span class="arrow">▾</span> ${esc(a)}</span><span class="cnt">${g.length} · ${g.filter(x=>x.status!=='done').length} פתוחות</span></div>
+        <div class="area-body">${g.map(cardHTML).join('')}</div></div>`;
+    }).join('');
+  } else {
+    list.innerHTML=items.map(cardHTML).join('');
+  }
+  updateBulkBar();refreshDataLists();
 }
+function cardHTML(d){
+  const st=statusOf(d.status),ty=typeOf(d.type),od=isOverdue(d);
+  const before=(d.photos||[]).find(x=>x.kind==='before'),after=(d.photos||[]).find(x=>x.kind==='after');
+  const sel=selected.has(d.id)?' sel':'';
+  return `<div class="card s-${st.cls}${sel}" style="position:relative" onclick="cardTap('${d.id}')">
+    <div class="selmark">✓</div>
+    <div class="c-head"><div style="flex:1">
+      <div class="c-loc">${esc(d.area||'—')}${d.location?' · '+esc(d.location):''}</div>
+      <div class="c-title">${esc(d.desc)||'(ללא תיאור)'}</div></div>
+      <div class="thumbs">${before?`<img class="c-thumb" src="${before.data}">`:''}${after?`<img class="c-thumb after" src="${after.data}">`:''}</div></div>
+    <div><span class="badge b-status st-${st.cls}">${st.label}</span></div>
+    <div class="c-meta">
+      <span class="tag tag-type">${ty.icon} ${ty.label}</span>
+      <span class="tag">${esc(d.category||'')}</span>
+      ${d.type==='defect'?`<span class="tag sev-${d.severity}">חומרה: ${esc(d.severity||'')}</span>`:''}
+      ${d.contractor?`<span class="tag">👷 ${esc(d.contractor)}</span>`:''}
+      ${d.due?`<span class="tag ${od?'c-overdue':''}">📅 ${formatD(d.due)}${od?' (באיחור)':''}</span>`:''}
+      ${(d.photos&&d.photos.length>1)?`<span class="tag media">🖼️ ${d.photos.length}</span>`:''}
+      ${d.voice?`<span class="tag media">🎤</span>`:''}
+      ${after?`<span class="tag fixed">✓ תיקון</span>`:''}
+      ${d.gps?`<span class="tag gps">📍 GPS</span>`:''}
+    </div></div>`;
+}
+function toggleArea(enc){const a=decodeURIComponent(enc);if(closedAreas.has(a))closedAreas.delete(a);else closedAreas.add(a);render();}
+function toggleGroup(){groupByArea=!groupByArea;render();}
+/* selection / bulk */
+function cardTap(id){selectMode?toggleSelect(id):openDef(id);}
+function toggleSelect(id){if(selected.has(id))selected.delete(id);else selected.add(id);render();}
+function enterSelect(){selectMode=true;selected.clear();render();}
+function exitSelect(){selectMode=false;selected.clear();document.getElementById('bulkBar').classList.remove('show');render();}
+function updateBulkBar(){
+  const bar=document.getElementById('bulkBar'),fab=document.getElementById('fab');
+  if(!selectMode){bar.classList.remove('show');if(fab)fab.style.display='flex';return;}
+  if(fab)fab.style.display='none';
+  bar.classList.add('show');
+  document.getElementById('bulk-count').textContent=`${selected.size} נבחרו`;
+  document.getElementById('bulk-actions').innerHTML=STATUSES.map(s=>`<button onclick="bulkStatus('${s.key}')">${s.label}</button>`).join('')+`<button onclick="bulkDelete()">🗑 מחק</button>`;
+}
+function bulkStatus(k){if(!selected.size){toast('לא נבחרו רשומות');return;}let n=0;store.defects.forEach(d=>{if(selected.has(d.id)){d.status=k;d.synced=false;n++;}});save();toast(`${n} עודכנו ל«${statusOf(k).label}»`);exitSelect();syncNow(false);}
+function bulkDelete(){if(!selected.size)return;if(confirm(`למחוק ${selected.size} רשומות לצמיתות?`)){store.defects.forEach(d=>{if(selected.has(d.id))queueDelete(d.id);});store.defects=store.defects.filter(d=>!selected.has(d.id));save();exitSelect();syncNow(false);}}
 function isOverdue(d){return d.due&&d.status!=='done'&&d.due<todayStr();}
 function todayStr(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
 function formatD(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
@@ -502,6 +615,7 @@ function openDef(id){
   const d=id?store.defects.find(x=>x.id===id):null;
   document.getElementById('defTitle').textContent=d?'עריכת רשומה':'רשומה חדשה';
   document.getElementById('dDelBtn').style.display=d?'block':'none';
+  document.getElementById('dDupBtn').style.display=d?'block':'none';
   document.getElementById('d-id').value=d?d.id:'';
   if(d){
     document.getElementById('d-desc').value=d.desc||'';
@@ -744,6 +858,81 @@ function importData(input){
 }
 function loadNormalize(){(store.defects||[]).forEach(d=>{if(!d.type)d.type='defect';if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});}delete d.photoBefore;delete d.photoAfter;delete d.photo;});}
 
+/* ===== templates ===== */
+function allTemplates(){return DEFAULT_TEMPLATES.concat(store.templates||[]);}
+function openTemplates(){
+  const t=allTemplates();
+  document.getElementById('tpl-list').innerHTML=t.length?t.map((x,i)=>`<div class="area-chip" style="justify-content:space-between"><span onclick="pickTemplate(${i})" style="flex:1;cursor:pointer">${esc(x.desc)}${x.category?` <span style="color:#999;font-size:.8rem">· ${esc(x.category)}</span>`:''}</span>${i>=DEFAULT_TEMPLATES.length?`<button type="button" onclick="delTemplate(${i-DEFAULT_TEMPLATES.length})">×</button>`:''}</div>`).join(''):'<div class="hint">אין תבניות.</div>';
+  showOverlay('tplOverlay');
+}
+function closeTemplates(){hideOverlay('tplOverlay');}
+function pickTemplate(i){const x=allTemplates()[i];if(!x)return;document.getElementById('d-desc').value=x.desc||'';if(x.category)document.getElementById('d-cat').value=x.category;closeTemplates();}
+function addTemplateManual(){const inp=document.getElementById('tpl-new'),v=inp.value.trim();if(!v)return;store.templates.push({desc:v,category:document.getElementById('d-cat').value||''});save();inp.value='';openTemplates();}
+function delTemplate(idx){store.templates.splice(idx,1);save();openTemplates();}
+
+/* ===== duplicate record ===== */
+function duplicateDefect(){
+  document.getElementById('d-id').value='';
+  curPhotos=[];curVoice=null;curGPS=null;renderGallery();showVoice();showGPS();
+  setRadio('status','open');
+  document.getElementById('defTitle').textContent='רשומה חדשה (שוכפלה)';
+  document.getElementById('dDelBtn').style.display='none';
+  document.getElementById('dDupBtn').style.display='none';
+  const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
+  toast('שוכפל — ערוך ושמור כרשומה חדשה');
+}
+
+/* ===== report branding (logo) ===== */
+function setLogo(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const reader=new FileReader();
+  reader.onload=ev=>{const img=new Image();img.onload=()=>{const max=320;let w=img.width,h=img.height;if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);store.reportSettings.logo=cv.toDataURL('image/png');save();showLogoPrev();};img.src=ev.target.result;};
+  reader.readAsDataURL(file);
+}
+function showLogoPrev(){document.getElementById('logo-prev').innerHTML=store.reportSettings.logo?`<div class="photo-prev"><img src="${store.reportSettings.logo}"><button type="button" class="del" onclick="store.reportSettings.logo='';save();showLogoPrev()">×</button></div>`:'';}
+
+/* ===== dashboard ===== */
+function openDash(){
+  const p=curProject();if(!p)return;const ds=defectsOf(p.id);
+  const body=document.getElementById('dash-body');
+  if(!ds.length){body.innerHTML='<div class="hint">אין נתונים להצגה.</div>';showOverlay('dashOverlay');return;}
+  const byStatus=STATUSES.map(s=>({label:s.label,val:ds.filter(d=>d.status===s.key).length,color:STCOLOR[s.key]}));
+  const sevC={'נמוכה':'#27ae60','בינונית':'#f39c12','גבוהה':'#e67e22','קריטית':'#e74c3c'};
+  const bySev=SEVS.map(s=>({label:s,val:ds.filter(d=>d.type==='defect'&&d.severity===s).length,color:sevC[s]}));
+  const cons={};ds.forEach(d=>{if(d.contractor)cons[d.contractor]=(cons[d.contractor]||0)+1;});
+  const byCon=Object.keys(cons).map(c=>({label:c,val:cons[c],color:'#2d6cdf'})).sort((a,b)=>b.val-a.val).slice(0,8);
+  const ar={};ds.forEach(d=>{const a=d.area||'—';ar[a]=(ar[a]||0)+1;});
+  const byArea=Object.keys(ar).map(a=>({label:a,val:ar[a],color:'#9b59b6'})).sort((a,b)=>b.val-a.val).slice(0,8);
+  const overdue=ds.filter(isOverdue).length;
+  body.innerHTML=`
+    <div class="stats" style="margin:0 0 16px;background:var(--navy);border-radius:12px;padding:10px;color:#fff">
+      <div class="stat"><b>${ds.length}</b><span>סה"כ</span></div>
+      <div class="stat"><b>${ds.filter(d=>d.status!=='done').length}</b><span>פתוחות</span></div>
+      <div class="stat"><b>${overdue}</b><span>באיחור</span></div>
+      <div class="stat"><b>${ds.filter(d=>d.status==='done').length}</b><span>נסגרו</span></div>
+    </div>
+    ${barSection('לפי סטטוס',byStatus)}
+    ${bySev.some(x=>x.val)?barSection('לפי חומרה',bySev):''}
+    ${byCon.length?barSection('לפי קבלן (Top 8)',byCon):''}
+    ${byArea.length?barSection('לפי אזור (Top 8)',byArea):''}`;
+  showOverlay('dashOverlay');
+}
+function barSection(title,rows){const max=Math.max(1,...rows.map(r=>r.val));return `<div class="dash-sec"><h3>${title}</h3>${rows.map(r=>`<div class="bar-row"><span class="bl">${esc(r.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(r.val/max*100)}%;background:${r.color}"></span></span><span class="bv">${r.val}</span></div>`).join('')}</div>`;}
+function closeDash(){hideOverlay('dashOverlay');}
+
+/* ===== reminders (overdue) ===== */
+function checkReminders(){
+  const overdue=store.defects.filter(isOverdue);
+  const b=document.getElementById('remBanner');
+  if(!overdue.length){if(b)b.style.display='none';return;}
+  if(b){b.style.display='block';b.innerHTML=`🔔 ${overdue.length} ליקויים עברו את תאריך היעד. <a href="#" onclick="showOverdue();return false">הצג</a>`;}
+  if('Notification' in window){
+    if(Notification.permission==='granted')try{new Notification('פיקוח אתר',{body:`${overdue.length} ליקויים באיחור`});}catch(e){}
+    else if(Notification.permission!=='denied')Notification.requestPermission().then(pm=>{if(pm==='granted')try{new Notification('פיקוח אתר',{body:`${overdue.length} ליקויים באיחור`});}catch(e){}});
+  }
+}
+function showOverdue(){const od=store.defects.filter(isOverdue);if(od.length)openProject(od[0].projectId);}
+
 /* ===== cloud sync (Google Sheets via Apps Script) ===== */
 const SYNC_KEY='inspection_sync_url',SHEET_KEY='inspection_sheet_url';
 let syncUrl=localStorage.getItem(SYNC_KEY)||'',sheetUrl=localStorage.getItem(SHEET_KEY)||'';
@@ -778,7 +967,7 @@ async function syncNow(manual){
 /* ===== overlay helpers ===== */
 function showOverlay(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
 function hideOverlay(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
-['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
+['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay','tplOverlay','dashOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
 
 /* ===== excel export ===== */
 async function exportExcel(){
@@ -816,10 +1005,12 @@ function openReport(){
   const cons=[...new Set(ds.map(d=>d.contractor).filter(Boolean))];
   document.getElementById('rep-contractor').innerHTML='<option value="all">כל הקבלנים</option>'+cons.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   document.getElementById('rep-phone').value='';document.getElementById('rep-inspector').value='';
+  document.getElementById('rep-org').value=store.reportSettings.orgName||'';showLogoPrev();
   setRadio('repscope','all');
   showOverlay('reportOverlay');
   setTimeout(initSig,60);
 }
+function saveBranding(){store.reportSettings.orgName=(document.getElementById('rep-org').value||'').trim();save();}
 function repContractorChange(){
   const c=document.getElementById('rep-contractor').value;const ph=document.getElementById('rep-phone');
   if(c!=='all'&&store.phones[c])ph.value=store.phones[c];else if(c==='all')ph.value='';
@@ -844,11 +1035,16 @@ function reportRecords(){
 }
 function repHeaderHTML(){
   const p=curProject(),ds=reportRecords(),conSel=document.getElementById('rep-contractor').value;
+  const org=(document.getElementById('rep-org').value||'').trim(),logo=store.reportSettings.logo;
   return `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1b2a4a;padding-bottom:12px;margin-bottom:14px">
-    <div><div style="font-size:22px;font-weight:800;color:#1b2a4a">דוח פיקוח ליקויים</div>
-    <div style="font-size:14px;margin-top:4px">${esc(p.name)}${p.address?' · '+esc(p.address):''}</div>
-    ${p.client?`<div style="font-size:12px;color:#555">מזמין: ${esc(p.client)}</div>`:''}
-    ${conSel!=='all'?`<div style="font-size:13px;color:#333;margin-top:3px">לכבוד הקבלן: <b>${esc(conSel)}</b></div>`:''}</div>
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      ${logo?`<img src="${logo}" style="height:54px;max-width:130px;object-fit:contain">`:''}
+      <div>${org?`<div style="font-size:15px;font-weight:800;color:#1b2a4a">${esc(org)}</div>`:''}
+      <div style="font-size:20px;font-weight:800;color:#1b2a4a">דוח פיקוח ליקויים</div>
+      <div style="font-size:14px;margin-top:4px">${esc(p.name)}${p.address?' · '+esc(p.address):''}</div>
+      ${p.client?`<div style="font-size:12px;color:#555">מזמין: ${esc(p.client)}</div>`:''}
+      ${conSel!=='all'?`<div style="font-size:13px;color:#333;margin-top:3px">לכבוד הקבלן: <b>${esc(conSel)}</b></div>`:''}</div>
+    </div>
     <div style="text-align:left;font-size:12px;color:#555">תאריך: ${formatD(todayStr())}<br>סה"כ רשומות: ${ds.length}</div>
   </div>`;
 }
@@ -907,6 +1103,7 @@ function buildReportPages(){
 async function doPrint(){
   if(!window.jspdf||typeof html2canvas==='undefined'){toast('ספריית ה-PDF לא נטענה');return;}
   if(!reportRecords().length){toast('אין רשומות לדוח');return;}
+  saveBranding();
   toast('מכין PDF…');
   try{
     const pages=buildReportPages();
@@ -936,6 +1133,7 @@ function waText(){
   return t;
 }
 async function doShare(){
+  saveBranding();
   const phone=normPhone(document.getElementById('rep-phone').value);
   const txt=waText();
   document.getElementById('printArea').innerHTML=buildReport();
@@ -972,6 +1170,7 @@ window.addEventListener('online',()=>syncNow(false));
 if(syncUrl)setTimeout(()=>syncNow(false),1800);
 
 initForm();render();
+checkReminders();
 </script>
 </body>
 </html>
