@@ -256,8 +256,10 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-del" id="dDelBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
+        <button type="button" class="btn btn-ghost" onclick="saveAndNext()">💾 שמור + עוד</button>
         <button type="submit" class="btn btn-save">שמירה</button>
       </div>
+      <div class="hint" style="text-align:center">«שמור + עוד» שומר ופותח רשומה חדשה עם אותו אזור/קבלן — לתיעוד מהיר באותו חלל.</div>
     </form>
   </div>
 </div>
@@ -315,6 +317,7 @@ const KEY='inspection_store_v2';
 let store=loadStore();
 let view='projects',curProjectId=null,filter='all';
 let curPhotos=[],curVoice=null,curGPS=null,editAreas=[];
+let lastCtx=null,batchCount=0;
 
 function loadStore(){
   let s=null;try{s=JSON.parse(localStorage.getItem(KEY));}catch(e){}
@@ -353,7 +356,7 @@ function initForm(){
 
 /* ===== routing ===== */
 function goHome(){view='projects';curProjectId=null;filter='all';render();scrollTo(0,0);}
-function openProject(id){view='project';curProjectId=id;filter='all';document.getElementById('search').value='';document.getElementById('typeFilter').value='all';render();scrollTo(0,0);}
+function openProject(id){view='project';curProjectId=id;filter='all';lastCtx=null;batchCount=0;document.getElementById('search').value='';document.getElementById('typeFilter').value='all';render();scrollTo(0,0);}
 function render(){view==='projects'?renderProjects():renderProject();}
 
 function renderProjects(){
@@ -464,7 +467,7 @@ function closeProj(){hideOverlay('projOverlay');}
 
 /* ===== item form ===== */
 function openDef(id){
-  const f=document.getElementById('defForm');f.reset();curPhotos=[];curVoice=null;curGPS=null;
+  const f=document.getElementById('defForm');f.reset();curPhotos=[];curVoice=null;curGPS=null;batchCount=0;
   refreshDataLists();
   const d=id?store.defects.find(x=>x.id===id):null;
   document.getElementById('defTitle').textContent=d?'עריכת רשומה':'רשומה חדשה';
@@ -481,7 +484,18 @@ function openDef(id){
     document.getElementById('d-notes').value=d.notes||'';
     setRadio('rtype',d.type||'defect');setRadio('sev',d.severity||'בינונית');setRadio('status',d.status||'open');
     curPhotos=(d.photos||[]).map(x=>({...x}));curVoice=d.voice||null;curGPS=d.gps||null;
-  }else{setRadio('rtype','defect');setRadio('sev','בינונית');setRadio('status','open');}
+  }else{
+    setRadio('rtype','defect');setRadio('sev','בינונית');setRadio('status','open');
+    if(lastCtx){ // sticky context — keep area/contractor so you don't redefine each time
+      document.getElementById('d-area').value=lastCtx.area||'';
+      document.getElementById('d-loc').value=lastCtx.location||'';
+      document.getElementById('d-cat').value=lastCtx.category||CATS[0];
+      document.getElementById('d-contractor').value=lastCtx.contractor||'';
+      document.getElementById('d-phone').value=lastCtx.phone||'';
+      document.getElementById('d-due').value=lastCtx.due||'';
+      setRadio('rtype',lastCtx.type||'defect');
+    }
+  }
   renderGallery();showVoice();showGPS();
   showOverlay('defOverlay');
 }
@@ -493,12 +507,13 @@ function fillPhone(){
   const ph=document.getElementById('d-phone');
   if(name&&store.phones[name]&&!ph.value)ph.value=store.phones[name];
 }
-function saveDefect(e){
-  e.preventDefault();
+function persistRecord(){
   const id=document.getElementById('d-id').value,area=document.getElementById('d-area').value.trim();
+  const desc=document.getElementById('d-desc').value.trim();
+  if(!desc){toast('יש למלא תיאור');document.getElementById('d-desc').focus();return null;}
   const contractor=document.getElementById('d-contractor').value.trim(),phone=document.getElementById('d-phone').value.trim();
   const rec={id:id||uid(),projectId:curProjectId,type:getRadio('rtype'),
-    desc:document.getElementById('d-desc').value.trim(),area:area,location:document.getElementById('d-loc').value.trim(),
+    desc:desc,area:area,location:document.getElementById('d-loc').value.trim(),
     category:document.getElementById('d-cat').value,contractor:contractor,phone:phone,
     severity:getRadio('sev'),status:getRadio('status'),due:document.getElementById('d-due').value,
     notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS};
@@ -506,7 +521,25 @@ function saveDefect(e){
   if(area&&p&&!(p.areas||[]).includes(area)){p.areas=p.areas||[];p.areas.push(area);}
   if(contractor&&phone)store.phones[contractor]=phone;
   if(id){const i=store.defects.findIndex(x=>x.id===id);rec.createdAt=store.defects[i].createdAt;store.defects[i]=rec;}else{rec.createdAt=Date.now();store.defects.push(rec);}
-  save();closeDef();render();
+  save();
+  lastCtx={area:rec.area,location:rec.location,type:rec.type,category:rec.category,contractor:rec.contractor,phone:rec.phone,due:rec.due};
+  return rec;
+}
+function saveDefect(e){e.preventDefault();if(persistRecord()){closeDef();render();}}
+function saveAndNext(){
+  const rec=persistRecord();if(!rec)return;
+  batchCount++;render(); // refresh the list behind the open form
+  // reset only the per-record fields; keep area/location/category/contractor/phone/type/due
+  document.getElementById('d-id').value='';
+  document.getElementById('d-desc').value='';
+  document.getElementById('d-notes').value='';
+  setRadio('status','open');
+  curPhotos=[];curVoice=null;curGPS=null;renderGallery();showVoice();showGPS();
+  document.getElementById('dDelBtn').style.display='none';
+  document.getElementById('defTitle').textContent=`רשומה חדשה • ${batchCount} נשמרו ב«${rec.area||'—'}»`;
+  const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
+  document.getElementById('d-desc').focus();
+  toast(`נשמר ✓ — ${batchCount} באצווה`);
 }
 function deleteDefect(){const id=document.getElementById('d-id').value;if(confirm('למחוק את הרשומה לצמיתות?')){store.defects=store.defects.filter(x=>x.id!==id);save();closeDef();render();}}
 
