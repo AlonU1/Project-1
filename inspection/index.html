@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1b2a4a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>דוחות פיקוח — מעקב ליקויים</title>
+<title>פיקוח ליקויים — פרויקטים ומעקב</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{
@@ -18,165 +18,177 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);
   padding-bottom:90px;line-height:1.5;-webkit-text-size-adjust:100%}
-/* ---- Header ---- */
 header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;
   padding:14px 16px;position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(0,0,0,.15)}
 .h-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.h-top h1{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px}
-.h-top h1 .logo{background:var(--accent);width:30px;height:30px;border-radius:8px;
-  display:grid;place-items:center;font-size:1rem}
-.btn-export{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;
-  padding:7px 12px;border-radius:9px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap}
-.btn-export:active{background:rgba(255,255,255,.28)}
-/* ---- Stats ---- */
+.h-top h1{font-size:1.12rem;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+.h-top h1 .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo{background:var(--accent);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1rem;flex:0 0 auto}
+.back{background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:9px;font-size:1.2rem;cursor:pointer;flex:0 0 auto}
+.h-btns{display:flex;gap:7px;flex:0 0 auto}
+.btn-h{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;
+  padding:7px 11px;border-radius:9px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-h:active{background:rgba(255,255,255,.28)}
+.sub{font-size:.74rem;opacity:.8;margin-top:3px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
 .stat{background:rgba(255,255,255,.1);border-radius:10px;padding:8px 4px;text-align:center}
-.stat b{display:block;font-size:1.3rem;line-height:1.1}
-.stat span{font-size:.65rem;opacity:.85}
-/* ---- Filters ---- */
+.stat b{display:block;font-size:1.25rem;line-height:1.1}
+.stat span{font-size:.62rem;opacity:.85}
 .filters{padding:12px 16px 4px;display:flex;flex-direction:column;gap:10px}
-.search{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:11px;
-  font-size:.95rem;background:var(--card)}
+.search{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:11px;font-size:.95rem;background:var(--card)}
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;padding:7px 13px;border-radius:20px;border:1px solid var(--border);
   background:var(--card);font-size:.82rem;cursor:pointer;font-weight:600;color:var(--muted)}
 .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-/* ---- List ---- */
 .list{padding:8px 16px}
-.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-  padding:14px;margin-bottom:11px;border-right:5px solid var(--border);cursor:pointer;position:relative}
-.card.s-open{border-right-color:var(--open)}
-.card.s-prog{border-right-color:var(--prog)}
-.card.s-recheck{border-right-color:var(--recheck)}
-.card.s-done{border-right-color:var(--done)}
-.card.s-done{opacity:.72}
+/* project card */
+.pcard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pcard h3{font-size:1.08rem;margin-bottom:3px}
+.pcard .addr{font-size:.8rem;color:var(--muted)}
+.pcard .mini{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.pill{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.pill-open{background:#fdecea;color:var(--open)}
+.pill-done{background:#eafaf1;color:var(--done)}
+.pill-tot{background:var(--bg);color:var(--muted)}
+.chev{color:var(--muted);font-size:1.6rem;flex:0 0 auto}
+/* defect card */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:11px;border-right:5px solid var(--border);cursor:pointer}
+.card.s-open{border-right-color:var(--open)}.card.s-prog{border-right-color:var(--prog)}
+.card.s-recheck{border-right-color:var(--recheck)}.card.s-done{border-right-color:var(--done);opacity:.72}
 .c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .c-loc{font-size:.78rem;color:var(--muted);font-weight:600}
 .c-title{font-weight:700;font-size:1rem;margin:3px 0 8px}
 .badge{display:inline-block;padding:3px 9px;border-radius:7px;font-size:.7rem;font-weight:700;white-space:nowrap}
-.b-status{color:#fff}
-.st-open{background:var(--open)}.st-prog{background:var(--prog)}
-.st-recheck{background:var(--recheck)}.st-done{background:var(--done)}
+.b-status{color:#fff}.st-open{background:var(--open)}.st-prog{background:var(--prog)}.st-recheck{background:var(--recheck)}.st-done{background:var(--done)}
 .c-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag{font-size:.72rem;background:var(--bg);color:var(--muted);padding:3px 9px;border-radius:7px;font-weight:600}
 .tag.sev-גבוהה,.tag.sev-קריטית{background:#fdecea;color:#c0392b}
 .tag.sev-בינונית{background:#fef5e7;color:#b9770e}
+.tag.gps{background:#eaf3ff;color:var(--blue)}
 .c-thumb{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:0 0 auto}
 .c-overdue{color:var(--open);font-weight:700}
 .empty{text-align:center;color:var(--muted);padding:60px 20px}
 .empty .big{font-size:3rem;margin-bottom:10px}
-/* ---- FAB ---- */
-.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);
-  color:#fff;border:none;border-radius:30px;padding:15px 26px;font-size:1rem;font-weight:700;
-  box-shadow:0 6px 20px rgba(230,126,34,.45);cursor:pointer;z-index:25;display:flex;align-items:center;gap:8px}
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;border:none;border-radius:30px;padding:15px 26px;font-size:1rem;font-weight:700;box-shadow:0 6px 20px rgba(230,126,34,.45);cursor:pointer;z-index:25;display:flex;align-items:center;gap:8px}
 .fab:active{transform:translateX(-50%) scale(.96)}
-/* ---- Modal ---- */
-.overlay{position:fixed;inset:0;background:rgba(15,22,40,.55);z-index:40;display:none;
-  align-items:flex-end;justify-content:center}
+.overlay{position:fixed;inset:0;background:rgba(15,22,40,.55);z-index:40;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:560px;max-height:94vh;overflow-y:auto;
-  border-radius:20px 20px 0 0;animation:up .25s ease}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:94vh;overflow-y:auto;border-radius:20px 20px 0 0;animation:up .25s ease}
 @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-head{position:sticky;top:0;background:var(--navy);color:#fff;padding:15px 18px;
-  display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:2}
+.sheet-head{position:sticky;top:0;background:var(--navy);color:#fff;padding:15px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:2}
 .sheet-head h2{font-size:1.05rem}
 .x{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1}
 .form{padding:16px 18px 24px}
 .field{margin-bottom:15px}
 .field label{display:block;font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:6px}
-.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--border);
-  border-radius:11px;font-size:.95rem;background:var(--card);font-family:inherit}
-.field textarea{min-height:78px;resize:vertical}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:11px;font-size:.95rem;background:var(--card);font-family:inherit}
+.field textarea{min-height:70px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
-.seg label{flex:1;min-width:60px}
+.seg label{flex:1;min-width:58px}
 .seg input{display:none}
-.seg span{display:block;text-align:center;padding:10px 4px;border:1px solid var(--border);
-  border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;background:var(--card)}
+.seg span{display:block;text-align:center;padding:10px 4px;border:1px solid var(--border);border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;background:var(--card)}
 .seg input:checked+span{background:var(--navy);color:#fff;border-color:var(--navy)}
+.areas-edit{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.area-chip{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.area-chip button{background:var(--open);color:#fff;border:none;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.75rem;line-height:1}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1}
+.add-row button{background:var(--blue);color:#fff;border:none;border-radius:11px;padding:0 16px;font-weight:700;cursor:pointer}
 .photo-box{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.photo-btn{background:var(--card);border:1.5px dashed var(--blue);color:var(--blue);padding:12px 16px;
-  border-radius:11px;font-weight:600;cursor:pointer;font-size:.9rem}
+.photo-btn{background:var(--card);border:1.5px dashed var(--blue);color:var(--blue);padding:12px 16px;border-radius:11px;font-weight:600;cursor:pointer;font-size:.9rem}
 .photo-prev{position:relative;width:78px;height:78px}
 .photo-prev img{width:78px;height:78px;object-fit:cover;border-radius:11px}
-.photo-prev .del{position:absolute;top:-7px;left:-7px;background:var(--open);color:#fff;border:none;
-  width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:.9rem;line-height:1}
+.photo-prev .del{position:absolute;top:-7px;left:-7px;background:var(--open);color:#fff;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:.9rem;line-height:1}
+.gps-box{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px}
+.gps-btn{background:#eaf3ff;border:1px solid #cfe2ff;color:var(--blue);padding:10px 14px;border-radius:11px;font-weight:600;cursor:pointer;font-size:.88rem}
+.gps-info{font-size:.78rem;color:var(--muted)}
+.gps-info a{color:var(--blue);font-weight:700;text-decoration:none}
 .form-actions{display:flex;gap:10px;margin-top:8px}
 .btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
 .btn-save{background:var(--accent);color:#fff}
 .btn-del{background:#fdecea;color:var(--open);flex:0 0 auto;padding:14px 18px}
-.btn-ghost{background:var(--card);color:var(--muted);border:1px solid var(--border)}
 .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
-@media(min-width:560px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:90vh}
-  .sheet-head{border-radius:20px 20px 0 0}}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:.88rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+@media(min-width:560px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:90vh}}
 </style>
 </head>
 <body>
 <header>
   <div class="h-top">
-    <h1><span class="logo">🏗️</span> פיקוח ליקויים</h1>
-    <button class="btn-export" onclick="exportExcel()">⬇️ ייצוא לאקסל</button>
+    <div style="display:flex;align-items:center;gap:9px;min-width:0">
+      <button class="back" id="backBtn" onclick="goHome()" style="display:none">‹</button>
+      <span class="logo">🏗️</span>
+      <h1><span class="t" id="hTitle">פיקוח ליקויים</span></h1>
+    </div>
+    <div class="h-btns" id="hBtns"></div>
   </div>
-  <div class="stats" id="stats"></div>
+  <div class="sub" id="hSub"></div>
+  <div class="stats" id="stats" style="display:none"></div>
 </header>
 
-<div class="filters">
-  <input class="search" id="search" placeholder="🔍 חיפוש לפי תיאור, מיקום, קבלן…" oninput="render()">
+<div class="filters" id="filters" style="display:none">
+  <input class="search" id="search" placeholder="🔍 חיפוש…" oninput="render()">
   <div class="chips" id="chips"></div>
 </div>
 
 <div class="list" id="list"></div>
 
-<button class="fab" onclick="openForm()">＋ ליקוי חדש</button>
+<button class="fab" id="fab" onclick="fabAction()">＋</button>
+<div class="toast" id="toast"></div>
 
-<!-- Modal -->
-<div class="overlay" id="overlay">
+<!-- ===== Project modal ===== -->
+<div class="overlay" id="projOverlay">
   <div class="sheet">
-    <div class="sheet-head">
-      <h2 id="sheetTitle">ליקוי חדש</h2>
-      <button class="x" onclick="closeForm()">×</button>
-    </div>
-    <form class="form" id="form" onsubmit="saveDefect(event)">
-      <input type="hidden" id="f-id">
+    <div class="sheet-head"><h2 id="projTitle">פרויקט חדש</h2><button class="x" onclick="closeProj()">×</button></div>
+    <form class="form" id="projForm" onsubmit="saveProject(event)">
+      <input type="hidden" id="p-id">
+      <div class="field"><label>שם הפרויקט *</label><input id="p-name" required placeholder="למשל: מגדל רותם, רחוב הרצל"></div>
+      <div class="row2">
+        <div class="field"><label>כתובת / מיקום</label><input id="p-addr" placeholder="עיר, רחוב"></div>
+        <div class="field"><label>מזמין / יזם</label><input id="p-client" placeholder="שם החברה"></div>
+      </div>
       <div class="field">
-        <label>תיאור הליקוי *</label>
-        <textarea id="f-desc" required placeholder="למשל: סדק בקיר ממ&quot;ד, רטיבות בתקרה…"></textarea>
+        <label>אזורים / מבנים / חללים</label>
+        <div class="areas-edit" id="p-areas"></div>
+        <div class="add-row">
+          <input id="p-area-new" placeholder="הוסף אזור (מבנה A, קומה 3, ממ&quot;ד…)" onkeydown="if(event.key==='Enter'){event.preventDefault();addArea()}">
+          <button type="button" onclick="addArea()">הוסף</button>
+        </div>
+        <div class="hint">תגדיר פעם אחת — ותבחר מהרשימה בכל ליקוי.</div>
+      </div>
+      <div class="field"><label>הערות לפרויקט</label><textarea id="p-notes"></textarea></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-del" id="pDelBtn" onclick="deleteProject()" style="display:none">🗑️</button>
+        <button type="submit" class="btn btn-save">שמירה</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Defect modal ===== -->
+<div class="overlay" id="defOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="defTitle">ליקוי חדש</h2><button class="x" onclick="closeDef()">×</button></div>
+    <form class="form" id="defForm" onsubmit="saveDefect(event)">
+      <input type="hidden" id="d-id">
+      <div class="field"><label>תיאור הליקוי *</label><textarea id="d-desc" required placeholder="סדק בקיר, רטיבות בתקרה…"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>אזור / מבנה / חלל</label>
+          <input id="d-area" list="d-areas" placeholder="בחר או הקלד">
+          <datalist id="d-areas"></datalist>
+        </div>
+        <div class="field"><label>מיקום מדויק</label><input id="d-loc" placeholder="דירה 12 / ציר B"></div>
       </div>
       <div class="row2">
-        <div class="field">
-          <label>אתר / פרויקט</label>
-          <input id="f-site" list="sites" placeholder="שם הפרויקט">
-          <datalist id="sites"></datalist>
-        </div>
-        <div class="field">
-          <label>מיקום באתר</label>
-          <input id="f-loc" placeholder="קומה 3 / דירה 12">
-        </div>
+        <div class="field"><label>קטגוריה</label><select id="d-cat"></select></div>
+        <div class="field"><label>קבלן / אחראי</label><input id="d-contractor" list="contractors" placeholder="שם הקבלן"><datalist id="contractors"></datalist></div>
       </div>
-      <div class="row2">
-        <div class="field">
-          <label>קטגוריה</label>
-          <select id="f-cat"></select>
-        </div>
-        <div class="field">
-          <label>קבלן / אחראי</label>
-          <input id="f-contractor" list="contractors" placeholder="שם הקבלן">
-          <datalist id="contractors"></datalist>
-        </div>
-      </div>
-      <div class="field">
-        <label>חומרה</label>
-        <div class="seg" id="seg-sev"></div>
-      </div>
-      <div class="field">
-        <label>סטטוס</label>
-        <div class="seg" id="seg-status"></div>
-      </div>
-      <div class="field">
-        <label>תאריך יעד לתיקון</label>
-        <input type="date" id="f-due">
-      </div>
+      <div class="field"><label>חומרה</label><div class="seg" id="seg-sev"></div></div>
+      <div class="field"><label>סטטוס</label><div class="seg" id="seg-status"></div></div>
+      <div class="field"><label>תאריך יעד לתיקון</label><input type="date" id="d-due"></div>
       <div class="field">
         <label>תמונה</label>
         <div class="photo-box">
@@ -185,84 +197,148 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;
           </label>
           <div id="photo-prev"></div>
         </div>
-        <div class="hint">התמונה נשמרת מקומית בטלפון בלבד.</div>
+        <div class="gps-box">
+          <button type="button" class="gps-btn" onclick="grabGPS(true)">📍 תפוס מיקום GPS</button>
+          <span class="gps-info" id="gps-info">אין מיקום עדיין</span>
+        </div>
+        <div class="hint">המיקום נתפס מ-GPS המכשיר בזמן התיעוד (מדויק יותר מ-EXIF של התמונה).</div>
       </div>
-      <div class="field">
-        <label>הערות נוספות</label>
-        <textarea id="f-notes" placeholder="תיעוד טיפול, מי תיקן, הערות לתיקון חוזר…"></textarea>
-      </div>
+      <div class="field"><label>הערות נוספות</label><textarea id="d-notes" placeholder="תיעוד טיפול, מי תיקן…"></textarea></div>
       <div class="form-actions">
-        <button type="button" class="btn btn-del" id="delBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
+        <button type="button" class="btn btn-del" id="dDelBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
         <button type="submit" class="btn btn-save">שמירה</button>
       </div>
     </form>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script>
-const CATS = ['חשמל','אינסטלציה','גמר/צבע','שלד ובטון','אלומיניום','ריצוף וחיפוי','איטום ורטיבות','גבס','בטיחות','אחר'];
-const SEVS = ['נמוכה','בינונית','גבוהה','קריטית'];
-const STATUSES = [
-  {key:'open',    label:'פתוח',        cls:'open'},
-  {key:'prog',    label:'בטיפול',      cls:'prog'},
-  {key:'recheck', label:'לתיקון חוזר', cls:'recheck'},
-  {key:'done',    label:'סגור',        cls:'done'},
+const CATS=['חשמל','אינסטלציה','גמר/צבע','שלד ובטון','אלומיניום','ריצוף וחיפוי','איטום ורטיבות','גבס','בטיחות','אחר'];
+const SEVS=['נמוכה','בינונית','גבוהה','קריטית'];
+const STATUSES=[
+  {key:'open',label:'פתוח',cls:'open'},
+  {key:'prog',label:'בטיפול',cls:'prog'},
+  {key:'recheck',label:'לתיקון חוזר',cls:'recheck'},
+  {key:'done',label:'סגור',cls:'done'},
 ];
-const KEY='inspection_defects_v1';
-let defects = load();
-let filter = 'all';
-let curPhoto = null;
+const KEY='inspection_store_v2';
+let store=loadStore();
+let view='projects';        // 'projects' | 'project'
+let curProjectId=null;
+let filter='all';
+let curPhoto=null, curGPS=null, editAreas=[];
 
-function load(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]} }
-function save(){ localStorage.setItem(KEY, JSON.stringify(defects)); }
-function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function statusOf(k){ return STATUSES.find(s=>s.key===k)||STATUSES[0]; }
-function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function loadStore(){
+  try{const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.projects)return s;}catch(e){}
+  // migrate v1 (flat defects) if present
+  let migrated={projects:[],defects:[]};
+  try{
+    const old=JSON.parse(localStorage.getItem('inspection_defects_v1'));
+    if(old&&old.length){
+      const p={id:uid(),name:'פרויקט ראשון',address:'',client:'',notes:'',areas:[],createdAt:Date.now()};
+      migrated.projects.push(p);
+      old.forEach(d=>{d.projectId=p.id; d.area=d.location||''; migrated.defects.push(d);});
+    }
+  }catch(e){}
+  return migrated;
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(store));return true;}catch(e){toast('האחסון מלא — מחק ליקויים ישנים או ייצא לאקסל');return false;} }
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function statusOf(k){return STATUSES.find(s=>s.key===k)||STATUSES[0];}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function curProject(){return store.projects.find(p=>p.id===curProjectId);}
+function defectsOf(pid){return store.defects.filter(d=>d.projectId===pid);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
-/* ---------- Build static form controls ---------- */
+/* build static form controls */
 function initForm(){
-  document.getElementById('f-cat').innerHTML = CATS.map(c=>`<option>${c}</option>`).join('');
-  document.getElementById('seg-sev').innerHTML = SEVS.map((s,i)=>
-    `<label><input type="radio" name="sev" value="${s}" ${i===1?'checked':''}><span>${s}</span></label>`).join('');
-  document.getElementById('seg-status').innerHTML = STATUSES.map((s,i)=>
-    `<label><input type="radio" name="status" value="${s.key}" ${i===0?'checked':''}><span>${s.label}</span></label>`).join('');
+  document.getElementById('d-cat').innerHTML=CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('seg-sev').innerHTML=SEVS.map((s,i)=>`<label><input type="radio" name="sev" value="${s}" ${i===1?'checked':''}><span>${s}</span></label>`).join('');
+  document.getElementById('seg-status').innerHTML=STATUSES.map((s,i)=>`<label><input type="radio" name="status" value="${s.key}" ${i===0?'checked':''}><span>${s.label}</span></label>`).join('');
 }
 
-/* ---------- Render list + stats + filters ---------- */
-function render(){
-  const counts = {all:defects.length};
-  STATUSES.forEach(s=>counts[s.key]=defects.filter(d=>d.status===s.key).length);
-  const overdue = defects.filter(isOverdue).length;
+/* ===================== ROUTING / RENDER ===================== */
+function goHome(){view='projects';curProjectId=null;filter='all';render();window.scrollTo(0,0);}
+function openProject(id){view='project';curProjectId=id;filter='all';document.getElementById('search').value='';render();window.scrollTo(0,0);}
 
-  document.getElementById('stats').innerHTML = `
+function render(){ view==='projects'?renderProjects():renderProject(); }
+
+function renderProjects(){
+  document.getElementById('backBtn').style.display='none';
+  document.getElementById('hTitle').textContent='הפרויקטים שלי';
+  document.getElementById('hSub').textContent=store.projects.length?`${store.projects.length} פרויקטים`:'';
+  document.getElementById('hBtns').innerHTML='';
+  document.getElementById('stats').style.display='none';
+  document.getElementById('filters').style.display='none';
+  document.getElementById('fab').innerHTML='＋ פרויקט חדש';
+
+  const list=document.getElementById('list');
+  if(!store.projects.length){
+    list.innerHTML=`<div class="empty"><div class="big">🏢</div>אין עדיין פרויקטים.<br>לחץ על «פרויקט חדש» כדי להתחיל.</div>`;return;
+  }
+  list.innerHTML=store.projects.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(p=>{
+    const ds=defectsOf(p.id);
+    const open=ds.filter(d=>d.status!=='done').length;
+    const done=ds.filter(d=>d.status==='done').length;
+    return `<div class="pcard" onclick="openProject('${p.id}')">
+      <div style="min-width:0">
+        <h3>${esc(p.name)}</h3>
+        <div class="addr">${esc(p.address||'')}${p.client?' · '+esc(p.client):''}</div>
+        <div class="mini">
+          <span class="pill pill-tot">${ds.length} ליקויים</span>
+          <span class="pill pill-open">${open} פתוחים</span>
+          <span class="pill pill-done">${done} נסגרו</span>
+          ${p.areas&&p.areas.length?`<span class="pill pill-tot">${p.areas.length} אזורים</span>`:''}
+        </div>
+      </div>
+      <div class="chev">‹</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProject(){
+  const p=curProject(); if(!p){goHome();return;}
+  const ds=defectsOf(p.id);
+  document.getElementById('backBtn').style.display='block';
+  document.getElementById('hTitle').textContent=p.name;
+  document.getElementById('hSub').textContent=p.address||'';
+  document.getElementById('hBtns').innerHTML=`
+    <button class="btn-h" onclick="openProj('${p.id}')">⚙️ פרויקט</button>
+    <button class="btn-h" onclick="exportExcel()">⬇️ אקסל</button>`;
+  document.getElementById('fab').innerHTML='＋ ליקוי חדש';
+
+  const counts={all:ds.length};
+  STATUSES.forEach(s=>counts[s.key]=ds.filter(d=>d.status===s.key).length);
+  const overdue=ds.filter(isOverdue).length;
+  const statsEl=document.getElementById('stats');
+  statsEl.style.display='grid';
+  statsEl.innerHTML=`
     <div class="stat"><b>${counts.all}</b><span>סה"כ</span></div>
     <div class="stat"><b>${counts.open+counts.prog+counts.recheck}</b><span>פתוחים</span></div>
     <div class="stat"><b>${overdue}</b><span>באיחור</span></div>
     <div class="stat"><b>${counts.done}</b><span>נסגרו</span></div>`;
 
-  const chipDefs = [{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label})));
-  document.getElementById('chips').innerHTML = chipDefs.map(c=>
-    `<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
+  document.getElementById('filters').style.display='flex';
+  const chipDefs=[{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label})));
+  document.getElementById('chips').innerHTML=chipDefs.map(c=>`<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
 
-  const q = document.getElementById('search').value.trim().toLowerCase();
-  let items = defects.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  if(filter!=='all') items = items.filter(d=>d.status===filter);
-  if(q) items = items.filter(d=>[d.desc,d.location,d.site,d.contractor,d.category].join(' ').toLowerCase().includes(q));
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  let items=ds.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(filter!=='all')items=items.filter(d=>d.status===filter);
+  if(q)items=items.filter(d=>[d.desc,d.area,d.location,d.contractor,d.category].join(' ').toLowerCase().includes(q));
 
-  const list = document.getElementById('list');
+  const list=document.getElementById('list');
   if(!items.length){
-    list.innerHTML = `<div class="empty"><div class="big">📋</div>
-      ${defects.length? 'אין ליקויים שתואמים לסינון.' : 'עדיין אין ליקויים.<br>לחץ על «ליקוי חדש» כדי להתחיל.'}</div>`;
-    refreshLists(); return;
+    list.innerHTML=`<div class="empty"><div class="big">📋</div>${ds.length?'אין ליקויים שתואמים לסינון.':'אין עדיין ליקויים בפרויקט.<br>לחץ «ליקוי חדש».'}</div>`;
+    refreshDataLists();return;
   }
-  list.innerHTML = items.map(d=>{
-    const st = statusOf(d.status);
-    const od = isOverdue(d);
-    return `<div class="card s-${st.cls}" onclick="openForm('${d.id}')">
+  list.innerHTML=items.map(d=>{
+    const st=statusOf(d.status),od=isOverdue(d);
+    return `<div class="card s-${st.cls}" onclick="openDef('${d.id}')">
       <div class="c-head">
         <div style="flex:1">
-          <div class="c-loc">${esc(d.site||'—')}${d.location?' · '+esc(d.location):''}</div>
+          <div class="c-loc">${esc(d.area||'—')}${d.location?' · '+esc(d.location):''}</div>
           <div class="c-title">${esc(d.desc)||'(ללא תיאור)'}</div>
         </div>
         ${d.photo?`<img class="c-thumb" src="${d.photo}">`:''}
@@ -273,133 +349,238 @@ function render(){
         <span class="tag sev-${d.severity}">חומרה: ${esc(d.severity||'')}</span>
         ${d.contractor?`<span class="tag">👷 ${esc(d.contractor)}</span>`:''}
         ${d.due?`<span class="tag ${od?'c-overdue':''}">📅 ${formatD(d.due)}${od?' (באיחור)':''}</span>`:''}
+        ${d.gps?`<span class="tag gps">📍 GPS</span>`:''}
       </div>
     </div>`;
   }).join('');
-  refreshLists();
+  refreshDataLists();
 }
-function isOverdue(d){ return d.due && d.status!=='done' && d.due < todayStr(); }
-function todayStr(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
-function formatD(s){ if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
-function setFilter(k){ filter=k; render(); }
-function refreshLists(){
-  const sites=[...new Set(defects.map(d=>d.site).filter(Boolean))];
-  const cons=[...new Set(defects.map(d=>d.contractor).filter(Boolean))];
-  document.getElementById('sites').innerHTML=sites.map(s=>`<option value="${esc(s)}">`).join('');
+
+function isOverdue(d){return d.due&&d.status!=='done'&&d.due<todayStr();}
+function todayStr(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function formatD(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function setFilter(k){filter=k;render();}
+function fabAction(){view==='projects'?openProj():openDef();}
+function refreshDataLists(){
+  const p=curProject();
+  if(p)document.getElementById('d-areas').innerHTML=(p.areas||[]).map(a=>`<option value="${esc(a)}">`).join('');
+  const cons=[...new Set(store.defects.map(d=>d.contractor).filter(Boolean))];
   document.getElementById('contractors').innerHTML=cons.map(s=>`<option value="${esc(s)}">`).join('');
 }
 
-/* ---------- Form open/close/save ---------- */
-function openForm(id){
-  const f=document.getElementById('form'); f.reset(); curPhoto=null;
-  document.getElementById('photo-prev').innerHTML='';
-  const d = id ? defects.find(x=>x.id===id) : null;
-  document.getElementById('sheetTitle').textContent = d?'עריכת ליקוי':'ליקוי חדש';
-  document.getElementById('delBtn').style.display = d?'block':'none';
-  document.getElementById('f-id').value = d?d.id:'';
-  if(d){
-    document.getElementById('f-desc').value=d.desc||'';
-    document.getElementById('f-site').value=d.site||'';
-    document.getElementById('f-loc').value=d.location||'';
-    document.getElementById('f-cat').value=d.category||CATS[0];
-    document.getElementById('f-contractor').value=d.contractor||'';
-    document.getElementById('f-due').value=d.due||'';
-    document.getElementById('f-notes').value=d.notes||'';
-    setRadio('sev', d.severity||'בינונית');
-    setRadio('status', d.status||'open');
-    if(d.photo){ curPhoto=d.photo; showPhoto(); }
-  } else {
-    setRadio('sev','בינונית'); setRadio('status','open');
-  }
-  document.getElementById('overlay').classList.add('show');
-  document.body.style.overflow='hidden';
+/* ===================== PROJECT FORM ===================== */
+function openProj(id){
+  document.getElementById('projForm').reset();
+  const p=id?store.projects.find(x=>x.id===id):null;
+  document.getElementById('projTitle').textContent=p?'עריכת פרויקט':'פרויקט חדש';
+  document.getElementById('pDelBtn').style.display=p?'block':'none';
+  document.getElementById('p-id').value=p?p.id:'';
+  document.getElementById('p-name').value=p?p.name:'';
+  document.getElementById('p-addr').value=p?p.address||'':'';
+  document.getElementById('p-client').value=p?p.client||'':'';
+  document.getElementById('p-notes').value=p?p.notes||'':'';
+  editAreas=p?(p.areas||[]).slice():[];
+  renderAreas();
+  showOverlay('projOverlay');
 }
-function setRadio(name,val){ const el=document.querySelector(`input[name="${name}"][value="${val}"]`); if(el)el.checked=true; }
-function closeForm(){ document.getElementById('overlay').classList.remove('show'); document.body.style.overflow=''; }
-function getRadio(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+function renderAreas(){
+  document.getElementById('p-areas').innerHTML=editAreas.length?editAreas.map((a,i)=>
+    `<span class="area-chip">${esc(a)}<button type="button" onclick="removeArea(${i})">×</button></span>`).join(''):
+    '<span class="hint">לא הוגדרו אזורים עדיין.</span>';
+}
+function addArea(){
+  const inp=document.getElementById('p-area-new');const v=inp.value.trim();
+  if(!v)return;
+  if(!editAreas.includes(v))editAreas.push(v);
+  inp.value='';renderAreas();inp.focus();
+}
+function removeArea(i){editAreas.splice(i,1);renderAreas();}
+function saveProject(e){
+  e.preventDefault();
+  const id=document.getElementById('p-id').value;
+  const rec={
+    id:id||uid(),
+    name:document.getElementById('p-name').value.trim(),
+    address:document.getElementById('p-addr').value.trim(),
+    client:document.getElementById('p-client').value.trim(),
+    notes:document.getElementById('p-notes').value.trim(),
+    areas:editAreas.slice(),
+  };
+  if(id){const i=store.projects.findIndex(x=>x.id===id);rec.createdAt=store.projects[i].createdAt;store.projects[i]=rec;}
+  else{rec.createdAt=Date.now();store.projects.push(rec);}
+  save();closeProj();
+  if(!id){openProject(rec.id);}else{render();}
+}
+function deleteProject(){
+  const id=document.getElementById('p-id').value;
+  const n=defectsOf(id).length;
+  if(confirm(`למחוק את הפרויקט${n?` ואת ${n} הליקויים שבו`:''}? פעולה בלתי הפיכה.`)){
+    store.projects=store.projects.filter(x=>x.id!==id);
+    store.defects=store.defects.filter(d=>d.projectId!==id);
+    save();closeProj();goHome();
+  }
+}
+function closeProj(){hideOverlay('projOverlay');}
 
+/* ===================== DEFECT FORM ===================== */
+function openDef(id){
+  const f=document.getElementById('defForm');f.reset();curPhoto=null;curGPS=null;
+  document.getElementById('photo-prev').innerHTML='';
+  refreshDataLists();
+  const d=id?store.defects.find(x=>x.id===id):null;
+  document.getElementById('defTitle').textContent=d?'עריכת ליקוי':'ליקוי חדש';
+  document.getElementById('dDelBtn').style.display=d?'block':'none';
+  document.getElementById('d-id').value=d?d.id:'';
+  if(d){
+    document.getElementById('d-desc').value=d.desc||'';
+    document.getElementById('d-area').value=d.area||'';
+    document.getElementById('d-loc').value=d.location||'';
+    document.getElementById('d-cat').value=d.category||CATS[0];
+    document.getElementById('d-contractor').value=d.contractor||'';
+    document.getElementById('d-due').value=d.due||'';
+    document.getElementById('d-notes').value=d.notes||'';
+    setRadio('sev',d.severity||'בינונית');setRadio('status',d.status||'open');
+    if(d.photo){curPhoto=d.photo;showPhoto();}
+    if(d.gps){curGPS=d.gps;showGPS();}
+  }else{setRadio('sev','בינונית');setRadio('status','open');showGPS();}
+  showOverlay('defOverlay');
+}
+function setRadio(name,val){const el=document.querySelector(`input[name="${name}"][value="${val}"]`);if(el)el.checked=true;}
+function getRadio(name){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:'';}
+function closeDef(){hideOverlay('defOverlay');}
 function saveDefect(e){
   e.preventDefault();
-  const id=document.getElementById('f-id').value;
+  const id=document.getElementById('d-id').value;
+  const area=document.getElementById('d-area').value.trim();
   const rec={
-    id: id||uid(),
-    desc: document.getElementById('f-desc').value.trim(),
-    site: document.getElementById('f-site').value.trim(),
-    location: document.getElementById('f-loc').value.trim(),
-    category: document.getElementById('f-cat').value,
-    contractor: document.getElementById('f-contractor').value.trim(),
-    severity: getRadio('sev'),
-    status: getRadio('status'),
-    due: document.getElementById('f-due').value,
-    notes: document.getElementById('f-notes').value.trim(),
-    photo: curPhoto,
+    id:id||uid(),projectId:curProjectId,
+    desc:document.getElementById('d-desc').value.trim(),
+    area:area,location:document.getElementById('d-loc').value.trim(),
+    category:document.getElementById('d-cat').value,
+    contractor:document.getElementById('d-contractor').value.trim(),
+    severity:getRadio('sev'),status:getRadio('status'),
+    due:document.getElementById('d-due').value,
+    notes:document.getElementById('d-notes').value.trim(),
+    photo:curPhoto,gps:curGPS,
   };
-  if(id){
-    const i=defects.findIndex(x=>x.id===id);
-    rec.createdAt=defects[i].createdAt; defects[i]=rec;
-  } else { rec.createdAt=Date.now(); defects.push(rec); }
-  try{ save(); }catch(err){ alert('האחסון מלא (יותר מדי תמונות). מחק ליקויים ישנים או ייצא לאקסל.'); }
-  closeForm(); render();
+  // auto-add a new area to the project
+  const p=curProject();
+  if(area&&p&&!(p.areas||[]).includes(area)){p.areas=p.areas||[];p.areas.push(area);}
+  if(id){const i=store.defects.findIndex(x=>x.id===id);rec.createdAt=store.defects[i].createdAt;store.defects[i]=rec;}
+  else{rec.createdAt=Date.now();store.defects.push(rec);}
+  save();closeDef();render();
 }
 function deleteDefect(){
-  const id=document.getElementById('f-id').value;
-  if(id && confirm('למחוק את הליקוי לצמיתות?')){
-    defects=defects.filter(x=>x.id!==id); save(); closeForm(); render();
-  }
+  const id=document.getElementById('d-id').value;
+  if(confirm('למחוק את הליקוי לצמיתות?')){store.defects=store.defects.filter(x=>x.id!==id);save();closeDef();render();}
 }
 
-/* ---------- Photo (compressed) ---------- */
+/* ===================== PHOTO + GPS ===================== */
 function addPhoto(input){
-  const file=input.files[0]; if(!file)return;
+  const file=input.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      const max=1100; let{width:w,height:h}=img;
-      if(w>max||h>max){ const r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
-      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      const max=1100;let w=img.width,h=img.height;
+      if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      curPhoto=cv.toDataURL('image/jpeg',0.7); showPhoto();
+      curPhoto=cv.toDataURL('image/jpeg',0.7);showPhoto();
     };
     img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
+  if(!curGPS)grabGPS(false); // auto-capture location alongside the photo
 }
 function showPhoto(){
-  document.getElementById('photo-prev').innerHTML = curPhoto ?
-    `<div class="photo-prev"><img src="${curPhoto}"><button type="button" class="del" onclick="removePhoto()">×</button></div>` : '';
+  document.getElementById('photo-prev').innerHTML=curPhoto?
+    `<div class="photo-prev"><img src="${curPhoto}"><button type="button" class="del" onclick="removePhoto()">×</button></div>`:'';
 }
-function removePhoto(){ curPhoto=null; showPhoto(); }
+function removePhoto(){curPhoto=null;showPhoto();}
+function grabGPS(manual){
+  const el=document.getElementById('gps-info');
+  if(!navigator.geolocation){el.textContent='המכשיר לא תומך ב-GPS';return;}
+  el.textContent='מאתר מיקום…';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{curGPS={lat:+pos.coords.latitude.toFixed(6),lng:+pos.coords.longitude.toFixed(6),acc:Math.round(pos.coords.accuracy),ts:Date.now()};showGPS();},
+    err=>{if(manual)el.textContent='לא ניתן לאתר מיקום ('+(err.code===1?'אין הרשאה':'נכשל')+')';else if(!curGPS)el.textContent='אין מיקום עדיין';},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+  );
+}
+function showGPS(){
+  const el=document.getElementById('gps-info');
+  if(curGPS){el.innerHTML=`📍 ${curGPS.lat}, ${curGPS.lng} (±${curGPS.acc} מ׳) · <a href="https://maps.google.com/?q=${curGPS.lat},${curGPS.lng}" target="_blank">מפה</a> <button type="button" onclick="removeGPS()" style="border:none;background:none;color:#e74c3c;cursor:pointer">הסר</button>`;}
+  else{el.textContent='אין מיקום עדיין';}
+}
+function removeGPS(){curGPS=null;showGPS();}
 
-/* ---------- Excel export ---------- */
-function exportExcel(){
-  if(!defects.length){ alert('אין נתונים לייצוא.'); return; }
-  const rows = defects.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map((d,i)=>({
-    'מס׳': i+1,
-    'אתר/פרויקט': d.site||'',
-    'מיקום': d.location||'',
-    'תיאור הליקוי': d.desc||'',
-    'קטגוריה': d.category||'',
-    'חומרה': d.severity||'',
-    'קבלן/אחראי': d.contractor||'',
-    'סטטוס': statusOf(d.status).label,
-    'תאריך יעד': d.due?formatD(d.due):'',
-    'באיחור': isOverdue(d)?'כן':'',
-    'תאריך פתיחה': d.createdAt?formatD(new Date(d.createdAt).toISOString().slice(0,10)):'',
-    'הערות': d.notes||'',
-    'תמונה': d.photo?'יש':'',
-  }));
-  const ws=XLSX.utils.json_to_sheet(rows);
-  ws['!cols']=[{wch:5},{wch:16},{wch:14},{wch:40},{wch:12},{wch:9},{wch:14},{wch:11},{wch:11},{wch:7},{wch:11},{wch:30},{wch:7}];
-  if(!ws['!margins'])ws['!margins']={};
-  const wb=XLSX.utils.book_new();
-  wb.Workbook={Views:[{RTL:true}]};
-  XLSX.utils.book_append_sheet(wb,ws,'ליקויים');
-  const date=todayStr();
-  XLSX.writeFile(wb,`דוח_ליקויים_${date}.xlsx`);
+/* ===================== OVERLAY HELPERS ===================== */
+function showOverlay(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
+function hideOverlay(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
+
+/* ===================== EXCEL EXPORT (with images) ===================== */
+async function exportExcel(){
+  const p=curProject();if(!p)return;
+  const ds=defectsOf(p.id);
+  if(!ds.length){toast('אין ליקויים לייצוא');return;}
+  if(typeof ExcelJS==='undefined'){toast('ספריית האקסל לא נטענה (נדרש אינטרנט פעם אחת)');return;}
+  toast('מכין קובץ אקסל…');
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet('ליקויים',{views:[{rightToLeft:true}]});
+  ws.mergeCells('A1:N1');
+  const t=ws.getCell('A1');
+  t.value=`דוח ליקויים — ${p.name}${p.address?' · '+p.address:''}   |   הופק: ${formatD(todayStr())}`;
+  t.font={bold:true,size:13,color:{argb:'FFFFFFFF'}};
+  t.alignment={horizontal:'right',vertical:'middle'};
+  t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1B2A4A'}};
+  ws.getRow(1).height=26;
+
+  const headers=['מס׳','אזור/מבנה','מיקום','תיאור הליקוי','קטגוריה','חומרה','קבלן/אחראי','סטטוס','תאריך יעד','באיחור','תאריך פתיחה','מיקום GPS','מפה','תמונה'];
+  const hr=ws.addRow(headers);
+  hr.eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2D6CDF'}};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
+  ws.columns=[{width:5},{width:16},{width:14},{width:38},{width:12},{width:9},{width:14},{width:11},{width:11},{width:7},{width:12},{width:20},{width:9},{width:20}];
+
+  const sorted=ds.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  sorted.forEach((d,i)=>{
+    const r=ws.addRow([
+      i+1,d.area||'',d.location||'',d.desc||'',d.category||'',d.severity||'',d.contractor||'',
+      statusOf(d.status).label,d.due?formatD(d.due):'',isOverdue(d)?'כן':'',
+      d.createdAt?formatD(new Date(d.createdAt).toISOString().slice(0,10)):'',
+      d.gps?`${d.gps.lat}, ${d.gps.lng}`:'',
+      d.gps?{text:'פתח במפה',hyperlink:`https://maps.google.com/?q=${d.gps.lat},${d.gps.lng}`}:'',
+      ''
+    ]);
+    r.alignment={vertical:'middle',wrapText:true};
+    if(d.gps)r.getCell(13).font={color:{argb:'FF2D6CDF'},underline:true};
+    if(d.photo){
+      r.height=92;
+      try{
+        const ext=d.photo.indexOf('image/png')>-1?'png':'jpeg';
+        const imgId=wb.addImage({base64:d.photo.split(',')[1],extension:ext});
+        const rowIdx=r.number-1; // 0-based
+        ws.addImage(imgId,{tl:{col:13.1,row:rowIdx+0.1},ext:{width:118,height:88}});
+      }catch(e){r.getCell(14).value='(תמונה)';}
+    }
+  });
+  ws.autoFilter={from:{row:2,column:1},to:{row:2,column:14}};
+  ws.views=[{rightToLeft:true,state:'frozen',ySplit:2}];
+
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`דוח_ליקויים_${p.name}_${todayStr()}.xlsx`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 
-initForm(); render();
+/* close overlays on backdrop click */
+['projOverlay','defOverlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);});
+});
+
+initForm();render();
 </script>
 </body>
 </html>
