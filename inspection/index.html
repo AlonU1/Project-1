@@ -153,6 +153,8 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
 .bar-track{flex:1;background:var(--bg);border-radius:6px;height:18px;overflow:hidden}
 .bar-fill{height:100%;border-radius:6px}
 .bar-row .bv{width:30px;text-align:left;font-weight:700;flex:0 0 auto}
+/* floor-plan pins */
+.pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 /* markup editor */
 .mk-tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
 .mk-tools button{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:8px 11px;font-size:.85rem;cursor:pointer;font-weight:600}
@@ -193,6 +195,16 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
     <input class="search" id="search" placeholder="🔍 חיפוש…" oninput="render()">
     <select class="search" id="typeFilter" onchange="render()"></select>
   </div>
+  <div class="f-row">
+    <select class="search" id="sortBy" onchange="render()">
+      <option value="new">החדש ביותר</option>
+      <option value="old">הישן ביותר</option>
+      <option value="due">לפי תאריך יעד</option>
+      <option value="sev">לפי חומרה</option>
+      <option value="status">לפי סטטוס</option>
+    </select>
+    <select class="search" id="contractorFilter" onchange="render()"><option value="all">כל הקבלנים</option></select>
+  </div>
   <div class="chips" id="chips"></div>
   <div class="chips" id="proj-tools"></div>
 </div>
@@ -221,6 +233,10 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
           <button type="button" onclick="addArea()">הוסף</button>
         </div>
         <div class="hint">תגדיר פעם אחת — ותבחר מהרשימה בכל רשומה.</div>
+      </div>
+      <div class="field">
+        <label>תוכנית קומה (לנעיצת ליקויים)</label>
+        <div class="photo-box"><label class="photo-btn">🗺️ העלה תוכנית<input type="file" accept="image/*" style="display:none" onchange="setPlan(this)"></label><div id="plan-prev"></div></div>
       </div>
       <div class="field"><label>הערות לפרויקט</label><textarea id="p-notes"></textarea></div>
       <div class="form-actions">
@@ -263,6 +279,7 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
           <label class="photo-btn">➕ תמונה «לפני»<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'before')"></label>
           <label class="photo-btn">➕ תמונה «אחרי»<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'after')"></label>
         </div>
+        <label style="font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="wm-toggle" checked> 🕒 חותמת תאריך/שעה/GPS על התמונה</label>
       </div>
       <div class="field">
         <label>הערה קולית</label>
@@ -275,6 +292,13 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
           <button type="button" class="gps-btn" onclick="grabGPS(true)">📍 תפוס מיקום</button>
           <button type="button" class="gps-btn" onclick="manualGPS()">✏️ ידני</button>
           <span class="gps-info" id="gps-info">אין מיקום עדיין</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>מיקום בתוכנית הקומה</label>
+        <div class="gps-box">
+          <button type="button" class="gps-btn" onclick="placeOnPlan()">🗺️ מקם על תוכנית</button>
+          <span class="gps-info" id="pin-info">לא ממוקם</span>
         </div>
       </div>
       <div class="field">
@@ -382,6 +406,17 @@ header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;p
   </div>
 </div>
 
+<!-- ===== Floor plan ===== -->
+<div class="overlay" id="planOverlay">
+  <div class="sheet" style="max-width:980px">
+    <div class="sheet-head"><h2 id="planTitle">🗺️ תוכנית</h2><button class="x" onclick="closePlan()">×</button></div>
+    <div style="padding:12px 14px 18px">
+      <div class="hint" id="plan-hint" style="margin-bottom:10px"></div>
+      <div id="plan-wrap" style="position:relative;display:inline-block;max-width:100%" onclick="handlePlanTap(event)"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Dashboard ===== -->
 <div class="overlay" id="dashOverlay">
   <div class="sheet">
@@ -411,8 +446,9 @@ const STCOLOR={open:'#e74c3c',prog:'#f39c12',recheck:'#9b59b6',done:'#27ae60'};
 const KEY='inspection_store_v2';
 let store=loadStore();
 let view='projects',curProjectId=null,filter='all';
-let curPhotos=[],curVoice=null,curGPS=null,editAreas=[];
+let curPhotos=[],curVoice=null,curGPS=null,curPin=null,editAreas=[],editPlan=null;
 let lastCtx=null,batchCount=0;
+let planMode='view',pendingPin=null;
 let groupByArea=false,selectMode=false,selected=new Set(),closedAreas=new Set();
 const DEFAULT_TEMPLATES=[
   {desc:'סדק בקיר',category:'שלד ובטון'},
@@ -462,6 +498,7 @@ function initForm(){
   document.getElementById('seg-type').innerHTML=TYPES.map((t,i)=>`<label><input type="radio" name="rtype" value="${t.key}" ${i===0?'checked':''}><span>${t.icon} ${t.label}</span></label>`).join('');
   document.getElementById('typeFilter').innerHTML='<option value="all">כל הסוגים</option>'+TYPES.map(t=>`<option value="${t.key}">${t.icon} ${t.label}</option>`).join('');
   document.getElementById('rep-scope').innerHTML='<label><input type="radio" name="repscope" value="all" checked><span>כל הרשומות</span></label><label><input type="radio" name="repscope" value="open"><span>פתוחות בלבד</span></label>';
+  const wm=document.getElementById('wm-toggle');wm.checked=localStorage.getItem('inspection_watermark')!=='0';wm.onchange=()=>localStorage.setItem('inspection_watermark',wm.checked?'1':'0');
   if(!window.isSecureContext)document.getElementById('secBanner').style.display='block';
 }
 
@@ -503,14 +540,29 @@ function renderProject(){
   const statsEl=document.getElementById('stats');statsEl.style.display='grid';
   statsEl.innerHTML=`<div class="stat"><b>${counts.all}</b><span>סה"כ</span></div><div class="stat"><b>${counts.open+counts.prog+counts.recheck}</b><span>פתוחות</span></div><div class="stat"><b>${overdue}</b><span>באיחור</span></div><div class="stat"><b>${counts.done}</b><span>נסגרו</span></div>`;
   document.getElementById('filters').style.display='flex';
-  const chipDefs=[{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label})));
+  counts.overdue=overdue;
+  const chipDefs=[{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label}))).concat([{key:'overdue',label:'⏰ באיחור'}]);
   document.getElementById('chips').innerHTML=chipDefs.map(c=>`<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
-  document.getElementById('proj-tools').innerHTML=`<div class="chip ${groupByArea?'active':''}" onclick="toggleGroup()">⬚ לפי אזור</div><div class="chip ${selectMode?'active':''}" onclick="selectMode?exitSelect():enterSelect()">✓ בחירה מרובה</div>`;
-  const q=document.getElementById('search').value.trim().toLowerCase(),tf=document.getElementById('typeFilter').value;
-  let items=ds.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  if(filter!=='all')items=items.filter(d=>d.status===filter);
+  document.getElementById('proj-tools').innerHTML=`<div class="chip ${groupByArea?'active':''}" onclick="toggleGroup()">⬚ לפי אזור</div><div class="chip ${selectMode?'active':''}" onclick="selectMode?exitSelect():enterSelect()">✓ בחירה מרובה</div><div class="chip" onclick="openPlanFromTools()">🗺️ תוכנית</div>`;
+  const cfEl=document.getElementById('contractorFilter'),cfPrev=cfEl.value;
+  const consList=[...new Set(ds.map(d=>d.contractor).filter(Boolean))];
+  cfEl.innerHTML='<option value="all">כל הקבלנים</option>'+consList.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  cfEl.value=consList.includes(cfPrev)?cfPrev:'all';
+  const q=document.getElementById('search').value.trim().toLowerCase(),tf=document.getElementById('typeFilter').value,cf=cfEl.value,sortBy=document.getElementById('sortBy').value;
+  let items=ds.slice();
+  if(filter==='overdue')items=items.filter(isOverdue);
+  else if(filter!=='all')items=items.filter(d=>d.status===filter);
   if(tf!=='all')items=items.filter(d=>(d.type||'defect')===tf);
+  if(cf!=='all')items=items.filter(d=>d.contractor===cf);
   if(q)items=items.filter(d=>[d.desc,d.area,d.location,d.contractor,d.category].join(' ').toLowerCase().includes(q));
+  const sevRank={'קריטית':4,'גבוהה':3,'בינונית':2,'נמוכה':1};
+  items.sort((a,b)=>{
+    if(sortBy==='old')return (a.createdAt||0)-(b.createdAt||0);
+    if(sortBy==='due')return (a.due||'9999-99-99').localeCompare(b.due||'9999-99-99');
+    if(sortBy==='sev')return (sevRank[b.severity]||0)-(sevRank[a.severity]||0);
+    if(sortBy==='status')return STATUSES.findIndex(s=>s.key===a.status)-STATUSES.findIndex(s=>s.key===b.status);
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
   const list=document.getElementById('list');
   if(!items.length){list.innerHTML=`<div class="empty"><div class="big">📋</div>${ds.length?'אין רשומות שתואמות לסינון.':'אין עדיין רשומות בפרויקט.<br>לחץ «רשומה חדשה».'}</div>`;updateBulkBar();refreshDataLists();return;}
   if(groupByArea){
@@ -547,6 +599,7 @@ function cardHTML(d){
       ${d.voice?`<span class="tag media">🎤</span>`:''}
       ${after?`<span class="tag fixed">✓ תיקון</span>`:''}
       ${d.gps?`<span class="tag gps">📍 GPS</span>`:''}
+      ${d.pin?`<span class="tag gps">🗺️ תוכנית</span>`:''}
     </div></div>`;
 }
 function toggleArea(enc){const a=decodeURIComponent(enc);if(closedAreas.has(a))closedAreas.delete(a);else closedAreas.add(a);render();}
@@ -591,6 +644,7 @@ function openProj(id){
   document.getElementById('p-client').value=p?p.client||'':'';
   document.getElementById('p-notes').value=p?p.notes||'':'';
   editAreas=p?(p.areas||[]).slice():[];renderAreas();
+  editPlan=p?(p.plan||null):null;showPlanPrev();
   showOverlay('projOverlay');
 }
 function renderAreas(){document.getElementById('p-areas').innerHTML=editAreas.length?editAreas.map((a,i)=>`<span class="area-chip">${esc(a)}<button type="button" onclick="removeArea(${i})">×</button></span>`).join(''):'<span class="hint">לא הוגדרו אזורים עדיין.</span>';}
@@ -598,7 +652,7 @@ function addArea(){const inp=document.getElementById('p-area-new'),v=inp.value.t
 function removeArea(i){editAreas.splice(i,1);renderAreas();}
 function saveProject(e){
   e.preventDefault();const id=document.getElementById('p-id').value;
-  const rec={id:id||uid(),name:document.getElementById('p-name').value.trim(),address:document.getElementById('p-addr').value.trim(),client:document.getElementById('p-client').value.trim(),notes:document.getElementById('p-notes').value.trim(),areas:editAreas.slice()};
+  const rec={id:id||uid(),name:document.getElementById('p-name').value.trim(),address:document.getElementById('p-addr').value.trim(),client:document.getElementById('p-client').value.trim(),notes:document.getElementById('p-notes').value.trim(),areas:editAreas.slice(),plan:editPlan||''};
   if(id){const i=store.projects.findIndex(x=>x.id===id);rec.createdAt=store.projects[i].createdAt;store.projects[i]=rec;}else{rec.createdAt=Date.now();store.projects.push(rec);}
   save();closeProj();if(!id)openProject(rec.id);else render();
 }
@@ -613,6 +667,7 @@ function openDef(id){
   const f=document.getElementById('defForm');f.reset();curPhotos=[];curVoice=null;curGPS=null;batchCount=0;
   refreshDataLists();
   const d=id?store.defects.find(x=>x.id===id):null;
+  curPin=d?(d.pin||null):(pendingPin||null);pendingPin=null;
   document.getElementById('defTitle').textContent=d?'עריכת רשומה':'רשומה חדשה';
   document.getElementById('dDelBtn').style.display=d?'block':'none';
   document.getElementById('dDupBtn').style.display=d?'block':'none';
@@ -640,7 +695,7 @@ function openDef(id){
       setRadio('rtype',lastCtx.type||'defect');
     }
   }
-  renderGallery();showVoice();showGPS();
+  renderGallery();showVoice();showGPS();showPinStatus();
   showOverlay('defOverlay');
 }
 function setRadio(n,v){const el=document.querySelector(`input[name="${n}"][value="${v}"]`);if(el)el.checked=true;}
@@ -660,7 +715,7 @@ function persistRecord(){
     desc:desc,area:area,location:document.getElementById('d-loc').value.trim(),
     category:document.getElementById('d-cat').value,contractor:contractor,phone:phone,
     severity:getRadio('sev'),status:getRadio('status'),due:document.getElementById('d-due').value,
-    notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS,synced:false};
+    notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS,pin:curPin,synced:false};
   const p=curProject();
   if(area&&p&&!(p.areas||[]).includes(area)){p.areas=p.areas||[];p.areas.push(area);}
   if(contractor&&phone)store.phones[contractor]=phone;
@@ -678,7 +733,7 @@ function saveAndNext(){
   document.getElementById('d-desc').value='';
   document.getElementById('d-notes').value='';
   setRadio('status','open');
-  curPhotos=[];curVoice=null;curGPS=null;renderGallery();showVoice();showGPS();
+  curPhotos=[];curVoice=null;curGPS=null;curPin=null;renderGallery();showVoice();showGPS();showPinStatus();
   document.getElementById('dDelBtn').style.display='none';
   document.getElementById('defTitle').textContent=`רשומה חדשה • ${batchCount} נשמרו ב«${rec.area||'—'}»`;
   const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
@@ -699,7 +754,8 @@ function addPhotos(input,kind){
       img.onload=()=>{
         const max=1280;let w=img.width,h=img.height;
         if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
-        const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        const wm=document.getElementById('wm-toggle');if(wm&&wm.checked)stampWatermark(ctx,w,h);
         curPhotos.push({id:uid(),data:cv.toDataURL('image/jpeg',0.7),kind:kind});renderGallery();
       };img.src=ev.target.result;
     };reader.readAsDataURL(file);
@@ -873,7 +929,7 @@ function delTemplate(idx){store.templates.splice(idx,1);save();openTemplates();}
 /* ===== duplicate record ===== */
 function duplicateDefect(){
   document.getElementById('d-id').value='';
-  curPhotos=[];curVoice=null;curGPS=null;renderGallery();showVoice();showGPS();
+  curPhotos=[];curVoice=null;curGPS=null;curPin=null;renderGallery();showVoice();showGPS();showPinStatus();
   setRadio('status','open');
   document.getElementById('defTitle').textContent='רשומה חדשה (שוכפלה)';
   document.getElementById('dDelBtn').style.display='none';
@@ -933,6 +989,55 @@ function checkReminders(){
 }
 function showOverdue(){const od=store.defects.filter(isOverdue);if(od.length)openProject(od[0].projectId);}
 
+/* ===== photo watermark ===== */
+function stampWatermark(ctx,w,h){
+  const n=new Date();
+  const ts=`${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  const lines=[ts];if(curGPS)lines.push(`GPS ${curGPS.lat}, ${curGPS.lng}`);
+  const fs=Math.max(13,Math.round(w*0.028));
+  ctx.font=`bold ${fs}px Arial`;ctx.textBaseline='bottom';ctx.textAlign='left';
+  const lh=fs*1.35,barH=lh*lines.length+fs*0.5;
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,h-barH,w,barH);
+  ctx.fillStyle='#fff';
+  lines.forEach((ln,i)=>ctx.fillText(ln,fs*0.5,h-barH+lh*(i+1)));
+}
+
+/* ===== floor plan ===== */
+function setPlan(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const reader=new FileReader();
+  reader.onload=ev=>{const img=new Image();img.onload=()=>{const max=1600;let w=img.width,h=img.height;if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);editPlan=cv.toDataURL('image/jpeg',0.8);showPlanPrev();};img.src=ev.target.result;};
+  reader.readAsDataURL(file);
+}
+function showPlanPrev(){document.getElementById('plan-prev').innerHTML=editPlan?`<div class="photo-prev"><img src="${editPlan}"><button type="button" class="del" onclick="editPlan=null;showPlanPrev()">×</button></div>`:'';}
+function showPinStatus(){const el=document.getElementById('pin-info');if(!el)return;el.innerHTML=curPin?`📍 ממוקם על התוכנית · <a href="#" onclick="curPin=null;showPinStatus();return false">הסר</a>`:'לא ממוקם';}
+function openPlanFromTools(){const p=curProject();if(!p)return;if(!p.plan){toast('העלה תחילה תוכנית בהגדרות הפרויקט (⚙️)');return;}planMode='view';document.getElementById('planTitle').textContent='🗺️ תוכנית — '+p.name;renderPlan();showOverlay('planOverlay');}
+function placeOnPlan(){const p=curProject();if(!p||!p.plan){toast('העלה תחילה תוכנית בהגדרות הפרויקט (⚙️)');return;}planMode='place';document.getElementById('planTitle').textContent='🗺️ מיקום הליקוי';renderPlan();showOverlay('planOverlay');}
+function renderPlan(){
+  const p=curProject(),wrap=document.getElementById('plan-wrap'),hint=document.getElementById('plan-hint');
+  if(!p||!p.plan){wrap.innerHTML='';hint.textContent='לא הועלתה תוכנית.';return;}
+  hint.textContent=planMode==='place'?'הקש על התוכנית כדי למקם את הליקוי':'הקש על סיכה לפתיחת ליקוי · הקש על מקום ריק להוספת ליקוי חדש';
+  let pins='';
+  if(planMode==='view'){
+    const pinned=defectsOf(p.id).filter(d=>d.pin);
+    pins=pinned.map((d,i)=>`<div class="pin" style="left:${d.pin.x*100}%;top:${d.pin.y*100}%;background:${STCOLOR[d.status]||'#777'}" onclick="event.stopPropagation();closePlan();openDef('${d.id}')">${i+1}</div>`).join('');
+  } else if(curPin){
+    pins=`<div class="pin" style="left:${curPin.x*100}%;top:${curPin.y*100}%;background:var(--accent)">✓</div>`;
+  }
+  wrap.innerHTML=`<img id="plan-img" src="${p.plan}" style="max-width:100%;display:block;border-radius:8px">${pins}`;
+}
+function handlePlanTap(e){
+  if(e.target.classList.contains('pin'))return;
+  const img=document.getElementById('plan-img');if(!img)return;
+  const r=img.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+  if(x<0||x>1||y<0||y>1)return;
+  const pin={x:+x.toFixed(4),y:+y.toFixed(4)};
+  if(planMode==='place'){curPin=pin;showPinStatus();closePlan();}
+  else{pendingPin=pin;closePlan();openDef(null);}
+}
+function closePlan(){hideOverlay('planOverlay');}
+
 /* ===== cloud sync (Google Sheets via Apps Script) ===== */
 const SYNC_KEY='inspection_sync_url',SHEET_KEY='inspection_sheet_url';
 let syncUrl=localStorage.getItem(SYNC_KEY)||'',sheetUrl=localStorage.getItem(SHEET_KEY)||'';
@@ -967,7 +1072,7 @@ async function syncNow(manual){
 /* ===== overlay helpers ===== */
 function showOverlay(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
 function hideOverlay(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
-['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay','tplOverlay','dashOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
+['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay','tplOverlay','dashOverlay','planOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
 
 /* ===== excel export ===== */
 async function exportExcel(){
