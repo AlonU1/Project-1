@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1b2a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>פיקוח אתר — פרויקטים, ליקויים ומשימות</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --navy:#1b2a4a; --navy-d:#13203a; --blue:#2d6cdf; --accent:#e67e22;
+  --bg:#f4f6fb; --card:#ffffff; --text:#1d2433; --muted:#6b7488;
+  --border:#e3e7f0; --radius:14px; --shadow:0 2px 12px rgba(20,30,60,.08);
+  --open:#e74c3c; --prog:#f39c12; --recheck:#9b59b6; --done:#27ae60; --wa:#25D366;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding-bottom:90px;line-height:1.5;-webkit-text-size-adjust:100%}
+header{background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;padding:14px 16px;position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.h-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h-top h1{font-size:1.12rem;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+.h-top h1 .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo{background:var(--accent);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1rem;flex:0 0 auto}
+.back{background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:9px;font-size:1.2rem;cursor:pointer;flex:0 0 auto}
+.h-btns{display:flex;gap:7px;flex:0 0 auto}
+.btn-h{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 10px;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-h:active{background:rgba(255,255,255,.28)}
+.sub{font-size:.74rem;opacity:.8;margin-top:3px}
+.banner{background:#fff3cd;color:#7a5c00;font-size:.78rem;padding:8px 16px;text-align:center;display:none}
+.banner a{color:var(--blue);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.stat{background:rgba(255,255,255,.1);border-radius:10px;padding:8px 4px;text-align:center}
+.stat b{display:block;font-size:1.25rem;line-height:1.1}
+.stat span{font-size:.62rem;opacity:.85}
+.filters{padding:12px 16px 4px;display:flex;flex-direction:column;gap:10px}
+.f-row{display:flex;gap:8px}
+.search{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:11px;font-size:.95rem;background:var(--card)}
+#typeFilter{flex:0 0 auto;width:auto}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:7px 13px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:.82rem;cursor:pointer;font-weight:600;color:var(--muted)}
+.chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.list{padding:8px 16px}
+.pcard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pcard h3{font-size:1.08rem;margin-bottom:3px}
+.pcard .addr{font-size:.8rem;color:var(--muted)}
+.pcard .mini{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.pill{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.pill-open{background:#fdecea;color:var(--open)}
+.pill-done{background:#eafaf1;color:var(--done)}
+.pill-tot{background:var(--bg);color:var(--muted)}
+.chev{color:var(--muted);font-size:1.6rem;flex:0 0 auto}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:11px;border-right:5px solid var(--border);cursor:pointer}
+.card.s-open{border-right-color:var(--open)}.card.s-prog{border-right-color:var(--prog)}
+.card.s-recheck{border-right-color:var(--recheck)}.card.s-done{border-right-color:var(--done);opacity:.74}
+.c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.c-loc{font-size:.78rem;color:var(--muted);font-weight:600}
+.c-title{font-weight:700;font-size:1rem;margin:3px 0 8px}
+.badge{display:inline-block;padding:3px 9px;border-radius:7px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.b-status{color:#fff}.st-open{background:var(--open)}.st-prog{background:var(--prog)}.st-recheck{background:var(--recheck)}.st-done{background:var(--done)}
+.c-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:.72rem;background:var(--bg);color:var(--muted);padding:3px 9px;border-radius:7px;font-weight:600}
+.tag-type{background:#eef2fb;color:var(--navy)}
+.tag.sev-גבוהה,.tag.sev-קריטית{background:#fdecea;color:#c0392b}
+.tag.sev-בינונית{background:#fef5e7;color:#b9770e}
+.tag.gps{background:#eaf3ff;color:var(--blue)}
+.tag.fixed{background:#eafaf1;color:var(--done)}
+.tag.media{background:#f3eafc;color:#7b3fb0}
+.thumbs{display:flex;gap:6px;flex:0 0 auto}
+.c-thumb{width:46px;height:46px;border-radius:9px;object-fit:cover}
+.c-thumb.after{outline:2px solid var(--done);outline-offset:-2px}
+.c-overdue{color:var(--open);font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}
+.empty .big{font-size:3rem;margin-bottom:10px}
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;border:none;border-radius:30px;padding:15px 26px;font-size:1rem;font-weight:700;box-shadow:0 6px 20px rgba(230,126,34,.45);cursor:pointer;z-index:25;display:flex;align-items:center;gap:8px}
+.fab:active{transform:translateX(-50%) scale(.96)}
+.overlay{position:fixed;inset:0;background:rgba(15,22,40,.55);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:94vh;overflow-y:auto;border-radius:20px 20px 0 0;animation:up .25s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-head{position:sticky;top:0;background:var(--navy);color:#fff;padding:15px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;z-index:2}
+.sheet-head h2{font-size:1.05rem}
+.x{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1}
+.form{padding:16px 18px 24px}
+.field{margin-bottom:15px}
+.lbl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.field label{display:block;font-size:.82rem;font-weight:700;color:var(--muted)}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:11px;font-size:.95rem;background:var(--card);font-family:inherit}
+.field textarea{min-height:70px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{flex:1;min-width:58px}
+.seg input{display:none}
+.seg span{display:block;text-align:center;padding:10px 4px;border:1px solid var(--border);border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;background:var(--card)}
+.seg input:checked+span{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mini-btn{background:#eef2fb;border:1px solid var(--border);color:var(--navy);border-radius:9px;padding:5px 10px;font-size:.78rem;font-weight:700;cursor:pointer}
+.mini-btn.rec{background:var(--open);color:#fff;border-color:var(--open)}
+.areas-edit{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.area-chip{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 10px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.area-chip button{background:var(--open);color:#fff;border:none;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.75rem;line-height:1}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1}
+.add-row button{background:var(--blue);color:#fff;border:none;border-radius:11px;padding:0 16px;font-weight:700;cursor:pointer}
+/* gallery */
+.gallery{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:9px}
+.gitem{position:relative;width:84px}
+.gitem img{width:84px;height:84px;object-fit:cover;border-radius:11px;display:block}
+.gitem.after img{outline:2px solid var(--done);outline-offset:-2px}
+.gitem .klbl{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:6px}
+.gbtns{display:flex;gap:3px;margin-top:3px}
+.gbtns button{flex:1;border:none;background:#eef2fb;border-radius:7px;padding:4px 0;font-size:.78rem;cursor:pointer}
+.add-photos{display:flex;gap:8px;flex-wrap:wrap}
+.photo-btn{background:var(--card);border:1.5px dashed var(--blue);color:var(--blue);padding:11px 15px;border-radius:11px;font-weight:600;cursor:pointer;font-size:.88rem}
+/* voice */
+.voice-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.voice-box audio{height:38px;max-width:210px}
+/* gps */
+.gps-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.gps-btn{background:#eaf3ff;border:1px solid #cfe2ff;color:var(--blue);padding:9px 13px;border-radius:11px;font-weight:600;cursor:pointer;font-size:.85rem}
+.gps-info{font-size:.78rem;color:var(--muted);width:100%}
+.gps-info a{color:var(--blue);font-weight:700;text-decoration:none}
+.form-actions{display:flex;gap:10px;margin-top:8px}
+.btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+.btn-save{background:var(--accent);color:#fff}
+.btn-ghost{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.btn-del{background:#fdecea;color:var(--open);flex:0 0 auto;padding:14px 18px}
+.hint{font-size:.72rem;color:var(--muted);margin-top:5px}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:.88rem;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+/* selection + bulk */
+.card.sel{outline:3px solid var(--blue);outline-offset:-1px}
+.card .selmark{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;display:none;align-items:center;justify-content:center;font-size:.85rem;font-weight:700}
+.card.sel .selmark{display:flex}
+#bulkBar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:#fff;padding:10px 14px;display:none;align-items:center;gap:10px;z-index:35;flex-wrap:wrap;box-shadow:0 -2px 12px rgba(0,0,0,.25)}
+#bulkBar.show{display:flex}
+#bulk-count{font-weight:700;font-size:.85rem;white-space:nowrap}
+#bulk-actions{display:flex;gap:6px;flex:1;flex-wrap:wrap;justify-content:center}
+#bulk-actions button{background:rgba(255,255,255,.16);border:none;color:#fff;padding:7px 10px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer}
+#bulkBar>button:last-child{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:7px 12px;border-radius:8px;cursor:pointer}
+/* area groups */
+.area-group{margin-bottom:6px}
+.area-head{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:8px;cursor:pointer;font-weight:700;box-shadow:var(--shadow)}
+.area-head .cnt{font-size:.75rem;color:var(--muted);font-weight:600}
+.area-group.closed .area-body{display:none}
+.area-head .arrow{transition:transform .2s}
+.area-group.closed .area-head .arrow{transform:rotate(-90deg)}
+/* dashboard bars */
+.dash-sec{margin-bottom:18px}
+.dash-sec h3{font-size:.95rem;margin-bottom:9px;color:var(--navy)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.82rem}
+.bar-row .bl{width:88px;flex:0 0 auto;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:6px;height:18px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px}
+.bar-row .bv{width:30px;text-align:left;font-weight:700;flex:0 0 auto}
+/* floor-plan pins */
+.pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+/* markup editor */
+.mk-tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.mk-tools button{border:1px solid var(--border);background:var(--card);border-radius:9px;padding:8px 11px;font-size:.85rem;cursor:pointer;font-weight:600}
+.mk-tools button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mk-color{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer}
+.mk-color.on{box-shadow:0 0 0 2px var(--navy)}
+#mkCanvas{touch-action:none;max-width:100%;border:1px solid #ccc;border-radius:8px}
+/* signature */
+#sigPad{border:1px solid #ccc;border-radius:10px;background:#fff;touch-action:none;width:100%;height:130px}
+/* print area (off-screen until printing) */
+#printArea{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#111;padding:30px;font-family:'Segoe UI',Arial,sans-serif}
+@media print{
+  body.printing>*:not(#printArea){display:none !important}
+  #printArea{position:static !important;left:0 !important;width:auto !important;padding:0 !important}
+  @page{margin:14mm}
+}
+@media(min-width:560px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:90vh}}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <div style="display:flex;align-items:center;gap:9px;min-width:0">
+      <button class="back" id="backBtn" onclick="goHome()" style="display:none">‹</button>
+      <span class="logo">🏗️</span>
+      <h1><span class="t" id="hTitle">פיקוח אתר</span></h1>
+    </div>
+    <div class="h-btns" id="hBtns"></div>
+  </div>
+  <div class="sub" id="hSub"></div>
+  <div class="stats" id="stats" style="display:none"></div>
+</header>
+<div class="banner" id="secBanner">⚠️ GPS, מיקרופון והכתבה פעילים רק ב-HTTPS. <a href="#" onclick="alert('העלה את התיקייה ל-GitHub Pages או לכל שרת HTTPS.');return false">פרטים</a></div>
+<div class="banner" id="remBanner" style="background:#fde8e8;color:#a01818;display:none"></div>
+
+<div class="filters" id="filters" style="display:none">
+  <div class="f-row">
+    <input class="search" id="search" placeholder="🔍 חיפוש…" oninput="render()">
+    <select class="search" id="typeFilter" onchange="render()"></select>
+  </div>
+  <div class="f-row">
+    <select class="search" id="sortBy" onchange="render()">
+      <option value="new">החדש ביותר</option>
+      <option value="old">הישן ביותר</option>
+      <option value="due">לפי תאריך יעד</option>
+      <option value="sev">לפי חומרה</option>
+      <option value="status">לפי סטטוס</option>
+    </select>
+    <select class="search" id="contractorFilter" onchange="render()"><option value="all">כל הקבלנים</option></select>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="chips" id="proj-tools"></div>
+</div>
+
+<div class="list" id="list"></div>
+
+<button class="fab" id="fab" onclick="fabAction()">＋</button>
+<div class="toast" id="toast"></div>
+
+<!-- ===== Project modal ===== -->
+<div class="overlay" id="projOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="projTitle">פרויקט חדש</h2><button class="x" onclick="closeProj()">×</button></div>
+    <form class="form" id="projForm" onsubmit="saveProject(event)">
+      <input type="hidden" id="p-id">
+      <div class="field"><label>שם הפרויקט *</label><input id="p-name" required placeholder="למשל: מגדל רותם, רחוב הרצל"></div>
+      <div class="row2">
+        <div class="field"><label>כתובת / מיקום</label><input id="p-addr" placeholder="עיר, רחוב"></div>
+        <div class="field"><label>מזמין / יזם</label><input id="p-client" placeholder="שם החברה"></div>
+      </div>
+      <div class="field">
+        <label>אזורים / מבנים / חללים</label>
+        <div class="areas-edit" id="p-areas"></div>
+        <div class="add-row">
+          <input id="p-area-new" placeholder="הוסף אזור (מבנה A, קומה 3, ממ&quot;ד…)" onkeydown="if(event.key==='Enter'){event.preventDefault();addArea()}">
+          <button type="button" onclick="addArea()">הוסף</button>
+        </div>
+        <div class="hint">תגדיר פעם אחת — ותבחר מהרשימה בכל רשומה.</div>
+      </div>
+      <div class="field">
+        <label>תוכנית קומה (לנעיצת ליקויים)</label>
+        <div class="photo-box"><label class="photo-btn">🗺️ העלה תוכנית<input type="file" accept="image/*" style="display:none" onchange="setPlan(this)"></label><div id="plan-prev"></div></div>
+      </div>
+      <div class="field"><label>הערות לפרויקט</label><textarea id="p-notes"></textarea></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-del" id="pDelBtn" onclick="deleteProject()" style="display:none">🗑️</button>
+        <button type="submit" class="btn btn-save">שמירה</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Item modal ===== -->
+<div class="overlay" id="defOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="defTitle">רשומה חדשה</h2><button class="x" onclick="closeDef()">×</button></div>
+    <form class="form" id="defForm" onsubmit="saveDefect(event)">
+      <input type="hidden" id="d-id">
+      <div class="field"><label>סוג הרשומה</label><div class="seg" id="seg-type"></div></div>
+      <div class="field">
+        <div class="lbl-row"><label>תיאור *</label><span style="display:flex;gap:6px"><button type="button" class="mini-btn" onclick="openTemplates()">📋 תבנית</button><button type="button" class="mini-btn" id="dict-desc" onclick="dictate('d-desc','dict-desc')">🎤 הכתבה</button></span></div>
+        <textarea id="d-desc" required placeholder="סדק בקיר, התקנת מעקה, אישור יציקה…"></textarea>
+      </div>
+      <div class="row2">
+        <div class="field"><label>אזור / מבנה / חלל</label>
+          <input id="d-area" list="d-areas" placeholder="בחר או הקלד"><datalist id="d-areas"></datalist>
+        </div>
+        <div class="field"><label>מיקום מדויק</label><input id="d-loc" placeholder="דירה 12 / ציר B"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>קטגוריה מקצועית</label><select id="d-cat"></select></div>
+        <div class="field"><label>קבלן / אחראי</label><input id="d-contractor" list="contractors" placeholder="שם הקבלן" onchange="fillPhone()"><datalist id="contractors"></datalist></div>
+      </div>
+      <div class="field"><label>טלפון הקבלן (לוואטסאפ)</label><input id="d-phone" type="tel" list="phones" placeholder="05X-XXXXXXX"><datalist id="phones"></datalist></div>
+      <div class="field"><label>חומרה / עדיפות</label><div class="seg" id="seg-sev"></div></div>
+      <div class="field"><label>סטטוס</label><div class="seg" id="seg-status"></div></div>
+      <div class="field"><label>תאריך יעד</label><input type="date" id="d-due"></div>
+      <div class="field">
+        <label>תמונות (גלריה — סמן ✏️ להדגשה)</label>
+        <div class="gallery" id="gallery"></div>
+        <div class="add-photos">
+          <label class="photo-btn">➕ תמונה «לפני»<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'before')"></label>
+          <label class="photo-btn">➕ תמונה «אחרי»<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'after')"></label>
+        </div>
+        <label style="font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="wm-toggle" checked> 🕒 חותמת תאריך/שעה/GPS על התמונה</label>
+      </div>
+      <div class="field">
+        <label>הערה קולית</label>
+        <div class="voice-box" id="voice-box"></div>
+        <div class="hint">הקלטת קול נשמרת ברשומה (נדרש HTTPS + הרשאת מיקרופון).</div>
+      </div>
+      <div class="field">
+        <label>מיקום GPS</label>
+        <div class="gps-box">
+          <button type="button" class="gps-btn" onclick="grabGPS(true)">📍 תפוס מיקום</button>
+          <button type="button" class="gps-btn" onclick="manualGPS()">✏️ ידני</button>
+          <span class="gps-info" id="gps-info">אין מיקום עדיין</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>מיקום בתוכנית הקומה</label>
+        <div class="gps-box">
+          <button type="button" class="gps-btn" onclick="placeOnPlan()">🗺️ מקם על תוכנית</button>
+          <span class="gps-info" id="pin-info">לא ממוקם</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl-row"><label>הערות נוספות</label><button type="button" class="mini-btn" id="dict-notes" onclick="dictate('d-notes','dict-notes')">🎤 הכתבה</button></div>
+        <textarea id="d-notes" placeholder="תיעוד טיפול, מי תיקן…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-del" id="dDelBtn" onclick="deleteDefect()" style="display:none">🗑️</button>
+        <button type="button" class="btn btn-ghost" id="dDupBtn" onclick="duplicateDefect()" style="display:none">⧉ שכפל</button>
+        <button type="button" class="btn btn-ghost" onclick="saveAndNext()">💾 שמור + עוד</button>
+        <button type="submit" class="btn btn-save">שמירה</button>
+      </div>
+      <div class="hint" style="text-align:center">«שמור + עוד» שומר ופותח רשומה חדשה עם אותו אזור/קבלן — לתיעוד מהיר באותו חלל.</div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Markup editor ===== -->
+<div class="overlay" id="markupOverlay">
+  <div class="sheet" style="max-width:980px">
+    <div class="sheet-head"><h2>סימון על התמונה</h2><button class="x" onclick="closeMarkup()">×</button></div>
+    <div style="padding:12px 14px 18px">
+      <div class="mk-tools" id="mk-tools"></div>
+      <div style="text-align:center;overflow:auto"><canvas id="mkCanvas"></canvas></div>
+      <div class="form-actions" style="margin-top:12px">
+        <button class="btn btn-ghost" onclick="closeMarkup()">ביטול</button>
+        <button class="btn btn-save" onclick="saveMarkup()">שמור סימון</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Report modal ===== -->
+<div class="overlay" id="reportOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>הפקת דוח לקבלן</h2><button class="x" onclick="closeReport()">×</button></div>
+    <div class="form">
+      <div class="row2">
+        <div class="field"><label>שם המשרד / חברה (לכותרת)</label><input id="rep-org" placeholder="שם לכותרת הדוח"></div>
+        <div class="field"><label>לוגו</label>
+          <div class="photo-box">
+            <label class="photo-btn">🖼️ העלה לוגו<input type="file" accept="image/*" style="display:none" onchange="setLogo(this)"></label>
+            <div id="logo-prev"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>היקף הדוח</label><div class="seg" id="rep-scope"></div></div>
+      <div class="field"><label>סינון לפי קבלן</label><select id="rep-contractor" onchange="repContractorChange()"></select></div>
+      <div class="row2">
+        <div class="field"><label>שם המפקח</label><input id="rep-inspector" placeholder="לחתימה בדוח"></div>
+        <div class="field"><label>טלפון הקבלן (וואטסאפ)</label><input id="rep-phone" type="tel" placeholder="05X-XXXXXXX"></div>
+      </div>
+      <div class="field">
+        <div class="lbl-row"><label>חתימת המפקח (אופציונלי)</label><button type="button" class="mini-btn" onclick="clearSig()">נקה</button></div>
+        <canvas id="sigPad"></canvas>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-save" onclick="doPrint()">📄 צור PDF</button>
+        <button class="btn" style="background:var(--wa);color:#fff" onclick="doShare()">📲 וואטסאפ</button>
+      </div>
+      <div class="hint" style="text-align:center;margin-top:10px">«צור PDF» מוריד קובץ PDF ישירות (בלי חלון הדפסה). «וואטסאפ» משתף תמונת דוח ישירות.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Cloud sync modal ===== -->
+<div class="overlay" id="syncOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>☁️ סנכרון לענן (Google Sheets)</h2><button class="x" onclick="closeSync()">×</button></div>
+    <div class="form">
+      <div class="field"><label>כתובת ה-Web App (מ-Apps Script)</label><input id="sync-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="field"><label>קישור לגיליון (לצפייה ישירה)</label><input id="sync-sheet" placeholder="https://docs.google.com/spreadsheets/d/.../edit"></div>
+      <div class="hint" id="sync-status"></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="saveSyncUrl()">שמור</button>
+        <button class="btn btn-save" onclick="syncNow(true)">🔄 סנכרן עכשיו</button>
+      </div>
+      <button class="btn" style="background:#0f9d58;color:#fff;width:100%;margin-top:10px" onclick="openSheet()">📊 פתח את הגיליון</button>
+      <div class="field" style="margin-top:16px">
+        <label>איך מגדירים? (פעם אחת, ~5 דק׳)</label>
+        <div class="hint" style="line-height:1.8">
+          1. צור גיליון חדש ב-Google Sheets.<br>
+          2. תפריט <b>Extensions ← Apps Script</b>.<br>
+          3. הדבק את הקוד מהקובץ <b>inspection/sync/AppsScript.gs</b> שבריפו.<br>
+          4. <b>Deploy ← New deployment ← Web app</b>. הגדר: Execute as = <b>Me</b>, Who has access = <b>Anyone</b>.<br>
+          5. אשר הרשאות, העתק את כתובת ה-Web app (מסתיימת ב-<b>/exec</b>) והדבק למעלה.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Templates picker ===== -->
+<div class="overlay" id="tplOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>📋 תבניות ליקויים</h2><button class="x" onclick="closeTemplates()">×</button></div>
+    <div class="form">
+      <div class="hint">בחר תבנית למילוי מהיר של התיאור והקטגוריה:</div>
+      <div id="tpl-list" style="display:flex;flex-direction:column;gap:8px;margin:10px 0"></div>
+      <div class="add-row">
+        <input id="tpl-new" placeholder="הוסף תבנית חדשה (תיאור)">
+        <button type="button" onclick="addTemplateManual()">הוסף</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Floor plan ===== -->
+<div class="overlay" id="planOverlay">
+  <div class="sheet" style="max-width:980px">
+    <div class="sheet-head"><h2 id="planTitle">🗺️ תוכנית</h2><button class="x" onclick="closePlan()">×</button></div>
+    <div style="padding:12px 14px 18px">
+      <div class="hint" id="plan-hint" style="margin-bottom:10px"></div>
+      <div id="plan-wrap" style="position:relative;display:inline-block;max-width:100%" onclick="handlePlanTap(event)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Dashboard ===== -->
+<div class="overlay" id="dashOverlay">
+  <div class="sheet">
+    <div class="sheet-head"><h2>📊 דשבורד</h2><button class="x" onclick="closeDash()">×</button></div>
+    <div class="form" id="dash-body"></div>
+  </div>
+</div>
+
+<!-- ===== Bulk action bar ===== -->
+<div id="bulkBar">
+  <span id="bulk-count">0 נבחרו</span>
+  <div id="bulk-actions"></div>
+  <button onclick="exitSelect()">ביטול</button>
+</div>
+
+<div id="printArea"></div>
+
+<script src="vendor/exceljs.min.js"></script>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+const CATS=['חשמל','אינסטלציה','גמר/צבע','שלד ובטון','אלומיניום','ריצוף וחיפוי','איטום ורטיבות','גבס','בטיחות','אחר'];
+const SEVS=['נמוכה','בינונית','גבוהה','קריטית'];
+const STATUSES=[{key:'open',label:'פתוח',cls:'open'},{key:'prog',label:'בטיפול',cls:'prog'},{key:'recheck',label:'לתיקון חוזר',cls:'recheck'},{key:'done',label:'סגור',cls:'done'}];
+const TYPES=[{key:'defect',label:'ליקוי',icon:'⚠️'},{key:'task',label:'משימת ביצוע',icon:'🛠️'},{key:'approval',label:'אישור/בדיקה',icon:'✅'},{key:'note',label:'הערה',icon:'📝'}];
+const STCOLOR={open:'#e74c3c',prog:'#f39c12',recheck:'#9b59b6',done:'#27ae60'};
+const KEY='inspection_store_v2';
+let store=loadStore();
+let view='projects',curProjectId=null,filter='all';
+let curPhotos=[],curVoice=null,curGPS=null,curPin=null,editAreas=[],editPlan=null;
+let lastCtx=null,batchCount=0;
+let planMode='view',pendingPin=null;
+let groupByArea=false,selectMode=false,selected=new Set(),closedAreas=new Set();
+const DEFAULT_TEMPLATES=[
+  {desc:'סדק בקיר',category:'שלד ובטון'},
+  {desc:'רטיבות / נזילה',category:'איטום ורטיבות'},
+  {desc:'צבע לא אחיד / כתמים',category:'גמר/צבע'},
+  {desc:'חסר / פגום מעקה בטיחות',category:'בטיחות'},
+  {desc:'אריח שבור / חלול',category:'ריצוף וחיפוי'},
+  {desc:'דלת / חלון לא נסגר כראוי',category:'אלומיניום'},
+  {desc:'נקודת חשמל חסרה / לא תקינה',category:'חשמל'},
+  {desc:'נזילה בצנרת',category:'אינסטלציה'},
+  {desc:'סדק / פגם בגבס',category:'גבס'},
+  {desc:'ליקוי גמר כללי',category:'גמר/צבע'},
+];
+
+function loadStore(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  if(!s||!s.projects){
+    s={projects:[],defects:[],phones:{}};
+    try{const old=JSON.parse(localStorage.getItem('inspection_defects_v1'));
+      if(old&&old.length){const p={id:uid(),name:'פרויקט ראשון',address:'',client:'',notes:'',areas:[],createdAt:Date.now()};s.projects.push(p);old.forEach(d=>{d.projectId=p.id;d.area=d.location||'';s.defects.push(d);});}
+    }catch(e){}
+  }
+  if(!s.phones)s.phones={};
+  if(!s.pendingDeletes)s.pendingDeletes=[];
+  if(!s.templates)s.templates=[];
+  if(!s.reportSettings)s.reportSettings={orgName:'',logo:''};
+  (s.defects||[]).forEach(d=>{
+    if(!d.type)d.type='defect';
+    if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});if(d.photo)d.photos.push({id:uid(),data:d.photo,kind:'before'});}
+    delete d.photoBefore;delete d.photoAfter;delete d.photo;
+  });
+  return s;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));return true;}catch(e){toast('האחסון מלא — מחק רשומות/תמונות או ייצא');return false;}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function statusOf(k){return STATUSES.find(s=>s.key===k)||STATUSES[0];}
+function typeOf(k){return TYPES.find(t=>t.key===k)||TYPES[0];}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function curProject(){return store.projects.find(p=>p.id===curProjectId);}
+function defectsOf(pid){return store.defects.filter(d=>d.projectId===pid);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+
+function initForm(){
+  document.getElementById('d-cat').innerHTML=CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('seg-sev').innerHTML=SEVS.map((s,i)=>`<label><input type="radio" name="sev" value="${s}" ${i===1?'checked':''}><span>${s}</span></label>`).join('');
+  document.getElementById('seg-status').innerHTML=STATUSES.map((s,i)=>`<label><input type="radio" name="status" value="${s.key}" ${i===0?'checked':''}><span>${s.label}</span></label>`).join('');
+  document.getElementById('seg-type').innerHTML=TYPES.map((t,i)=>`<label><input type="radio" name="rtype" value="${t.key}" ${i===0?'checked':''}><span>${t.icon} ${t.label}</span></label>`).join('');
+  document.getElementById('typeFilter').innerHTML='<option value="all">כל הסוגים</option>'+TYPES.map(t=>`<option value="${t.key}">${t.icon} ${t.label}</option>`).join('');
+  document.getElementById('rep-scope').innerHTML='<label><input type="radio" name="repscope" value="all" checked><span>כל הרשומות</span></label><label><input type="radio" name="repscope" value="open"><span>פתוחות בלבד</span></label>';
+  const wm=document.getElementById('wm-toggle');wm.checked=localStorage.getItem('inspection_watermark')!=='0';wm.onchange=()=>localStorage.setItem('inspection_watermark',wm.checked?'1':'0');
+  if(!window.isSecureContext)document.getElementById('secBanner').style.display='block';
+}
+
+/* ===== routing ===== */
+function goHome(){view='projects';curProjectId=null;filter='all';selectMode=false;selected.clear();document.getElementById('bulkBar').classList.remove('show');render();scrollTo(0,0);}
+function openProject(id){view='project';curProjectId=id;filter='all';lastCtx=null;batchCount=0;selectMode=false;selected.clear();groupByArea=false;closedAreas.clear();document.getElementById('bulkBar').classList.remove('show');document.getElementById('search').value='';document.getElementById('typeFilter').value='all';render();scrollTo(0,0);}
+function render(){view==='projects'?renderProjects():renderProject();}
+
+function renderProjects(){
+  document.getElementById('backBtn').style.display='none';
+  document.getElementById('hTitle').textContent='הפרויקטים שלי';
+  document.getElementById('hSub').textContent=store.projects.length?`${store.projects.length} פרויקטים`:'';
+  document.getElementById('hBtns').innerHTML=`<button class="btn-h" id="syncBtn" onclick="openSync()">☁️</button><button class="btn-h" onclick="backupData()">💾</button><button class="btn-h" onclick="document.getElementById('importFile').click()">📂</button>`;
+  updateSyncBadge();
+  document.getElementById('stats').style.display='none';
+  document.getElementById('filters').style.display='none';
+  const fab=document.getElementById('fab');fab.innerHTML='＋ פרויקט חדש';fab.style.display='flex';
+  const list=document.getElementById('list');
+  if(!store.projects.length){list.innerHTML=`<div class="empty"><div class="big">🏢</div>אין עדיין פרויקטים.<br>לחץ «פרויקט חדש» כדי להתחיל.</div>`;return;}
+  list.innerHTML=store.projects.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(p=>{
+    const ds=defectsOf(p.id),open=ds.filter(d=>d.status!=='done').length,done=ds.filter(d=>d.status==='done').length;
+    return `<div class="pcard" onclick="openProject('${p.id}')"><div style="min-width:0">
+      <h3>${esc(p.name)}</h3><div class="addr">${esc(p.address||'')}${p.client?' · '+esc(p.client):''}</div>
+      <div class="mini"><span class="pill pill-tot">${ds.length} רשומות</span><span class="pill pill-open">${open} פתוחות</span><span class="pill pill-done">${done} נסגרו</span>${p.areas&&p.areas.length?`<span class="pill pill-tot">${p.areas.length} אזורים</span>`:''}</div>
+    </div><div class="chev">‹</div></div>`;
+  }).join('');
+}
+
+function renderProject(){
+  const p=curProject();if(!p){goHome();return;}
+  const ds=defectsOf(p.id);
+  document.getElementById('backBtn').style.display='block';
+  document.getElementById('hTitle').textContent=p.name;
+  document.getElementById('hSub').textContent=p.address||'';
+  document.getElementById('hBtns').innerHTML=`<button class="btn-h" onclick="openDash()">📊</button><button class="btn-h" onclick="openReport()">📄</button><button class="btn-h" onclick="exportExcel()">⬇️</button><button class="btn-h" onclick="openProj('${p.id}')">⚙️</button>`;
+  document.getElementById('fab').innerHTML='＋ רשומה חדשה';
+  const counts={all:ds.length};STATUSES.forEach(s=>counts[s.key]=ds.filter(d=>d.status===s.key).length);
+  const overdue=ds.filter(isOverdue).length;
+  const statsEl=document.getElementById('stats');statsEl.style.display='grid';
+  statsEl.innerHTML=`<div class="stat"><b>${counts.all}</b><span>סה"כ</span></div><div class="stat"><b>${counts.open+counts.prog+counts.recheck}</b><span>פתוחות</span></div><div class="stat"><b>${overdue}</b><span>באיחור</span></div><div class="stat"><b>${counts.done}</b><span>נסגרו</span></div>`;
+  document.getElementById('filters').style.display='flex';
+  counts.overdue=overdue;
+  const chipDefs=[{key:'all',label:'הכל'}].concat(STATUSES.map(s=>({key:s.key,label:s.label}))).concat([{key:'overdue',label:'⏰ באיחור'}]);
+  document.getElementById('chips').innerHTML=chipDefs.map(c=>`<div class="chip ${filter===c.key?'active':''}" onclick="setFilter('${c.key}')">${c.label} (${counts[c.key]??0})</div>`).join('');
+  document.getElementById('proj-tools').innerHTML=`<div class="chip ${groupByArea?'active':''}" onclick="toggleGroup()">⬚ לפי אזור</div><div class="chip ${selectMode?'active':''}" onclick="selectMode?exitSelect():enterSelect()">✓ בחירה מרובה</div><div class="chip" onclick="openPlanFromTools()">🗺️ תוכנית</div>`;
+  const cfEl=document.getElementById('contractorFilter'),cfPrev=cfEl.value;
+  const consList=[...new Set(ds.map(d=>d.contractor).filter(Boolean))];
+  cfEl.innerHTML='<option value="all">כל הקבלנים</option>'+consList.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  cfEl.value=consList.includes(cfPrev)?cfPrev:'all';
+  const q=document.getElementById('search').value.trim().toLowerCase(),tf=document.getElementById('typeFilter').value,cf=cfEl.value,sortBy=document.getElementById('sortBy').value;
+  let items=ds.slice();
+  if(filter==='overdue')items=items.filter(isOverdue);
+  else if(filter!=='all')items=items.filter(d=>d.status===filter);
+  if(tf!=='all')items=items.filter(d=>(d.type||'defect')===tf);
+  if(cf!=='all')items=items.filter(d=>d.contractor===cf);
+  if(q)items=items.filter(d=>[d.desc,d.area,d.location,d.contractor,d.category].join(' ').toLowerCase().includes(q));
+  const sevRank={'קריטית':4,'גבוהה':3,'בינונית':2,'נמוכה':1};
+  items.sort((a,b)=>{
+    if(sortBy==='old')return (a.createdAt||0)-(b.createdAt||0);
+    if(sortBy==='due')return (a.due||'9999-99-99').localeCompare(b.due||'9999-99-99');
+    if(sortBy==='sev')return (sevRank[b.severity]||0)-(sevRank[a.severity]||0);
+    if(sortBy==='status')return STATUSES.findIndex(s=>s.key===a.status)-STATUSES.findIndex(s=>s.key===b.status);
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+  const list=document.getElementById('list');
+  if(!items.length){list.innerHTML=`<div class="empty"><div class="big">📋</div>${ds.length?'אין רשומות שתואמות לסינון.':'אין עדיין רשומות בפרויקט.<br>לחץ «רשומה חדשה».'}</div>`;updateBulkBar();refreshDataLists();return;}
+  if(groupByArea){
+    const groups={};items.forEach(d=>{const a=d.area||'— ללא אזור';(groups[a]=groups[a]||[]).push(d);});
+    list.innerHTML=Object.keys(groups).map(a=>{
+      const g=groups[a],closed=closedAreas.has(a)?' closed':'';
+      return `<div class="area-group${closed}">
+        <div class="area-head" onclick="toggleArea('${encodeURIComponent(a)}')"><span><span class="arrow">▾</span> ${esc(a)}</span><span class="cnt">${g.length} · ${g.filter(x=>x.status!=='done').length} פתוחות</span></div>
+        <div class="area-body">${g.map(cardHTML).join('')}</div></div>`;
+    }).join('');
+  } else {
+    list.innerHTML=items.map(cardHTML).join('');
+  }
+  updateBulkBar();refreshDataLists();
+}
+function cardHTML(d){
+  const st=statusOf(d.status),ty=typeOf(d.type),od=isOverdue(d);
+  const before=(d.photos||[]).find(x=>x.kind==='before'),after=(d.photos||[]).find(x=>x.kind==='after');
+  const sel=selected.has(d.id)?' sel':'';
+  return `<div class="card s-${st.cls}${sel}" style="position:relative" onclick="cardTap('${d.id}')">
+    <div class="selmark">✓</div>
+    <div class="c-head"><div style="flex:1">
+      <div class="c-loc">${esc(d.area||'—')}${d.location?' · '+esc(d.location):''}</div>
+      <div class="c-title">${esc(d.desc)||'(ללא תיאור)'}</div></div>
+      <div class="thumbs">${before?`<img class="c-thumb" src="${before.data}">`:''}${after?`<img class="c-thumb after" src="${after.data}">`:''}</div></div>
+    <div><span class="badge b-status st-${st.cls}">${st.label}</span></div>
+    <div class="c-meta">
+      <span class="tag tag-type">${ty.icon} ${ty.label}</span>
+      <span class="tag">${esc(d.category||'')}</span>
+      ${d.type==='defect'?`<span class="tag sev-${d.severity}">חומרה: ${esc(d.severity||'')}</span>`:''}
+      ${d.contractor?`<span class="tag">👷 ${esc(d.contractor)}</span>`:''}
+      ${d.due?`<span class="tag ${od?'c-overdue':''}">📅 ${formatD(d.due)}${od?' (באיחור)':''}</span>`:''}
+      ${(d.photos&&d.photos.length>1)?`<span class="tag media">🖼️ ${d.photos.length}</span>`:''}
+      ${d.voice?`<span class="tag media">🎤</span>`:''}
+      ${after?`<span class="tag fixed">✓ תיקון</span>`:''}
+      ${d.gps?`<span class="tag gps">📍 GPS</span>`:''}
+      ${d.pin?`<span class="tag gps">🗺️ תוכנית</span>`:''}
+    </div></div>`;
+}
+function toggleArea(enc){const a=decodeURIComponent(enc);if(closedAreas.has(a))closedAreas.delete(a);else closedAreas.add(a);render();}
+function toggleGroup(){groupByArea=!groupByArea;render();}
+/* selection / bulk */
+function cardTap(id){selectMode?toggleSelect(id):openDef(id);}
+function toggleSelect(id){if(selected.has(id))selected.delete(id);else selected.add(id);render();}
+function enterSelect(){selectMode=true;selected.clear();render();}
+function exitSelect(){selectMode=false;selected.clear();document.getElementById('bulkBar').classList.remove('show');render();}
+function updateBulkBar(){
+  const bar=document.getElementById('bulkBar'),fab=document.getElementById('fab');
+  if(!selectMode){bar.classList.remove('show');if(fab)fab.style.display='flex';return;}
+  if(fab)fab.style.display='none';
+  bar.classList.add('show');
+  document.getElementById('bulk-count').textContent=`${selected.size} נבחרו`;
+  document.getElementById('bulk-actions').innerHTML=STATUSES.map(s=>`<button onclick="bulkStatus('${s.key}')">${s.label}</button>`).join('')+`<button onclick="bulkDelete()">🗑 מחק</button>`;
+}
+function bulkStatus(k){if(!selected.size){toast('לא נבחרו רשומות');return;}let n=0;store.defects.forEach(d=>{if(selected.has(d.id)){d.status=k;d.synced=false;n++;}});save();toast(`${n} עודכנו ל«${statusOf(k).label}»`);exitSelect();syncNow(false);}
+function bulkDelete(){if(!selected.size)return;if(confirm(`למחוק ${selected.size} רשומות לצמיתות?`)){store.defects.forEach(d=>{if(selected.has(d.id))queueDelete(d.id);});store.defects=store.defects.filter(d=>!selected.has(d.id));save();exitSelect();syncNow(false);}}
+function isOverdue(d){return d.due&&d.status!=='done'&&d.due<todayStr();}
+function todayStr(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function formatD(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function setFilter(k){filter=k;render();}
+function fabAction(){view==='projects'?openProj():openDef();}
+function refreshDataLists(){
+  const p=curProject();
+  if(p)document.getElementById('d-areas').innerHTML=(p.areas||[]).map(a=>`<option value="${esc(a)}">`).join('');
+  const cons=[...new Set(store.defects.map(d=>d.contractor).filter(Boolean))];
+  document.getElementById('contractors').innerHTML=cons.map(s=>`<option value="${esc(s)}">`).join('');
+  document.getElementById('phones').innerHTML=[...new Set(Object.values(store.phones||{}).filter(Boolean))].map(s=>`<option value="${esc(s)}">`).join('');
+}
+
+/* ===== project form ===== */
+function openProj(id){
+  document.getElementById('projForm').reset();
+  const p=id?store.projects.find(x=>x.id===id):null;
+  document.getElementById('projTitle').textContent=p?'עריכת פרויקט':'פרויקט חדש';
+  document.getElementById('pDelBtn').style.display=p?'block':'none';
+  document.getElementById('p-id').value=p?p.id:'';
+  document.getElementById('p-name').value=p?p.name:'';
+  document.getElementById('p-addr').value=p?p.address||'':'';
+  document.getElementById('p-client').value=p?p.client||'':'';
+  document.getElementById('p-notes').value=p?p.notes||'':'';
+  editAreas=p?(p.areas||[]).slice():[];renderAreas();
+  editPlan=p?(p.plan||null):null;showPlanPrev();
+  showOverlay('projOverlay');
+}
+function renderAreas(){document.getElementById('p-areas').innerHTML=editAreas.length?editAreas.map((a,i)=>`<span class="area-chip">${esc(a)}<button type="button" onclick="removeArea(${i})">×</button></span>`).join(''):'<span class="hint">לא הוגדרו אזורים עדיין.</span>';}
+function addArea(){const inp=document.getElementById('p-area-new'),v=inp.value.trim();if(!v)return;if(!editAreas.includes(v))editAreas.push(v);inp.value='';renderAreas();inp.focus();}
+function removeArea(i){editAreas.splice(i,1);renderAreas();}
+function saveProject(e){
+  e.preventDefault();const id=document.getElementById('p-id').value;
+  const rec={id:id||uid(),name:document.getElementById('p-name').value.trim(),address:document.getElementById('p-addr').value.trim(),client:document.getElementById('p-client').value.trim(),notes:document.getElementById('p-notes').value.trim(),areas:editAreas.slice(),plan:editPlan||''};
+  if(id){const i=store.projects.findIndex(x=>x.id===id);rec.createdAt=store.projects[i].createdAt;store.projects[i]=rec;}else{rec.createdAt=Date.now();store.projects.push(rec);}
+  save();closeProj();if(!id)openProject(rec.id);else render();
+}
+function deleteProject(){
+  const id=document.getElementById('p-id').value,n=defectsOf(id).length;
+  if(confirm(`למחוק את הפרויקט${n?` ואת ${n} הרשומות שבו`:''}? פעולה בלתי הפיכה.`)){defectsOf(id).forEach(d=>queueDelete(d.id));store.projects=store.projects.filter(x=>x.id!==id);store.defects=store.defects.filter(d=>d.projectId!==id);save();closeProj();goHome();syncNow(false);}
+}
+function closeProj(){hideOverlay('projOverlay');}
+
+/* ===== item form ===== */
+function openDef(id){
+  const f=document.getElementById('defForm');f.reset();curPhotos=[];curVoice=null;curGPS=null;batchCount=0;
+  refreshDataLists();
+  const d=id?store.defects.find(x=>x.id===id):null;
+  curPin=d?(d.pin||null):(pendingPin||null);pendingPin=null;
+  document.getElementById('defTitle').textContent=d?'עריכת רשומה':'רשומה חדשה';
+  document.getElementById('dDelBtn').style.display=d?'block':'none';
+  document.getElementById('dDupBtn').style.display=d?'block':'none';
+  document.getElementById('d-id').value=d?d.id:'';
+  if(d){
+    document.getElementById('d-desc').value=d.desc||'';
+    document.getElementById('d-area').value=d.area||'';
+    document.getElementById('d-loc').value=d.location||'';
+    document.getElementById('d-cat').value=d.category||CATS[0];
+    document.getElementById('d-contractor').value=d.contractor||'';
+    document.getElementById('d-phone').value=d.phone||'';
+    document.getElementById('d-due').value=d.due||'';
+    document.getElementById('d-notes').value=d.notes||'';
+    setRadio('rtype',d.type||'defect');setRadio('sev',d.severity||'בינונית');setRadio('status',d.status||'open');
+    curPhotos=(d.photos||[]).map(x=>({...x}));curVoice=d.voice||null;curGPS=d.gps||null;
+  }else{
+    setRadio('rtype','defect');setRadio('sev','בינונית');setRadio('status','open');
+    if(lastCtx){ // sticky context — keep area/contractor so you don't redefine each time
+      document.getElementById('d-area').value=lastCtx.area||'';
+      document.getElementById('d-loc').value=lastCtx.location||'';
+      document.getElementById('d-cat').value=lastCtx.category||CATS[0];
+      document.getElementById('d-contractor').value=lastCtx.contractor||'';
+      document.getElementById('d-phone').value=lastCtx.phone||'';
+      document.getElementById('d-due').value=lastCtx.due||'';
+      setRadio('rtype',lastCtx.type||'defect');
+    }
+  }
+  renderGallery();showVoice();showGPS();showPinStatus();
+  showOverlay('defOverlay');
+}
+function setRadio(n,v){const el=document.querySelector(`input[name="${n}"][value="${v}"]`);if(el)el.checked=true;}
+function getRadio(n){const el=document.querySelector(`input[name="${n}"]:checked`);return el?el.value:'';}
+function closeDef(){stopDictate();hideOverlay('defOverlay');}
+function fillPhone(){
+  const name=document.getElementById('d-contractor').value.trim();
+  const ph=document.getElementById('d-phone');
+  if(name&&store.phones[name]&&!ph.value)ph.value=store.phones[name];
+}
+function persistRecord(){
+  const id=document.getElementById('d-id').value,area=document.getElementById('d-area').value.trim();
+  const desc=document.getElementById('d-desc').value.trim();
+  if(!desc){toast('יש למלא תיאור');document.getElementById('d-desc').focus();return null;}
+  const contractor=document.getElementById('d-contractor').value.trim(),phone=document.getElementById('d-phone').value.trim();
+  const rec={id:id||uid(),projectId:curProjectId,type:getRadio('rtype'),
+    desc:desc,area:area,location:document.getElementById('d-loc').value.trim(),
+    category:document.getElementById('d-cat').value,contractor:contractor,phone:phone,
+    severity:getRadio('sev'),status:getRadio('status'),due:document.getElementById('d-due').value,
+    notes:document.getElementById('d-notes').value.trim(),photos:curPhotos.map(x=>({...x})),voice:curVoice,gps:curGPS,pin:curPin,synced:false};
+  const p=curProject();
+  if(area&&p&&!(p.areas||[]).includes(area)){p.areas=p.areas||[];p.areas.push(area);}
+  if(contractor&&phone)store.phones[contractor]=phone;
+  if(id){const i=store.defects.findIndex(x=>x.id===id);rec.createdAt=store.defects[i].createdAt;store.defects[i]=rec;}else{rec.createdAt=Date.now();store.defects.push(rec);}
+  save();
+  lastCtx={area:rec.area,location:rec.location,type:rec.type,category:rec.category,contractor:rec.contractor,phone:rec.phone,due:rec.due};
+  return rec;
+}
+function saveDefect(e){e.preventDefault();if(persistRecord()){closeDef();render();syncNow(false);}}
+function saveAndNext(){
+  const rec=persistRecord();if(!rec)return;
+  batchCount++;render(); // refresh the list behind the open form
+  // reset only the per-record fields; keep area/location/category/contractor/phone/type/due
+  document.getElementById('d-id').value='';
+  document.getElementById('d-desc').value='';
+  document.getElementById('d-notes').value='';
+  setRadio('status','open');
+  curPhotos=[];curVoice=null;curGPS=null;curPin=null;renderGallery();showVoice();showGPS();showPinStatus();
+  document.getElementById('dDelBtn').style.display='none';
+  document.getElementById('defTitle').textContent=`רשומה חדשה • ${batchCount} נשמרו ב«${rec.area||'—'}»`;
+  const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
+  document.getElementById('d-desc').focus();
+  toast(`נשמר ✓ — ${batchCount} באצווה`);
+  syncNow(false);
+}
+function deleteDefect(){const id=document.getElementById('d-id').value;if(confirm('למחוק את הרשומה לצמיתות?')){queueDelete(id);store.defects=store.defects.filter(x=>x.id!==id);save();closeDef();render();syncNow(false);}}
+function queueDelete(id){const rec=store.defects.find(x=>x.id===id);if(rec&&rec.synced){store.pendingDeletes=store.pendingDeletes||[];if(!store.pendingDeletes.includes(id))store.pendingDeletes.push(id);}}
+
+/* ===== gallery ===== */
+function addPhotos(input,kind){
+  const files=[...input.files];input.value='';
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1280;let w=img.width,h=img.height;
+        if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        const wm=document.getElementById('wm-toggle');if(wm&&wm.checked)stampWatermark(ctx,w,h);
+        curPhotos.push({id:uid(),data:cv.toDataURL('image/jpeg',0.7),kind:kind});renderGallery();
+      };img.src=ev.target.result;
+    };reader.readAsDataURL(file);
+  });
+  if(kind==='before'&&!curGPS)grabGPS(false);
+}
+function renderGallery(){
+  const g=document.getElementById('gallery');
+  g.innerHTML=curPhotos.map(ph=>`<div class="gitem ${ph.kind}">
+    <img src="${ph.data}"><span class="klbl">${ph.kind==='after'?'אחרי':'לפני'}</span>
+    <div class="gbtns"><button type="button" onclick="openMarkup('${ph.id}')">✏️</button><button type="button" onclick="togglePhotoKind('${ph.id}')">↔</button><button type="button" onclick="delPhoto('${ph.id}')">🗑</button></div>
+  </div>`).join('');
+}
+function togglePhotoKind(id){const ph=curPhotos.find(x=>x.id===id);if(ph){ph.kind=ph.kind==='after'?'before':'after';renderGallery();}}
+function delPhoto(id){curPhotos=curPhotos.filter(x=>x.id!==id);renderGallery();}
+
+/* ===== markup editor ===== */
+const MKCOLORS=['#e53935','#fdd835','#1e88e5','#43a047','#111111','#ffffff'];
+let mk={img:null,shapes:[],tool:'arrow',color:'#e53935',width:6,start:null,pen:null,target:null};
+function openMarkup(photoId){
+  const ph=curPhotos.find(p=>p.id===photoId);if(!ph)return;
+  mk.target=photoId;mk.shapes=[];mk.tool='arrow';mk.color='#e53935';mk.width=6;mk.start=null;mk.pen=null;
+  const img=new Image();
+  img.onload=()=>{
+    mk.img=img;const canvas=document.getElementById('mkCanvas');
+    const maxW=Math.min(window.innerWidth-44,920),maxH=window.innerHeight*0.6;
+    let s=Math.min(maxW/img.width,maxH/img.height,1);
+    canvas.width=Math.round(img.width*s);canvas.height=Math.round(img.height*s);
+    mkDraw();renderMkTools();showOverlay('markupOverlay');
+  };
+  img.src=ph.data;
+}
+function renderMkTools(){
+  const tools=[['arrow','↗ חץ'],['rect','▭ מסגרת'],['pen','✎ חופשי']];
+  let html=tools.map(t=>`<button class="${mk.tool===t[0]?'on':''}" onclick="setMkTool('${t[0]}')">${t[1]}</button>`).join('');
+  html+='<span style="width:8px"></span>'+MKCOLORS.map(c=>`<span class="mk-color ${mk.color===c?'on':''}" style="background:${c}" onclick="setMkColor('${c}')"></span>`).join('');
+  html+='<span style="width:8px"></span>'+[4,6,10].map(w=>`<button class="${mk.width===w?'on':''}" onclick="setMkWidth(${w})">${w}</button>`).join('');
+  html+='<span style="width:8px"></span><button onclick="mkUndo()">↶ בטל</button><button onclick="mkClear()">נקה</button>';
+  document.getElementById('mk-tools').innerHTML=html;
+}
+function setMkTool(t){mk.tool=t;renderMkTools();}
+function setMkColor(c){mk.color=c;renderMkTools();}
+function setMkWidth(w){mk.width=w;renderMkTools();}
+function mkUndo(){mk.shapes.pop();mkDraw();}
+function mkClear(){mk.shapes=[];mkDraw();}
+function mkPos(e){const c=document.getElementById('mkCanvas'),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*(c.width/r.width),y:(e.clientY-r.top)*(c.height/r.height)};}
+function mkDraw(preview){
+  const c=document.getElementById('mkCanvas'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(mk.img,0,0,c.width,c.height);
+  const all=preview?mk.shapes.concat([preview]):mk.shapes;
+  all.forEach(sh=>drawShape(ctx,sh,1));
+}
+function drawShape(ctx,sh,sc){
+  ctx.strokeStyle=sh.color;ctx.fillStyle=sh.color;ctx.lineWidth=sh.width*sc;ctx.lineCap='round';ctx.lineJoin='round';
+  if(sh.tool==='rect'){ctx.strokeRect(sh.x1*sc,sh.y1*sc,(sh.x2-sh.x1)*sc,(sh.y2-sh.y1)*sc);}
+  else if(sh.tool==='pen'){ctx.beginPath();sh.pts.forEach((p,i)=>i?ctx.lineTo(p[0]*sc,p[1]*sc):ctx.moveTo(p[0]*sc,p[1]*sc));ctx.stroke();}
+  else{ // arrow
+    const x1=sh.x1*sc,y1=sh.y1*sc,x2=sh.x2*sc,y2=sh.y2*sc;
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    const ang=Math.atan2(y2-y1,x2-x1),hl=Math.max(14,sh.width*sc*2.4);
+    ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-hl*Math.cos(ang-0.4),y2-hl*Math.sin(ang-0.4));ctx.lineTo(x2-hl*Math.cos(ang+0.4),y2-hl*Math.sin(ang+0.4));ctx.closePath();ctx.fill();
+  }
+}
+function mkDown(e){e.preventDefault();const p=mkPos(e);if(mk.tool==='pen'){mk.pen={tool:'pen',color:mk.color,width:mk.width,pts:[[p.x,p.y]]};}else{mk.start=p;}}
+function mkMove(e){
+  if(mk.tool==='pen'&&mk.pen){const p=mkPos(e);mk.pen.pts.push([p.x,p.y]);mkDraw(mk.pen);}
+  else if(mk.start){const p=mkPos(e);mkDraw({tool:mk.tool,color:mk.color,width:mk.width,x1:mk.start.x,y1:mk.start.y,x2:p.x,y2:p.y});}
+}
+function mkUp(e){
+  if(mk.tool==='pen'&&mk.pen){if(mk.pen.pts.length>1)mk.shapes.push(mk.pen);mk.pen=null;}
+  else if(mk.start){const p=mkPos(e);if(Math.hypot(p.x-mk.start.x,p.y-mk.start.y)>4)mk.shapes.push({tool:mk.tool,color:mk.color,width:mk.width,x1:mk.start.x,y1:mk.start.y,x2:p.x,y2:p.y});mk.start=null;}
+  mkDraw();
+}
+function saveMarkup(){
+  const disp=document.getElementById('mkCanvas');
+  const full=document.createElement('canvas');full.width=mk.img.width;full.height=mk.img.height;
+  const ctx=full.getContext('2d');ctx.drawImage(mk.img,0,0);
+  const sc=mk.img.width/disp.width;
+  mk.shapes.forEach(sh=>drawShape(ctx,sh,sc));
+  const ph=curPhotos.find(p=>p.id===mk.target);
+  if(ph)ph.data=full.toDataURL('image/jpeg',0.75);
+  closeMarkup();renderGallery();toast('הסימון נשמר');
+}
+function closeMarkup(){hideOverlay('markupOverlay');}
+
+/* ===== voice memo ===== */
+let mediaRec=null,voiceChunks=[];
+function toggleVoice(){
+  if(mediaRec&&mediaRec.state==='recording'){mediaRec.stop();return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('הקלטה לא נתמכת בדפדפן');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    voiceChunks=[];mediaRec=new MediaRecorder(stream);
+    mediaRec.ondataavailable=e=>{if(e.data.size)voiceChunks.push(e.data);};
+    mediaRec.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(voiceChunks,{type:'audio/webm'});const fr=new FileReader();
+      fr.onload=()=>{curVoice=fr.result;showVoice();};fr.readAsDataURL(blob);mediaRec=null;
+    };
+    mediaRec.start();showVoice();
+  }).catch(()=>toast('אין גישה למיקרופון (נדרש HTTPS + הרשאה)'));
+}
+function showVoice(){
+  const b=document.getElementById('voice-box');
+  if(mediaRec&&mediaRec.state==='recording'){b.innerHTML=`<button type="button" class="mini-btn rec" onclick="toggleVoice()">⏹ עצור הקלטה…</button>`;return;}
+  let h=`<button type="button" class="mini-btn" onclick="toggleVoice()">🎤 ${curVoice?'הקלט מחדש':'הקלט'}</button>`;
+  if(curVoice)h+=`<audio controls src="${curVoice}"></audio><button type="button" class="mini-btn" onclick="curVoice=null;showVoice()">🗑 הסר</button>`;
+  b.innerHTML=h;
+}
+
+/* ===== dictation (speech-to-text) ===== */
+let recog=null,recogBtn=null;
+function dictate(targetId,btnId){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('הכתבה קולית לא נתמכת (נסה Chrome)');return;}
+  if(recog){stopDictate();return;}
+  recog=new SR();recog.lang='he-IL';recog.continuous=true;recog.interimResults=false;
+  const ta=document.getElementById(targetId);recogBtn=document.getElementById(btnId);
+  recog.onresult=e=>{let s='';for(let i=e.resultIndex;i<e.results.length;i++)s+=e.results[i][0].transcript;s=s.trim();if(s)ta.value=(ta.value?ta.value+' ':'')+s;};
+  recog.onend=()=>{recog=null;if(recogBtn){recogBtn.classList.remove('rec');recogBtn.textContent='🎤 הכתבה';}recogBtn=null;};
+  recog.onerror=()=>{};
+  try{recog.start();if(recogBtn){recogBtn.classList.add('rec');recogBtn.textContent='⏹ עצור';}}catch(e){recog=null;}
+}
+function stopDictate(){if(recog){try{recog.stop();}catch(e){}}}
+
+/* ===== gps ===== */
+function grabGPS(manual){
+  const el=document.getElementById('gps-info');
+  if(!window.isSecureContext){el.innerHTML='⚠️ נדרש HTTPS לאיתור אוטומטי. השתמש ב«ידני».';if(manual)manualGPS();return;}
+  if(!navigator.geolocation){el.textContent='המכשיר לא תומך ב-GPS';return;}
+  el.textContent='מאתר מיקום…';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{curGPS={lat:+pos.coords.latitude.toFixed(6),lng:+pos.coords.longitude.toFixed(6),acc:Math.round(pos.coords.accuracy),ts:Date.now()};showGPS();},
+    err=>{const msg=err.code===1?'אין הרשאת מיקום':err.code===3?'תם הזמן — נסה בחוץ':'מיקום לא זמין';if(manual||!curGPS)el.innerHTML=`⚠️ ${msg}. <a href="#" onclick="manualGPS();return false">הזן ידנית</a>`;},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+function manualGPS(){
+  const v=prompt('הדבק קואורדינטות (קו רוחב, קו אורך):\nאפשר להעתיק מ-Google Maps','');
+  if(!v)return;const m=v.split(/[, ]+/).map(parseFloat);
+  if(isFinite(m[0])&&isFinite(m[1])){curGPS={lat:+m[0].toFixed(6),lng:+m[1].toFixed(6),acc:0,ts:Date.now(),manual:true};showGPS();}else toast('פורמט לא תקין — נסה: 32.084, 34.887');
+}
+function showGPS(){const el=document.getElementById('gps-info');if(curGPS)el.innerHTML=`📍 ${curGPS.lat}, ${curGPS.lng}${curGPS.acc?` (±${curGPS.acc} מ׳)`:' (ידני)'} · <a href="https://maps.google.com/?q=${curGPS.lat},${curGPS.lng}" target="_blank">מפה</a> · <a href="#" onclick="removeGPS();return false">הסר</a>`;else el.textContent='אין מיקום עדיין';}
+function removeGPS(){curGPS=null;showGPS();}
+
+/* ===== backup / restore ===== */
+function backupData(){
+  const blob=new Blob([JSON.stringify(store)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`גיבוי_פיקוח_${todayStr()}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);toast('גיבוי נשמר');
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.projects||!data.defects)throw 0;
+    if(confirm(`לשחזר ${data.projects.length} פרויקטים ו-${data.defects.length} רשומות? הנתונים הנוכחיים יוחלפו.`)){store=data;if(!store.phones)store.phones={};loadNormalize();save();goHome();toast('שוחזר בהצלחה');}
+  }catch(e){toast('קובץ גיבוי לא תקין');}input.value='';};
+  reader.readAsText(file);
+}
+function loadNormalize(){(store.defects||[]).forEach(d=>{if(!d.type)d.type='defect';if(!d.photos){d.photos=[];if(d.photoBefore)d.photos.push({id:uid(),data:d.photoBefore,kind:'before'});if(d.photoAfter)d.photos.push({id:uid(),data:d.photoAfter,kind:'after'});}delete d.photoBefore;delete d.photoAfter;delete d.photo;});}
+
+/* ===== templates ===== */
+function allTemplates(){return DEFAULT_TEMPLATES.concat(store.templates||[]);}
+function openTemplates(){
+  const t=allTemplates();
+  document.getElementById('tpl-list').innerHTML=t.length?t.map((x,i)=>`<div class="area-chip" style="justify-content:space-between"><span onclick="pickTemplate(${i})" style="flex:1;cursor:pointer">${esc(x.desc)}${x.category?` <span style="color:#999;font-size:.8rem">· ${esc(x.category)}</span>`:''}</span>${i>=DEFAULT_TEMPLATES.length?`<button type="button" onclick="delTemplate(${i-DEFAULT_TEMPLATES.length})">×</button>`:''}</div>`).join(''):'<div class="hint">אין תבניות.</div>';
+  showOverlay('tplOverlay');
+}
+function closeTemplates(){hideOverlay('tplOverlay');}
+function pickTemplate(i){const x=allTemplates()[i];if(!x)return;document.getElementById('d-desc').value=x.desc||'';if(x.category)document.getElementById('d-cat').value=x.category;closeTemplates();}
+function addTemplateManual(){const inp=document.getElementById('tpl-new'),v=inp.value.trim();if(!v)return;store.templates.push({desc:v,category:document.getElementById('d-cat').value||''});save();inp.value='';openTemplates();}
+function delTemplate(idx){store.templates.splice(idx,1);save();openTemplates();}
+
+/* ===== duplicate record ===== */
+function duplicateDefect(){
+  document.getElementById('d-id').value='';
+  curPhotos=[];curVoice=null;curGPS=null;curPin=null;renderGallery();showVoice();showGPS();showPinStatus();
+  setRadio('status','open');
+  document.getElementById('defTitle').textContent='רשומה חדשה (שוכפלה)';
+  document.getElementById('dDelBtn').style.display='none';
+  document.getElementById('dDupBtn').style.display='none';
+  const sheet=document.querySelector('#defOverlay .sheet');if(sheet)sheet.scrollTop=0;
+  toast('שוכפל — ערוך ושמור כרשומה חדשה');
+}
+
+/* ===== report branding (logo) ===== */
+function setLogo(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const reader=new FileReader();
+  reader.onload=ev=>{const img=new Image();img.onload=()=>{const max=320;let w=img.width,h=img.height;if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);store.reportSettings.logo=cv.toDataURL('image/png');save();showLogoPrev();};img.src=ev.target.result;};
+  reader.readAsDataURL(file);
+}
+function showLogoPrev(){document.getElementById('logo-prev').innerHTML=store.reportSettings.logo?`<div class="photo-prev"><img src="${store.reportSettings.logo}"><button type="button" class="del" onclick="store.reportSettings.logo='';save();showLogoPrev()">×</button></div>`:'';}
+
+/* ===== dashboard ===== */
+function openDash(){
+  const p=curProject();if(!p)return;const ds=defectsOf(p.id);
+  const body=document.getElementById('dash-body');
+  if(!ds.length){body.innerHTML='<div class="hint">אין נתונים להצגה.</div>';showOverlay('dashOverlay');return;}
+  const byStatus=STATUSES.map(s=>({label:s.label,val:ds.filter(d=>d.status===s.key).length,color:STCOLOR[s.key]}));
+  const sevC={'נמוכה':'#27ae60','בינונית':'#f39c12','גבוהה':'#e67e22','קריטית':'#e74c3c'};
+  const bySev=SEVS.map(s=>({label:s,val:ds.filter(d=>d.type==='defect'&&d.severity===s).length,color:sevC[s]}));
+  const cons={};ds.forEach(d=>{if(d.contractor)cons[d.contractor]=(cons[d.contractor]||0)+1;});
+  const byCon=Object.keys(cons).map(c=>({label:c,val:cons[c],color:'#2d6cdf'})).sort((a,b)=>b.val-a.val).slice(0,8);
+  const ar={};ds.forEach(d=>{const a=d.area||'—';ar[a]=(ar[a]||0)+1;});
+  const byArea=Object.keys(ar).map(a=>({label:a,val:ar[a],color:'#9b59b6'})).sort((a,b)=>b.val-a.val).slice(0,8);
+  const overdue=ds.filter(isOverdue).length;
+  body.innerHTML=`
+    <div class="stats" style="margin:0 0 16px;background:var(--navy);border-radius:12px;padding:10px;color:#fff">
+      <div class="stat"><b>${ds.length}</b><span>סה"כ</span></div>
+      <div class="stat"><b>${ds.filter(d=>d.status!=='done').length}</b><span>פתוחות</span></div>
+      <div class="stat"><b>${overdue}</b><span>באיחור</span></div>
+      <div class="stat"><b>${ds.filter(d=>d.status==='done').length}</b><span>נסגרו</span></div>
+    </div>
+    ${barSection('לפי סטטוס',byStatus)}
+    ${bySev.some(x=>x.val)?barSection('לפי חומרה',bySev):''}
+    ${byCon.length?barSection('לפי קבלן (Top 8)',byCon):''}
+    ${byArea.length?barSection('לפי אזור (Top 8)',byArea):''}`;
+  showOverlay('dashOverlay');
+}
+function barSection(title,rows){const max=Math.max(1,...rows.map(r=>r.val));return `<div class="dash-sec"><h3>${title}</h3>${rows.map(r=>`<div class="bar-row"><span class="bl">${esc(r.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(r.val/max*100)}%;background:${r.color}"></span></span><span class="bv">${r.val}</span></div>`).join('')}</div>`;}
+function closeDash(){hideOverlay('dashOverlay');}
+
+/* ===== reminders (overdue) ===== */
+function checkReminders(){
+  const overdue=store.defects.filter(isOverdue);
+  const b=document.getElementById('remBanner');
+  if(!overdue.length){if(b)b.style.display='none';return;}
+  if(b){b.style.display='block';b.innerHTML=`🔔 ${overdue.length} ליקויים עברו את תאריך היעד. <a href="#" onclick="showOverdue();return false">הצג</a>`;}
+  if('Notification' in window){
+    if(Notification.permission==='granted')try{new Notification('פיקוח אתר',{body:`${overdue.length} ליקויים באיחור`});}catch(e){}
+    else if(Notification.permission!=='denied')Notification.requestPermission().then(pm=>{if(pm==='granted')try{new Notification('פיקוח אתר',{body:`${overdue.length} ליקויים באיחור`});}catch(e){}});
+  }
+}
+function showOverdue(){const od=store.defects.filter(isOverdue);if(od.length)openProject(od[0].projectId);}
+
+/* ===== photo watermark ===== */
+function stampWatermark(ctx,w,h){
+  const n=new Date();
+  const ts=`${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  const lines=[ts];if(curGPS)lines.push(`GPS ${curGPS.lat}, ${curGPS.lng}`);
+  const fs=Math.max(13,Math.round(w*0.028));
+  ctx.font=`bold ${fs}px Arial`;ctx.textBaseline='bottom';ctx.textAlign='left';
+  const lh=fs*1.35,barH=lh*lines.length+fs*0.5;
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,h-barH,w,barH);
+  ctx.fillStyle='#fff';
+  lines.forEach((ln,i)=>ctx.fillText(ln,fs*0.5,h-barH+lh*(i+1)));
+}
+
+/* ===== floor plan ===== */
+function setPlan(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const reader=new FileReader();
+  reader.onload=ev=>{const img=new Image();img.onload=()=>{const max=1600;let w=img.width,h=img.height;if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);editPlan=cv.toDataURL('image/jpeg',0.8);showPlanPrev();};img.src=ev.target.result;};
+  reader.readAsDataURL(file);
+}
+function showPlanPrev(){document.getElementById('plan-prev').innerHTML=editPlan?`<div class="photo-prev"><img src="${editPlan}"><button type="button" class="del" onclick="editPlan=null;showPlanPrev()">×</button></div>`:'';}
+function showPinStatus(){const el=document.getElementById('pin-info');if(!el)return;el.innerHTML=curPin?`📍 ממוקם על התוכנית · <a href="#" onclick="curPin=null;showPinStatus();return false">הסר</a>`:'לא ממוקם';}
+function openPlanFromTools(){const p=curProject();if(!p)return;if(!p.plan){toast('העלה תחילה תוכנית בהגדרות הפרויקט (⚙️)');return;}planMode='view';document.getElementById('planTitle').textContent='🗺️ תוכנית — '+p.name;renderPlan();showOverlay('planOverlay');}
+function placeOnPlan(){const p=curProject();if(!p||!p.plan){toast('העלה תחילה תוכנית בהגדרות הפרויקט (⚙️)');return;}planMode='place';document.getElementById('planTitle').textContent='🗺️ מיקום הליקוי';renderPlan();showOverlay('planOverlay');}
+function renderPlan(){
+  const p=curProject(),wrap=document.getElementById('plan-wrap'),hint=document.getElementById('plan-hint');
+  if(!p||!p.plan){wrap.innerHTML='';hint.textContent='לא הועלתה תוכנית.';return;}
+  hint.textContent=planMode==='place'?'הקש על התוכנית כדי למקם את הליקוי':'הקש על סיכה לפתיחת ליקוי · הקש על מקום ריק להוספת ליקוי חדש';
+  let pins='';
+  if(planMode==='view'){
+    const pinned=defectsOf(p.id).filter(d=>d.pin);
+    pins=pinned.map((d,i)=>`<div class="pin" style="left:${d.pin.x*100}%;top:${d.pin.y*100}%;background:${STCOLOR[d.status]||'#777'}" onclick="event.stopPropagation();closePlan();openDef('${d.id}')">${i+1}</div>`).join('');
+  } else if(curPin){
+    pins=`<div class="pin" style="left:${curPin.x*100}%;top:${curPin.y*100}%;background:var(--accent)">✓</div>`;
+  }
+  wrap.innerHTML=`<img id="plan-img" src="${p.plan}" style="max-width:100%;display:block;border-radius:8px">${pins}`;
+}
+function handlePlanTap(e){
+  if(e.target.classList.contains('pin'))return;
+  const img=document.getElementById('plan-img');if(!img)return;
+  const r=img.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+  if(x<0||x>1||y<0||y>1)return;
+  const pin={x:+x.toFixed(4),y:+y.toFixed(4)};
+  if(planMode==='place'){curPin=pin;showPinStatus();closePlan();}
+  else{pendingPin=pin;closePlan();openDef(null);}
+}
+function closePlan(){hideOverlay('planOverlay');}
+
+/* ===== cloud sync (Google Sheets via Apps Script) ===== */
+const SYNC_KEY='inspection_sync_url',SHEET_KEY='inspection_sheet_url';
+let syncUrl=localStorage.getItem(SYNC_KEY)||'',sheetUrl=localStorage.getItem(SHEET_KEY)||'';
+let syncing=false;
+function openSync(){document.getElementById('sync-url').value=syncUrl;document.getElementById('sync-sheet').value=sheetUrl;updateSyncStatus();showOverlay('syncOverlay');}
+function closeSync(){hideOverlay('syncOverlay');}
+function saveSyncUrl(){
+  syncUrl=document.getElementById('sync-url').value.trim();localStorage.setItem(SYNC_KEY,syncUrl);
+  sheetUrl=document.getElementById('sync-sheet').value.trim();localStorage.setItem(SHEET_KEY,sheetUrl);
+  toast('נשמר ✓');updateSyncStatus();updateSyncBadge();if(syncUrl)syncNow(true);
+}
+function openSheet(){if(sheetUrl)window.open(sheetUrl,'_blank');else toast('הדבק קודם את קישור הגיליון ושמור');}
+function pendingCount(){return store.defects.filter(d=>!d.synced).length+((store.pendingDeletes||[]).length);}
+function updateSyncBadge(){const b=document.getElementById('syncBtn');if(!b)return;const pend=pendingCount();b.textContent='☁️'+(pend?' '+pend:'');}
+function updateSyncStatus(){const el=document.getElementById('sync-status');if(!el)return;const pend=pendingCount();el.innerHTML=(syncUrl?'מחובר. ':'לא מוגדר עדיין. ')+(store.lastSync?`סונכרן: ${new Date(store.lastSync).toLocaleString('he-IL')}. `:'')+(pend?`<b>${pend} ממתינות</b>`:(syncUrl?'הכל מסונכרן ✓':''));}
+async function postSync(payload){await fetch(syncUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}
+async function syncNow(manual){
+  if(!syncUrl){if(manual)toast('הגדר קודם כתובת סנכרון (☁️)');return;}
+  if(syncing)return;
+  if(!navigator.onLine){if(manual)toast('אין חיבור — יסונכרן אוטומטית כשתחזור רשת');return;}
+  syncing=true;updateSyncBadge();
+  try{
+    for(const id of (store.pendingDeletes||[]).slice()){await postSync({action:'delete',id});store.pendingDeletes=store.pendingDeletes.filter(x=>x!==id);save();}
+    const dirty=store.defects.filter(d=>!d.synced);
+    for(const d of dirty){const p=store.projects.find(x=>x.id===d.projectId)||{};await postSync({action:'upsert',record:d,project:{id:p.id,name:p.name,address:p.address,client:p.client}});d.synced=true;d.syncedAt=Date.now();save();updateSyncBadge();}
+    store.lastSync=Date.now();save();
+    if(manual)toast('הסנכרון הושלם ✓');
+  }catch(e){if(manual)toast('הסנכרון נכשל — ננסה שוב מאוחר יותר');}
+  syncing=false;updateSyncBadge();updateSyncStatus();
+}
+
+/* ===== overlay helpers ===== */
+function showOverlay(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
+function hideOverlay(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
+['projOverlay','defOverlay','markupOverlay','reportOverlay','syncOverlay','tplOverlay','dashOverlay','planOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)hideOverlay(id);}));
+
+/* ===== excel export ===== */
+async function exportExcel(){
+  const p=curProject();if(!p)return;const ds=defectsOf(p.id);
+  if(!ds.length){toast('אין רשומות לייצוא');return;}
+  if(typeof ExcelJS==='undefined'){toast('ספריית האקסל לא נטענה');return;}
+  toast('מכין קובץ אקסל…');
+  const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('רשומות',{views:[{rightToLeft:true}]});
+  const headers=['מס׳','סוג','אזור/מבנה','מיקום','תיאור','קטגוריה','חומרה','קבלן/אחראי','סטטוס','תאריך יעד','באיחור','תאריך פתיחה','מיקום GPS','מפה','תמונה לפני','תמונה אחרי'];
+  const NC=headers.length;ws.mergeCells(1,1,1,NC);
+  const t=ws.getCell('A1');t.value=`דוח פיקוח — ${p.name}${p.address?' · '+p.address:''}   |   הופק: ${formatD(todayStr())}`;
+  t.font={bold:true,size:13,color:{argb:'FFFFFFFF'}};t.alignment={horizontal:'right',vertical:'middle'};t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1B2A4A'}};ws.getRow(1).height=26;
+  const hr=ws.addRow(headers);hr.eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2D6CDF'}};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
+  ws.columns=[{width:5},{width:12},{width:15},{width:13},{width:34},{width:12},{width:9},{width:14},{width:11},{width:11},{width:7},{width:11},{width:19},{width:9},{width:19},{width:19}];
+  const sorted=ds.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  sorted.forEach((d,i)=>{
+    const r=ws.addRow([i+1,typeOf(d.type).label,d.area||'',d.location||'',d.desc||'',d.category||'',d.type==='defect'?(d.severity||''):'',d.contractor||'',statusOf(d.status).label,d.due?formatD(d.due):'',isOverdue(d)?'כן':'',d.createdAt?formatD(new Date(d.createdAt).toISOString().slice(0,10)):'',d.gps?`${d.gps.lat}, ${d.gps.lng}`:'',d.gps?{text:'פתח במפה',hyperlink:`https://maps.google.com/?q=${d.gps.lat},${d.gps.lng}`}:'','','']);
+    r.alignment={vertical:'middle',wrapText:true};if(d.gps)r.getCell(14).font={color:{argb:'FF2D6CDF'},underline:true};
+    const before=(d.photos||[]).find(x=>x.kind==='before'),after=(d.photos||[]).find(x=>x.kind==='after');
+    if(before||after)r.height=92;
+    if(before)embedImg(wb,ws,before.data,r.number-1,14);
+    if(after)embedImg(wb,ws,after.data,r.number-1,15);
+  });
+  ws.autoFilter={from:{row:2,column:1},to:{row:2,column:NC}};ws.views=[{rightToLeft:true,state:'frozen',ySplit:2}];
+  const buf=await wb.xlsx.writeBuffer();const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`דוח_פיקוח_${p.name}_${todayStr()}.xlsx`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function embedImg(wb,ws,dataURL,rowIdx,col0){try{const ext=dataURL.indexOf('image/png')>-1?'png':'jpeg';const imgId=wb.addImage({base64:dataURL.split(',')[1],extension:ext});ws.addImage(imgId,{tl:{col:col0+0.1,row:rowIdx+0.1},ext:{width:118,height:88}});}catch(e){}}
+
+/* ===== report (PDF print + WhatsApp share) ===== */
+let sig={drawing:false,empty:true};
+function openReport(){
+  const p=curProject();if(!p)return;const ds=defectsOf(p.id);
+  if(!ds.length){toast('אין רשומות לדוח');return;}
+  const cons=[...new Set(ds.map(d=>d.contractor).filter(Boolean))];
+  document.getElementById('rep-contractor').innerHTML='<option value="all">כל הקבלנים</option>'+cons.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('rep-phone').value='';document.getElementById('rep-inspector').value='';
+  document.getElementById('rep-org').value=store.reportSettings.orgName||'';showLogoPrev();
+  setRadio('repscope','all');
+  showOverlay('reportOverlay');
+  setTimeout(initSig,60);
+}
+function saveBranding(){store.reportSettings.orgName=(document.getElementById('rep-org').value||'').trim();save();}
+function repContractorChange(){
+  const c=document.getElementById('rep-contractor').value;const ph=document.getElementById('rep-phone');
+  if(c!=='all'&&store.phones[c])ph.value=store.phones[c];else if(c==='all')ph.value='';
+}
+function closeReport(){hideOverlay('reportOverlay');}
+function initSig(){
+  const c=document.getElementById('sigPad');if(!c)return;
+  c.width=c.offsetWidth;c.height=c.offsetHeight;sig.empty=true;
+  const ctx=c.getContext('2d');ctx.lineWidth=2.5;ctx.lineCap='round';ctx.strokeStyle='#111';
+  const pos=e=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*(c.width/r.width),y:(e.clientY-r.top)*(c.height/r.height)};};
+  c.onpointerdown=e=>{sig.drawing=true;sig.empty=false;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};
+  c.onpointermove=e=>{if(!sig.drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();};
+  window.addEventListener('pointerup',()=>sig.drawing=false);
+}
+function clearSig(){const c=document.getElementById('sigPad');if(c){c.getContext('2d').clearRect(0,0,c.width,c.height);sig.empty=true;}}
+function getSig(){return sig.empty?null:document.getElementById('sigPad').toDataURL('image/png');}
+function reportRecords(){
+  const p=curProject();let ds=defectsOf(p.id);
+  if(getRadio('repscope')==='open')ds=ds.filter(d=>d.status!=='done');
+  const c=document.getElementById('rep-contractor').value;if(c!=='all')ds=ds.filter(d=>d.contractor===c);
+  return ds.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+}
+function repHeaderHTML(){
+  const p=curProject(),ds=reportRecords(),conSel=document.getElementById('rep-contractor').value;
+  const org=(document.getElementById('rep-org').value||'').trim(),logo=store.reportSettings.logo;
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1b2a4a;padding-bottom:12px;margin-bottom:14px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      ${logo?`<img src="${logo}" style="height:54px;max-width:130px;object-fit:contain">`:''}
+      <div>${org?`<div style="font-size:15px;font-weight:800;color:#1b2a4a">${esc(org)}</div>`:''}
+      <div style="font-size:20px;font-weight:800;color:#1b2a4a">דוח פיקוח ליקויים</div>
+      <div style="font-size:14px;margin-top:4px">${esc(p.name)}${p.address?' · '+esc(p.address):''}</div>
+      ${p.client?`<div style="font-size:12px;color:#555">מזמין: ${esc(p.client)}</div>`:''}
+      ${conSel!=='all'?`<div style="font-size:13px;color:#333;margin-top:3px">לכבוד הקבלן: <b>${esc(conSel)}</b></div>`:''}</div>
+    </div>
+    <div style="text-align:left;font-size:12px;color:#555">תאריך: ${formatD(todayStr())}<br>סה"כ רשומות: ${ds.length}</div>
+  </div>`;
+}
+function repRecordHTML(d,i){
+  const photos=(d.photos||[]).map(ph=>`<span style="display:inline-block;margin:3px;text-align:center;vertical-align:top"><img src="${ph.data}" style="width:148px;height:111px;object-fit:cover;border:1px solid #ccc;border-radius:6px"><br><span style="font-size:10px;color:#666">${ph.kind==='after'?'אחרי':'לפני'}</span></span>`).join('');
+  return `<div style="border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="font-weight:800;font-size:15px;flex:1"><span style="display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;background:#1b2a4a;color:#fff;border-radius:6px;margin-left:6px;font-size:12px">${i+1}</span>${esc(d.desc)||''}</div>
+      <span style="color:#fff;background:${STCOLOR[d.status]||'#777'};font-weight:700;padding:3px 10px;border-radius:6px;font-size:12px;white-space:nowrap">${statusOf(d.status).label}</span>
+    </div>
+    <div style="font-size:12px;color:#555;margin-top:5px">${typeOf(d.type).icon} ${typeOf(d.type).label} · ${esc(d.category||'')}${d.area?' · '+esc(d.area):''}${d.location?' · '+esc(d.location):''}${d.type==='defect'?' · חומרה: '+esc(d.severity||''):''}${d.due?' · יעד: '+formatD(d.due):''}</div>
+    ${d.contractor?`<div style="font-size:12px;color:#555">👷 ${esc(d.contractor)}${d.phone?' · '+esc(d.phone):''}</div>`:''}
+    ${d.notes?`<div style="font-size:12px;color:#333;margin-top:4px">${esc(d.notes)}</div>`:''}
+    ${d.gps?`<div style="font-size:11px;color:#2d6cdf">📍 ${d.gps.lat}, ${d.gps.lng}</div>`:''}
+    ${d.voice?`<div style="font-size:11px;color:#7b3fb0">🎤 הערה קולית מצורפת באפליקציה</div>`:''}
+    ${photos?`<div style="margin-top:6px">${photos}</div>`:''}
+  </div>`;
+}
+function repSignatureHTML(){
+  const inspector=document.getElementById('rep-inspector').value.trim(),sigImg=getSig();
+  return `<div style="margin-top:24px">
+    <div style="display:flex;justify-content:space-between;gap:30px">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:13px;color:#555;margin-bottom:4px">חתימת המפקח${inspector?' — '+esc(inspector):''}</div>
+        ${sigImg?`<img src="${sigImg}" style="height:58px">`:'<div style="height:58px"></div>'}
+        <div style="border-top:1px solid #111;margin-top:6px"></div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:13px;color:#555;margin-bottom:4px">חתימת הקבלן / האחראי</div>
+        <div style="height:58px"></div><div style="border-top:1px solid #111;margin-top:6px"></div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#999;margin-top:16px">הופק באפליקציית פיקוח אתר · ${formatD(todayStr())}</div>
+  </div>`;
+}
+// single tall container — used for the WhatsApp image share
+function buildReport(){
+  const ds=reportRecords();
+  return `<div style="direction:rtl;font-family:'Segoe UI',Arial,sans-serif;color:#111">${repHeaderHTML()}${ds.map((d,i)=>repRecordHTML(d,i)).join('')}${repSignatureHTML()}</div>`;
+}
+// paginated into A4 pages so no record is split across a page — used for the PDF
+function buildReportPages(){
+  const PAGEW=820,PAGEH=Math.round(820*297/210),PAD=30;
+  const host=document.getElementById('printArea');host.innerHTML='';
+  const ds=reportRecords();
+  const blocks=[repHeaderHTML()].concat(ds.map((d,i)=>repRecordHTML(d,i))).concat([repSignatureHTML()]);
+  const newPage=()=>{const pg=document.createElement('div');pg.style.cssText=`width:${PAGEW}px;min-height:${PAGEH}px;background:#fff;color:#111;padding:${PAD}px;box-sizing:border-box;direction:rtl;font-family:'Segoe UI',Arial,sans-serif`;host.appendChild(pg);return pg;};
+  let page=newPage();
+  blocks.forEach(html=>{
+    const tmp=document.createElement('div');tmp.innerHTML=html;const block=tmp.firstElementChild;
+    page.appendChild(block);
+    if(page.offsetHeight>PAGEH && page.childElementCount>1){page.removeChild(block);page=newPage();page.appendChild(block);}
+  });
+  return Array.from(host.children);
+}
+async function doPrint(){
+  if(!window.jspdf||typeof html2canvas==='undefined'){toast('ספריית ה-PDF לא נטענה');return;}
+  if(!reportRecords().length){toast('אין רשומות לדוח');return;}
+  saveBranding();
+  toast('מכין PDF…');
+  try{
+    const pages=buildReportPages();
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    for(let i=0;i<pages.length;i++){
+      const canvas=await html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff'});
+      const imgData=canvas.toDataURL('image/jpeg',0.92);
+      let w=pw,h=canvas.height*pw/canvas.width;
+      if(h>ph){h=ph;w=canvas.width*h/canvas.height;}
+      if(i)pdf.addPage();
+      pdf.addImage(imgData,'JPEG',(pw-w)/2,0,w,h);
+    }
+    const p=curProject();pdf.save(`דוח_פיקוח_${p?p.name:''}_${todayStr()}.pdf`);
+    document.getElementById('printArea').innerHTML='';
+    closeReport();
+  }catch(e){toast('יצירת ה-PDF נכשלה');}
+}
+function normPhone(p){let d=(p||'').replace(/\D/g,'');if(!d)return'';if(d[0]==='0')d='972'+d.slice(1);return d;}
+function waText(){
+  const p=curProject(),ds=reportRecords(),con=document.getElementById('rep-contractor').value;
+  let t=`*דוח פיקוח — ${p.name}*\n${formatD(todayStr())}\n`;
+  if(con!=='all')t+=`לכבוד ${con}\n`;
+  t+=`סה"כ ${ds.length} רשומות:\n`;
+  ds.slice(0,12).forEach((d,i)=>{t+=`${i+1}. ${d.desc||''} — ${statusOf(d.status).label}${d.area?' ('+d.area+')':''}\n`;});
+  if(ds.length>12)t+=`…ועוד ${ds.length-12}\n`;
+  return t;
+}
+async function doShare(){
+  saveBranding();
+  const phone=normPhone(document.getElementById('rep-phone').value);
+  const txt=waText();
+  document.getElementById('printArea').innerHTML=buildReport();
+  toast('מכין תמונת דוח…');
+  try{
+    const canvas=await html2canvas(document.getElementById('printArea'),{scale:2,backgroundColor:'#ffffff',windowWidth:820});
+    canvas.toBlob(async blob=>{
+      const file=new File([blob],`דוח_פיקוח_${todayStr()}.png`,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'דוח פיקוח',text:txt});closeReport();}
+        catch(e){if(e&&e.name!=='AbortError')fallbackShare(blob,phone,txt);}
+      }else fallbackShare(blob,phone,txt);
+    },'image/png');
+  }catch(e){toast('יצירת התמונה נכשלה');}
+}
+function fallbackShare(blob,phone,txt){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`דוח_פיקוח_${todayStr()}.png`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  const wa=phone?`https://wa.me/${phone}?text=${encodeURIComponent(txt)}`:`https://wa.me/?text=${encodeURIComponent(txt)}`;
+  setTimeout(()=>window.open(wa,'_blank'),400);
+  toast('תמונת הדוח נשמרה — צרף אותה בצ׳אט שנפתח');
+}
+
+/* markup canvas pointer bindings */
+(function(){const c=document.getElementById('mkCanvas');c.addEventListener('pointerdown',mkDown);c.addEventListener('pointermove',mkMove);window.addEventListener('pointerup',e=>{if(document.getElementById('markupOverlay').classList.contains('show'))mkUp(e);});})();
+
+/* hidden import input */
+const imp=document.createElement('input');imp.type='file';imp.accept='application/json,.json';imp.id='importFile';imp.style.display='none';imp.onchange=function(){importData(this);};document.body.appendChild(imp);
+
+/* service worker */
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+/* auto-sync: when connectivity returns, and shortly after load */
+window.addEventListener('online',()=>syncNow(false));
+if(syncUrl)setTimeout(()=>syncNow(false),1800);
+
+initForm();render();
+checkReminders();
+</script>
+</body>
+</html>
