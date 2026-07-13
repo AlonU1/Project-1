@@ -216,6 +216,42 @@ function buildEvm(baseline, current, invoices, discountPct, baseByWbs, statusDat
   };
 }
 
+/* ================= smart alerts (shared by header + home dashboard) ================= */
+function buildAlerts({ evm, endDelta, coPending }) {
+  const out = [];
+  if (evm.SPI != null && evm.SPI < 0.9) out.push({ t: "פיגור לו\"ז מהותי", tone: "bad", body: `SPI ${evm.SPI.toFixed(2)} — קצב הביצוע נמוך משמעותית מהמתוכנן.` });
+  else if (evm.SPI != null && evm.SPI < 0.97) out.push({ t: "פיגור לו\"ז", tone: "warn", body: `SPI ${evm.SPI.toFixed(2)} — הביצוע מעט מאחורי התכנון.` });
+  if (evm.CPI != null && evm.CPI < 0.9) out.push({ t: "חריגת עלות מהותית", tone: "bad", body: `CPI ${evm.CPI.toFixed(2)} — העלות בפועל גבוהה משמעותית מהערך שהופק.` });
+  else if (evm.CPI != null && evm.CPI < 0.97) out.push({ t: "חריגת עלות", tone: "warn", body: `CPI ${evm.CPI.toFixed(2)} — העלות מעט מעל הערך שהופק.` });
+  if (evm.AC > 0 && evm.unpaid / evm.AC > 0.15) out.push({ t: "פער תשלומים", tone: "warn", body: `${shekel(evm.unpaid)} מאושרים וטרם שולמו (${Math.round((evm.unpaid / evm.AC) * 100)}% מהמאושר).` });
+  if (endDelta != null && endDelta > 14) out.push({ t: "סטיית סיום", tone: endDelta > 30 ? "bad" : "warn", body: `סיום הפרויקט צפוי להתאחר ב-${endDelta} ימים מול הבסיס.` });
+  if (coPending > 0) out.push({ t: "פקודות שינוי ממתינות", tone: "info", body: `${shekel(coPending)} בפקודות שינוי שהוגשו וטרם אושרו.` });
+  return out;
+}
+
+/* ================= lightweight per-project summary for the home dashboard ================= */
+function summarizePayload(d) {
+  const baseline = Array.isArray(d.baseline) ? d.baseline : [];
+  const current = Array.isArray(d.current) ? d.current : [];
+  const invoices = Array.isArray(d.invoices) ? d.invoices : [];
+  const discount = typeof d.discount === "number" ? d.discount : 0;
+  if (!baseline.length && !current.length) return { empty: true, alerts: [] };
+  const baseByWbs = {};
+  baseline.forEach((b) => { if (b.wbs) baseByWbs[b.wbs] = b; });
+  const dated = invoices.filter((i) => toDate(i.date)).sort((a, b) => toDate(a.date) - toDate(b.date));
+  const statusDate = d.statusISO ? toDate(d.statusISO) : (dated.length ? toDate(dated.at(-1).date) : new Date());
+  const evm = buildEvm(baseline, current, invoices, discount, baseByWbs, statusDate);
+  const endOf = (list) => { const fs = list.map((a) => toDate(a.finish)).filter(Boolean); return fs.length ? new Date(Math.max(...fs)) : null; };
+  const bEnd = endOf(baseline), cEnd = endOf(current);
+  const endDelta = bEnd && cEnd ? Math.round((cEnd - bEnd) / DAY) : null;
+  const coPending = (Array.isArray(d.changeOrders) ? d.changeOrders : []).filter((c) => c.status === "submitted").reduce((s, c) => s + (Number(c.amount) || 0), 0);
+  const alerts = buildAlerts({ evm, endDelta, coPending });
+  return {
+    empty: false, pct: evm.pctComplete, SPI: evm.SPI, CPI: evm.CPI, BAC: evm.BAC, AC: evm.AC,
+    unpaid: evm.unpaid, endDelta, endDate: cEnd, statusDate, alerts, activities: current.length,
+  };
+}
+
 /* ================= shared UI ================= */
 const Kpi = ({ label, value, sub, accent }) => (
   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "13px 15px", flex: "1 1 145px", minWidth: 145 }}>
@@ -663,15 +699,17 @@ function Narrative({ items, plain }) {
   );
 }
 
-/* ================= logo ================= */
+/* ================= logo — triangle · rectangles · circle ================= */
 function Logo({ size = 38 }) {
+  const w = Math.round(size * 1.33);
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" style={{ flexShrink: 0, display: "block" }} aria-label="לוגו">
-      <rect x="2" y="2" width="60" height="60" rx="14" fill={C.ink} />
-      <rect x="13" y="34" width="9" height="16" rx="2" fill="#1D6FA3" />
-      <rect x="27" y="26" width="9" height="24" rx="2" fill="#E0A020" />
-      <rect x="41" y="18" width="9" height="32" rx="2" fill="#2F8F63" />
-      <path d="M13 26 L30 16 L40 21 L51 11" stroke="#fff" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={w} height={size} viewBox="0 0 120 90" style={{ flexShrink: 0, display: "block" }} aria-label="לוגו">
+      <g stroke="#0D2A56" strokeWidth="2.6" strokeLinejoin="round">
+        <path d="M44.5 1 L0.8 89 L87.5 89 Z" fill="#E9EAEC" fillOpacity="0.85" />
+        <rect x="44.5" y="1" width="30" height="88" fill="#E9EAEC" fillOpacity="0.7" />
+        <rect x="74.5" y="44.5" width="44.5" height="44.5" fill="#E9EAEC" fillOpacity="0.7" />
+        <circle cx="74.5" cy="66.5" r="22.3" fill="#DCDEE2" fillOpacity="0.75" />
+      </g>
     </svg>
   );
 }
@@ -989,6 +1027,8 @@ function aiErrorMessage(e) {
 
 /* ================= main ================= */
 function App() {
+  const [view, setView] = useState("home");            // "home" — כל הפרויקטים · "project" — פרויקט פעיל
+  const [summaries, setSummaries] = useState(null);    // תקצירי KPI לכל הפרויקטים (לדף הראשי)
   const [tab, setTab] = useState("base");
   const [dashView, setDashView] = useState("exec");
   const [aiKey, setAiKey] = useState(() => { try { return localStorage.getItem(AI_KEY_LS) || ""; } catch (e) { return ""; } });
@@ -1057,6 +1097,15 @@ function App() {
         applyPayload(payload); setProjects(idx); setProjectId(id);
       }
       loadedRef.current = true;
+      /* summaries for the home screen (the initial view) */
+      const rows = await Promise.all(idx.map(async (p) => {
+        try {
+          const r = await storage.get(PROJ_PREFIX + p.id);
+          const d = r?.value ? JSON.parse(r.value) : null;
+          return { id: p.id, name: p.name, ...(d ? summarizePayload(d) : { empty: true, alerts: [] }) };
+        } catch (e) { return { id: p.id, name: p.name, empty: true, alerts: [] }; }
+      }));
+      setSummaries(rows);
     })();
   }, []);
 
@@ -1087,6 +1136,28 @@ function App() {
     try { await storage.set(PROJ_PREFIX + projectId, JSON.stringify(currentPayload())); } catch (e) {}
   };
 
+  /* ---- home dashboard: load KPI summaries for every project ---- */
+  const loadSummaries = async (idx) => {
+    const rows = await Promise.all((idx || projects).map(async (p) => {
+      try {
+        const r = await storage.get(PROJ_PREFIX + p.id);
+        const d = r?.value ? JSON.parse(r.value) : null;
+        return { id: p.id, name: p.name, ...(d ? summarizePayload(d) : { empty: true, alerts: [] }) };
+      } catch (e) { return { id: p.id, name: p.name, empty: true, alerts: [] }; }
+    }));
+    setSummaries(rows);
+  };
+  const goHome = async () => {
+    await persistNow();
+    setSummaries(null);           // מציג "טוען…" במקום נתונים ישנים עד שהתקצירים מתרעננים
+    setView("home"); setAlertsOpen(false);
+    await loadSummaries();
+  };
+  const openProject = async (id) => {
+    await switchProject(id);
+    setView("project");
+  };
+
   const switchProject = async (id) => {
     if (!id || id === projectId) return;
     await persistNow();
@@ -1102,7 +1173,7 @@ function App() {
     const payload = emptyPayload();
     try { await storage.set(PROJ_PREFIX + id, JSON.stringify(payload)); } catch (e) {}
     setProjects((p) => [...p, { id, name }]);
-    applyPayload(payload); setProjectId(id); setTab("base");
+    applyPayload(payload); setProjectId(id); setTab("base"); setView("project");
   };
   const duplicateProject = async () => {
     const name = window.prompt("שם העותק:", projName + " (עותק)");
@@ -1134,6 +1205,30 @@ function App() {
   const resetAll = async () => {
     if (!window.confirm("לאפס את הפרויקט הנוכחי לנתוני ברירת המחדל?")) return;
     applyPayload(defaultPayload());
+  };
+
+  /* ---- project management from the home screen (by id) ---- */
+  const renameProjectById = (id) => {
+    const cur = projects.find((p) => p.id === id);
+    const name = window.prompt("שם הפרויקט:", cur?.name || "");
+    if (!name) return;
+    setProjects((p) => p.map((x) => (x.id === id ? { ...x, name } : x)));
+    setSummaries((s) => (s ? s.map((x) => (x.id === id ? { ...x, name } : x)) : s));
+  };
+  const deleteProjectById = async (id) => {
+    if (projects.length <= 1) { alert("לא ניתן למחוק את הפרויקט היחיד."); return; }
+    const cur = projects.find((p) => p.id === id);
+    if (!window.confirm(`למחוק את הפרויקט "${cur?.name}"? פעולה זו בלתי הפיכה.`)) return;
+    try { await storage.delete(PROJ_PREFIX + id); } catch (e) {}
+    const remaining = projects.filter((p) => p.id !== id);
+    setProjects(remaining);
+    setSummaries((s) => (s ? s.filter((x) => x.id !== id) : s));
+    if (id === projectId) {
+      const nid = remaining[0].id;
+      let payload = defaultPayload();
+      try { const r = await storage.get(PROJ_PREFIX + nid); if (r?.value) payload = JSON.parse(r.value); } catch (e) {}
+      applyPayload(payload); setProjectId(nid);
+    }
   };
 
   const baseModel = useMemo(() => buildModel(baseline, discount), [baseline, discount]);
@@ -1442,17 +1537,129 @@ function App() {
   const prevSnap = useMemo(() => snapshots.find((s) => s.dateISO !== isoOf(today)) || null, [snapshots]);
 
   /* ---- smart alerts ---- */
-  const alerts = useMemo(() => {
-    const out = [];
-    if (evm.SPI != null && evm.SPI < 0.9) out.push({ t: "פיגור לו\"ז מהותי", tone: "bad", body: `SPI ${evm.SPI.toFixed(2)} — קצב הביצוע נמוך משמעותית מהמתוכנן.` });
-    else if (evm.SPI != null && evm.SPI < 0.97) out.push({ t: "פיגור לו\"ז", tone: "warn", body: `SPI ${evm.SPI.toFixed(2)} — הביצוע מעט מאחורי התכנון.` });
-    if (evm.CPI != null && evm.CPI < 0.9) out.push({ t: "חריגת עלות מהותית", tone: "bad", body: `CPI ${evm.CPI.toFixed(2)} — העלות בפועל גבוהה משמעותית מהערך שהופק.` });
-    else if (evm.CPI != null && evm.CPI < 0.97) out.push({ t: "חריגת עלות", tone: "warn", body: `CPI ${evm.CPI.toFixed(2)} — העלות מעט מעל הערך שהופק.` });
-    if (evm.AC > 0 && evm.unpaid / evm.AC > 0.15) out.push({ t: "פער תשלומים", tone: "warn", body: `${shekel(evm.unpaid)} מאושרים וטרם שולמו (${Math.round((evm.unpaid / evm.AC) * 100)}% מהמאושר).` });
-    if (endDelta != null && endDelta > 14) out.push({ t: "סטיית סיום", tone: endDelta > 30 ? "bad" : "warn", body: `סיום הפרויקט צפוי להתאחר ב-${endDelta} ימים מול הבסיס.` });
-    if (coPending > 0) out.push({ t: "פקודות שינוי ממתינות", tone: "info", body: `${shekel(coPending)} בפקודות שינוי שהוגשו וטרם אושרו.` });
-    return out;
-  }, [evm, endDelta, coPending]);
+  const alerts = useMemo(() => buildAlerts({ evm, endDelta, coPending }), [evm, endDelta, coPending]);
+
+  /* ================= HOME — all-projects dashboard ================= */
+  if (view === "home") {
+    const loaded = summaries || [];
+    const active = loaded.filter((s) => !s.empty);
+    const totBAC = active.reduce((s, x) => s + (x.BAC || 0), 0);
+    const totAC = active.reduce((s, x) => s + (x.AC || 0), 0);
+    const totUnpaid = active.reduce((s, x) => s + (x.unpaid || 0), 0);
+    const totAlerts = loaded.reduce((s, x) => s + (x.alerts?.length || 0), 0);
+    const avgPct = totBAC > 0 ? active.reduce((s, x) => s + (x.pct || 0) * (x.BAC || 0), 0) / totBAC : 0;
+    const dotOf = (s) => s.empty ? "#9AA7B2" : s.alerts.some((a) => a.tone === "bad") ? C.red : s.alerts.some((a) => a.tone === "warn") ? "#E0A020" : C.green;
+    return (
+      <div dir="rtl" style={{ fontFamily: font, background: C.bg, minHeight: "100vh", color: C.ink, padding: "26px 30px" }}>
+        <style>{`button:hover { filter: brightness(0.96); }`}</style>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+
+          {/* header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 26 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <Logo size={52} />
+              <div>
+                <div style={{ fontSize: 27, fontWeight: 800, letterSpacing: -0.5 }}>בקרה תקציבית</div>
+                <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>
+                  ניהול פרויקטי בנייה ותשתית
+                  <span title={usingCloud ? "הנתונים נשמרים בענן ומשותפים בין מכשירים" : "הנתונים נשמרים בדפדפן זה בלבד"}
+                    style={{ marginInlineStart: 10, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: usingCloud ? "#EEF7F1" : "#F0F4F8", color: usingCloud ? C.green : C.muted, border: `1px solid ${usingCloud ? "#CDE8D8" : C.border}` }}>
+                    {usingCloud ? "☁ ענן" : "💾 מקומי"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button onClick={createProject} style={{ ...btn, background: C.ink, color: "#fff", border: "none", fontSize: 14, padding: "11px 20px" }}>＋ פרויקט חדש</button>
+          </div>
+
+          {/* aggregate KPIs */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 26 }}>
+            <Kpi label="פרויקטים" value={projects.length} sub={active.length < projects.length ? `${projects.length - active.length} ללא נתונים` : "כולם פעילים"} />
+            <Kpi label="סה״כ תקציב (BAC)" value={shekelShort(totBAC)} />
+            <Kpi label="מאושר מצטבר" value={shekelShort(totAC)} accent={C.green} sub={totUnpaid > 1000 ? `מתוכו טרם שולם ${shekelShort(totUnpaid)}` : ""} />
+            <Kpi label="השלמה משוקללת" value={`${avgPct.toFixed(0)}%`} sub="לפי משקל תקציב" />
+            <Kpi label="התראות פעילות" value={totAlerts} accent={totAlerts > 0 ? C.red : C.green} sub={totAlerts === 0 ? "הכל תקין ✓" : "פרוסות על הכרטיסים"} />
+          </div>
+
+          {/* project cards */}
+          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>הפרויקטים שלי</div>
+          {summaries === null ? (
+            <div style={{ color: C.muted, fontSize: 14, padding: 30, textAlign: "center" }}>⏳ טוען נתוני פרויקטים…</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))", gap: 14 }}>
+              {loaded.map((s) => (
+                <div key={s.id} onClick={() => openProject(s.id)} style={{
+                  background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px",
+                  cursor: "pointer", boxShadow: "0 1px 4px rgba(18,41,59,.05)", transition: "box-shadow .15s",
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 6px 18px rgba(18,41,59,.13)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(18,41,59,.05)"; }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
+                    <span style={{ width: 11, height: 11, borderRadius: "50%", background: dotOf(s), flexShrink: 0 }} />
+                    <span style={{ fontSize: 15.5, fontWeight: 800, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</span>
+                    <button title="שנה שם" onClick={(e) => { e.stopPropagation(); renameProjectById(s.id); }} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 13, color: C.muted }}>✎</button>
+                    <button title="מחק" onClick={(e) => { e.stopPropagation(); deleteProjectById(s.id); }} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 14, color: C.red }}>🗑</button>
+                  </div>
+                  {s.empty ? (
+                    <div style={{ fontSize: 12.5, color: C.muted, padding: "14px 0 10px" }}>אין נתונים עדיין — לחץ כדי להתחיל להזין תכנית.</div>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
+                        <div style={{ flex: 1, height: 14, background: "#EDF1F5", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+                          <div style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: `${clamp01((s.pct || 0) / 100) * 100}%`, background: dotOf(s), borderRadius: 8 }} />
+                        </div>
+                        <b style={{ fontSize: 14.5 }}>{Math.round(s.pct || 0)}%</b>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                        {[
+                          ["SPI", ratio(s.SPI), s.SPI == null ? null : s.SPI >= 0.97],
+                          ["CPI", ratio(s.CPI), s.CPI == null ? null : s.CPI >= 0.97],
+                          ["תקציב", shekelShort(s.BAC), null],
+                          ["מאושר", shekelShort(s.AC), null],
+                          ["סיום", s.endDate ? fmtDate(s.endDate) : "—", null],
+                        ].map(([k, v, good]) => (
+                          <span key={k} style={{ fontSize: 11, background: "#F5F7FA", border: `1px solid ${C.border}`, borderRadius: 7, padding: "3px 8px" }}>
+                            <span style={{ color: C.muted }}>{k} </span>
+                            <b style={{ color: good == null ? C.ink : good ? C.green : C.red }}>{v}</b>
+                          </span>
+                        ))}
+                      </div>
+                      {s.alerts.length === 0 ? (
+                        <div style={{ fontSize: 11.5, color: C.green, fontWeight: 600 }}>✓ אין התראות</div>
+                      ) : (
+                        <div>
+                          {s.alerts.slice(0, 2).map((a, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, marginBottom: 3, color: a.tone === "bad" ? C.red : a.tone === "warn" ? "#B26A00" : C.muted }}>
+                              <span>{a.tone === "bad" ? "⛔" : a.tone === "warn" ? "⚠" : "ℹ"}</span>
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><b>{a.t}</b> — {a.body}</span>
+                            </div>
+                          ))}
+                          {s.alerts.length > 2 && <div style={{ fontSize: 11, color: C.muted }}>+ עוד {s.alerts.length - 2} התראות</div>}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {/* new-project card */}
+              <div onClick={createProject} style={{
+                border: `2px dashed ${C.border}`, borderRadius: 14, padding: "16px 18px", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6, minHeight: 150, color: C.muted,
+              }}>
+                <span style={{ fontSize: 30, lineHeight: 1 }}>＋</span>
+                <span style={{ fontSize: 13.5, fontWeight: 700 }}>פרויקט חדש</span>
+              </div>
+            </div>
+          )}
+
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 26, lineHeight: 1.6 }}>
+            לחיצה על כרטיס פותחת את הפרויקט. הנתונים והמדדים מחושבים מהתכנית המתעדכנת והחשבונות של כל פרויקט; ההתראות זהות לאלה שבתוך הפרויקט.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div dir="rtl" style={{ fontFamily: font, background: C.bg, minHeight: "100vh", color: C.ink, padding: "20px 22px" }}>
@@ -1524,6 +1731,7 @@ function App() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <button style={{ ...btn, fontWeight: 700 }} onClick={goHome} title="חזרה לדף הראשי — כל הפרויקטים">🏠 דף ראשי</button>
           <div style={{ display: "flex", alignItems: "center", gap: 5, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: "4px 8px" }}>
             <span style={{ fontSize: 12, color: C.muted }}>פרויקט</span>
             <select value={projectId || ""} onChange={(e) => switchProject(e.target.value)} style={{ ...cell, fontFamily: font, cursor: "pointer", maxWidth: 200 }}>

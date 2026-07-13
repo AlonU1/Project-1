@@ -3,7 +3,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 const URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// שני שמות נתמכים — VITE_SUPABASE_ANON_KEY (הקאנוני) או VITE_SUPABASE_KEY (כפי שמוגדר ב-Vercel)
+const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_KEY;
 const supa = URL && ANON ? createClient(URL, ANON) : null;
 
 const local = {
@@ -14,19 +15,28 @@ const local = {
 
 const cloud = {
   async get(key) {
-    const { data, error } = await supa.from("kv").select("value").eq("key", key).maybeSingle();
-    if (error) { console.warn("supabase get:", error.message); return local.get(key); }
-    return data ? { key, value: data.value } : null;
+    try {
+      const { data, error } = await supa.from("kv").select("value").eq("key", key).maybeSingle();
+      if (error) { console.warn("supabase get:", error.message); return local.get(key); }
+      return data ? { key, value: data.value } : null;
+    } catch (e) { console.warn("supabase get:", e?.message); return local.get(key); }
   },
   async set(key, value) {
-    const { error } = await supa.from("kv").upsert({ key, value, updated_at: new Date().toISOString() });
-    if (error) { console.warn("supabase set:", error.message); return local.set(key, value); }
-    return { key, value };
+    try {
+      const { error } = await supa.from("kv").upsert({ key, value, updated_at: new Date().toISOString() });
+      if (error) { console.warn("supabase set:", error.message); return local.set(key, value); }
+      /* מראה מקומית — כך שקריאה מיידית תראה את הערך גם אם הענן איטי */
+      try { localStorage.setItem(key, value); } catch (e) {}
+      return { key, value };
+    } catch (e) { console.warn("supabase set:", e?.message); return local.set(key, value); }
   },
   async delete(key) {
-    const { error } = await supa.from("kv").delete().eq("key", key);
-    if (error) { console.warn("supabase delete:", error.message); return local.delete(key); }
-    return { key, deleted: true };
+    try {
+      const { error } = await supa.from("kv").delete().eq("key", key);
+      try { localStorage.removeItem(key); } catch (e) {}
+      if (error) { console.warn("supabase delete:", error.message); return local.delete(key); }
+      return { key, deleted: true };
+    } catch (e) { console.warn("supabase delete:", e?.message); return local.delete(key); }
   },
 };
 
