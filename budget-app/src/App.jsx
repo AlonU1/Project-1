@@ -640,21 +640,25 @@ function buildNarrative({ evm, endDelta, retention, invoices, baseAfter, curAfte
 
 const TONE_BG = { good: "#EEF7F1", bad: "#FBEEEC", warn: "#FDF6E9", info: "#F0F4F8" };
 const TONE_BAR = { good: C.green, bad: C.red, warn: C.amber, info: C.baseGray };
-function Narrative({ items }) {
+function Narrative({ items, plain }) {
+  const body = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {items.map((it, i) => (
+        <div key={i} style={{ display: "flex", gap: 10, background: TONE_BG[it.tone], borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ width: 4, borderRadius: 3, background: TONE_BAR[it.tone], flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{it.t}</div>
+            <div style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.7, whiteSpace: "pre-line" }}>{it.body}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+  if (plain) return body;
   return (
     <div style={{ ...panel, padding: "16px 16px 8px" }}>
       <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>ניתוח וממצאים</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {items.map((it, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, background: TONE_BG[it.tone], borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ width: 4, borderRadius: 3, background: TONE_BAR[it.tone], flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{it.t}</div>
-              <div style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.7, whiteSpace: "pre-line" }}>{it.body}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {body}
     </div>
   );
 }
@@ -808,6 +812,90 @@ function Md({ text }) {
   return <div style={{ fontSize: 13.5, lineHeight: 1.75 }}>{out}</div>;
 }
 
+/* ================= report building blocks ================= */
+/* numbered report section with a heading rule */
+function RSec({ n, title, children, noBreak }) {
+  return (
+    <div className={noBreak ? undefined : "avoid-break"} style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, borderBottom: `2px solid ${C.ink}`, paddingBottom: 6, marginBottom: 12 }}>
+        <span style={{ background: C.ink, color: "#fff", borderRadius: 6, fontSize: 11.5, fontWeight: 800, padding: "2px 9px", lineHeight: 1.6 }}>{n}</span>
+        <span style={{ fontSize: 15.5, fontWeight: 800 }}>{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* chapter completion — colored bar + planned tick + numbers */
+function ChapterProgress({ rows }) {
+  const totB = rows.reduce((s, r) => s + r.budget, 0);
+  const totE = rows.reduce((s, r) => s + r.earned, 0);
+  const totP = rows.reduce((s, r) => s + (r.budget * (r.plannedPct || 0)) / 100, 0);
+  const Row = ({ name, sub, color, pct, plannedPct, earned, budget, bold }) => {
+    const behind = plannedPct != null && pct + 5 < plannedPct;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: bold ? 0 : 8 }}>
+        <div style={{ width: 200, fontSize: 12.5, fontWeight: bold ? 800 : 600, lineHeight: 1.3 }}>
+          {name}
+          {sub && <div style={{ color: C.muted, fontWeight: 400, fontSize: 10.5 }}>{sub}</div>}
+        </div>
+        <div style={{ flex: 1, position: "relative", height: bold ? 20 : 15, background: "#EDF1F5", borderRadius: 9, overflow: "hidden" }}>
+          <div style={{ position: "absolute", insetInlineStart: 0, top: 0, bottom: 0, width: `${clamp01(pct / 100) * 100}%`, background: color, borderRadius: 9, opacity: bold ? 1 : 0.9 }} />
+          {plannedPct != null && plannedPct > 0 && plannedPct < 100 && (
+            <div title={`מתוכנן: ${Math.round(plannedPct)}%`} style={{ position: "absolute", insetInlineStart: `${clamp01(plannedPct / 100) * 100}%`, top: -1, bottom: -1, width: 2.5, background: C.ink }} />
+          )}
+        </div>
+        <div style={{ width: 48, fontSize: bold ? 15 : 13.5, fontWeight: 800, textAlign: "center", color: behind ? C.red : C.ink }}>{Math.round(pct)}%</div>
+        <div style={{ width: 140, fontSize: 10.5, color: C.muted, whiteSpace: "nowrap", textAlign: "left" }} dir="ltr">{shekelShort(earned)} / {shekelShort(budget)}</div>
+      </div>
+    );
+  };
+  return (
+    <div>
+      {rows.map((r) => (
+        <Row key={r.key} name={r.name} sub={r.count != null ? `${r.done}/${r.count} פעילויות הושלמו` : null}
+          color={r.color} pct={r.pct} plannedPct={r.plannedPct} earned={r.earned} budget={r.budget} />
+      ))}
+      <div style={{ borderTop: `1.5px solid ${C.ink}`, paddingTop: 8, marginTop: 4 }}>
+        <Row name="סה״כ פרויקט" color={C.ink} pct={totB > 0 ? (totE / totB) * 100 : 0} plannedPct={totB > 0 ? (totP / totB) * 100 : null} earned={totE} budget={totB} bold />
+      </div>
+      <div style={{ fontSize: 10.5, color: C.muted, marginTop: 8 }}>הפס הצבעוני — ביצוע בפועל (משוקלל תקציב) · הקו האנכי הכהה — הביצוע המתוכנן לתאריך הסטטוס. אחוז אדום = פיגור של יותר מ-5% מול המתוכנן.</div>
+    </div>
+  );
+}
+
+/* delta chips — "what changed since the previous report" */
+function DeltaChips({ prev, cur }) {
+  const items = [];
+  const add = (label, dv, fmt, goodWhenUp = true, suffix = "") => {
+    if (dv == null || isNaN(dv) || Math.abs(dv) < 1e-9) return;
+    const up = dv > 0;
+    const good = goodWhenUp ? up : !up;
+    items.push(
+      <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: 5, border: `1px solid ${C.border}`, borderRadius: 20, padding: "4px 11px", fontSize: 12, background: "#fff" }}>
+        <span style={{ color: C.muted }}>{label}</span>
+        <b style={{ color: good ? C.green : C.red }}>{up ? "▲" : "▼"} {fmt(Math.abs(dv))}{suffix}</b>
+      </span>
+    );
+  };
+  add("השלמה", (cur.pct ?? 0) - (prev.pct ?? 0), (v) => v.toFixed(1), true, " נק׳");
+  add("SPI", (cur.SPI ?? 0) - (prev.SPI ?? 0), (v) => v.toFixed(2), true);
+  add("CPI", (cur.CPI ?? 0) - (prev.CPI ?? 0), (v) => v.toFixed(2), true);
+  add("מאושר מצטבר", (cur.AC ?? 0) - (prev.AC ?? 0), shekelShort, true);
+  add("חריגים", (cur.extras ?? 0) - (prev.extras ?? 0), shekelShort, false);
+  add("סטיית סיום", (cur.endDelta ?? 0) - (prev.endDelta ?? 0), (v) => Math.round(v), false, " ימים");
+  if (!items.length) return <div style={{ fontSize: 12.5, color: C.muted }}>אין שינוי במדדים העיקריים מאז תמונת המצב הקודמת.</div>;
+  return <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{items}</div>;
+}
+
+/* change-order status meta */
+const CO_STATUS = [
+  { id: "draft", label: "טיוטה", color: "#8A99A8", bg: "#F0F4F8" },
+  { id: "submitted", label: "הוגש", color: "#B26A00", bg: "#FDF6E9" },
+  { id: "approved", label: "מאושר", color: "#2F8F63", bg: "#EEF7F1" },
+  { id: "rejected", label: "נדחה", color: "#C0392B", bg: "#FBEEEC" },
+];
+
 /* ================= extra rule-based insights (beyond the narrative) ================= */
 function buildInsights({ evm, curModel, invoices, retention, current, baseByWbs, discount, statusDate }) {
   const out = [];
@@ -905,10 +993,12 @@ function App() {
   const [dashView, setDashView] = useState("exec");
   const [aiKey, setAiKey] = useState(() => { try { return localStorage.getItem(AI_KEY_LS) || ""; } catch (e) { return ""; } });
   const [aiModel, setAiModel] = useState(() => { try { return localStorage.getItem(AI_MODEL_LS) || AI_MODELS[0].id; } catch (e) { return AI_MODELS[0].id; } });
-  const [aiText, setAiText] = useState("");
+  const [aiHistory, setAiHistory] = useState([]);   // ניתוחי AI שמורים — נשמרים עם הפרויקט (ענן/מקומי)
+  const [aiViewId, setAiViewId] = useState(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiErr, setAiErr] = useState("");
   const [aiInReport, setAiInReport] = useState(true);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [baseline, setBaseline] = useState(BASE_SEED);
   const [current, setCurrent] = useState(CUR_SEED);
   const [invoices, setInvoices] = useState(INV_SEED);
@@ -916,6 +1006,8 @@ function App() {
   const [discount, setDiscount] = useState(11.11);
   const [retention, setRetention] = useState(5);
   const [statusISO, setStatusISO] = useState("");
+  const [changeOrders, setChangeOrders] = useState([]);   // יומן חריגים / פקודות שינוי
+  const [snapshots, setSnapshots] = useState([]);          // תמונות מצב חודשיות להשוואה בין דוחות
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState(null);
   const [saveState, setSaveState] = useState("");
@@ -927,8 +1019,8 @@ function App() {
   useEffect(() => { try { localStorage.setItem(AI_MODEL_LS, aiModel); } catch (e) {} }, [aiModel]);
 
   /* ---- payload helpers ---- */
-  const defaultPayload = () => ({ baseline: BASE_SEED, current: CUR_SEED, invoices: INV_SEED, discount: 11.11, retention: 5, locked: true, statusISO: "" });
-  const emptyPayload = () => ({ baseline: [], current: [], invoices: [], discount: 11.11, retention: 5, locked: false, statusISO: "" });
+  const defaultPayload = () => ({ baseline: BASE_SEED, current: CUR_SEED, invoices: INV_SEED, discount: 11.11, retention: 5, locked: true, statusISO: "", aiHistory: [], changeOrders: [], snapshots: [] });
+  const emptyPayload = () => ({ baseline: [], current: [], invoices: [], discount: 11.11, retention: 5, locked: false, statusISO: "", aiHistory: [], changeOrders: [], snapshots: [] });
   const applyPayload = (d) => {
     setBaseline(Array.isArray(d.baseline) ? d.baseline : BASE_SEED);
     setCurrent(Array.isArray(d.current) ? d.current : CUR_SEED);
@@ -937,8 +1029,12 @@ function App() {
     setRetention(typeof d.retention === "number" ? d.retention : 5);
     setLocked(typeof d.locked === "boolean" ? d.locked : true);
     setStatusISO(typeof d.statusISO === "string" ? d.statusISO : "");
+    setAiHistory(Array.isArray(d.aiHistory) ? d.aiHistory : []);
+    setChangeOrders(Array.isArray(d.changeOrders) ? d.changeOrders : []);
+    setSnapshots(Array.isArray(d.snapshots) ? d.snapshots : []);
+    setAiViewId(null);
   };
-  const currentPayload = () => ({ baseline, current, invoices, discount, retention, locked, statusISO });
+  const currentPayload = () => ({ baseline, current, invoices, discount, retention, locked, statusISO, aiHistory, changeOrders, snapshots });
 
   /* ---- load projects index + active project (with one-time legacy migration) ---- */
   useEffect(() => {
@@ -975,7 +1071,7 @@ function App() {
       } catch (e) { setSaveState("שמירה נכשלה"); }
     }, 700);
     return () => clearTimeout(t);
-  }, [projectId, baseline, current, invoices, discount, retention, locked, statusISO]);
+  }, [projectId, baseline, current, invoices, discount, retention, locked, statusISO, aiHistory, changeOrders, snapshots]);
 
   /* ---- persist project index whenever it changes ---- */
   useEffect(() => {
@@ -996,7 +1092,7 @@ function App() {
     await persistNow();
     let payload = defaultPayload();
     try { const r = await storage.get(PROJ_PREFIX + id); if (r?.value) payload = JSON.parse(r.value); } catch (e) {}
-    applyPayload(payload); setProjectId(id); setTab("base"); setAiText(""); setAiErr("");
+    applyPayload(payload); setProjectId(id); setTab("base"); setAiErr("");
   };
   const createProject = async () => {
     const name = window.prompt("שם הפרויקט החדש:", "פרויקט חדש");
@@ -1236,8 +1332,28 @@ function App() {
     const acts = current.filter((a) => metaOf(a.wbs).key === g.key);
     const budget = acts.reduce((s, a) => s + (a.cost || 0) * disc, 0);
     const earned = acts.reduce((s, a) => s + (a.cost || 0) * disc * ((Number(a.progress) || 0) / 100), 0);
-    return { key: g.key, id: g.id, name: g.name, color: g.color, budget, earned, pct: budget > 0 ? (earned / budget) * 100 : 0 };
-  }).filter((r) => r.budget > 0), [current, disc]);
+    const planned = acts.reduce((s, a) => s + (a.cost || 0) * disc * plannedFrac(a.start, a.finish, statusDate), 0);
+    const done = acts.filter((a) => (Number(a.progress) || 0) >= 100).length;
+    return {
+      key: g.key, id: g.id, name: g.name, color: g.color, budget, earned, count: acts.length, done,
+      pct: budget > 0 ? (earned / budget) * 100 : 0,
+      plannedPct: budget > 0 ? (planned / budget) * 100 : 0,
+    };
+  }).filter((r) => r.budget > 0), [current, disc, statusDate]);
+
+  /* ---- monthly tracking: per-month planned vs actual, execution % ---- */
+  const monthlyTrack = useMemo(() => {
+    let pb = 0, pc = 0, pa = null, pp = null;
+    return compMonths.map((m) => {
+      const basePlan = (m.baseCum || 0) - pb; pb = m.baseCum || 0;
+      const curPlan = (m.curCum || 0) - pc; pc = m.curCum || 0;
+      const approved = m.actualCum != null ? m.actualCum - (pa ?? 0) : null; if (m.actualCum != null) pa = m.actualCum;
+      const paid = m.paidCum != null ? m.paidCum - (pp ?? 0) : null; if (m.paidCum != null) pp = m.paidCum;
+      const exec = approved != null && curPlan > 0 ? (approved / curPlan) * 100 : null;
+      const monthEnd = new Date(m.start.getFullYear(), m.start.getMonth() + 1, 0);
+      return { ...m, basePlan, curPlan, approved, paid, exec, isFuture: m.start > statusDate, isPast: monthEnd < statusDate };
+    });
+  }, [compMonths, statusDate]);
 
   const milestones = useMemo(() => current
     .filter((a) => a.duration === 0 && toDate(a.start))
@@ -1283,16 +1399,60 @@ function App() {
     };
   }, [projName, evm, curModel, baseModel, discount, retention, endDelta, critNames, slips, milestones, groupRows, invoices]);
 
+  /* the analysis currently on screen — the selected history entry, or the newest one */
+  const aiView = useMemo(() => aiHistory.find((h) => h.id === aiViewId) || aiHistory[0] || null, [aiHistory, aiViewId]);
+
   const generateAi = async () => {
     if (!aiKey.trim()) { setAiErr("הזן מפתח API כדי להפיק ניתוח."); return; }
     setAiBusy(true); setAiErr("");
     try {
       const text = await runAiAnalysis({ apiKey: aiKey.trim(), model: aiModel, payload: aiPayload });
-      setAiText(text);
+      const entry = { id: newId(), dateISO: isoOf(new Date()), statusDate: fmtDate(evm.statusDate), model: aiModel, text };
+      setAiHistory((h) => [entry, ...h].slice(0, 30));
+      setAiViewId(entry.id);
     } catch (e) {
       setAiErr(aiErrorMessage(e));
     } finally { setAiBusy(false); }
   };
+  const deleteAiEntry = (id) => {
+    if (!window.confirm("למחוק ניתוח זה מההיסטוריה?")) return;
+    setAiHistory((h) => h.filter((x) => x.id !== id));
+    if (aiViewId === id) setAiViewId(null);
+  };
+
+  /* ---- change orders (יומן חריגים / פקודות שינוי) ---- */
+  const addCO = () => setChangeOrders((p) => [...p, { id: newId(), date: isoOf(new Date()), name: "", amount: 0, status: "submitted", note: "" }]);
+  const setCO = (id, f, v) => setChangeOrders((p) => p.map((c) => (c.id === id ? { ...c, [f]: v } : c)));
+  const rmCO = (id) => setChangeOrders((p) => p.filter((c) => c.id !== id));
+  const coApproved = useMemo(() => changeOrders.filter((c) => c.status === "approved").reduce((s, c) => s + (Number(c.amount) || 0), 0), [changeOrders]);
+  const coPending = useMemo(() => changeOrders.filter((c) => c.status === "submitted").reduce((s, c) => s + (Number(c.amount) || 0), 0), [changeOrders]);
+
+  /* ---- monthly snapshots (השוואה בין דוחות) ---- */
+  const saveSnapshot = () => {
+    const s = {
+      id: newId(), dateISO: isoOf(new Date()), statusISO: isoOf(evm.statusDate),
+      pct: evm.pctComplete ?? null, SPI: evm.SPI ?? null, CPI: evm.CPI ?? null,
+      EV: evm.EV ?? null, AC: evm.AC ?? null, PV: evm.PV ?? null, EAC: evm.EAC ?? null,
+      endDelta: endDelta, extras: lastInv ? Number(lastInv.extras) || 0 : 0, paid: evm.paidCash ?? null,
+    };
+    setSnapshots((p) => [s, ...p.filter((x) => x.dateISO !== s.dateISO)].slice(0, 24));
+  };
+  const rmSnapshot = (id) => setSnapshots((p) => p.filter((s) => s.id !== id));
+  /* the snapshot we compare against — the most recent one not from today */
+  const prevSnap = useMemo(() => snapshots.find((s) => s.dateISO !== isoOf(today)) || null, [snapshots]);
+
+  /* ---- smart alerts ---- */
+  const alerts = useMemo(() => {
+    const out = [];
+    if (evm.SPI != null && evm.SPI < 0.9) out.push({ t: "פיגור לו\"ז מהותי", tone: "bad", body: `SPI ${evm.SPI.toFixed(2)} — קצב הביצוע נמוך משמעותית מהמתוכנן.` });
+    else if (evm.SPI != null && evm.SPI < 0.97) out.push({ t: "פיגור לו\"ז", tone: "warn", body: `SPI ${evm.SPI.toFixed(2)} — הביצוע מעט מאחורי התכנון.` });
+    if (evm.CPI != null && evm.CPI < 0.9) out.push({ t: "חריגת עלות מהותית", tone: "bad", body: `CPI ${evm.CPI.toFixed(2)} — העלות בפועל גבוהה משמעותית מהערך שהופק.` });
+    else if (evm.CPI != null && evm.CPI < 0.97) out.push({ t: "חריגת עלות", tone: "warn", body: `CPI ${evm.CPI.toFixed(2)} — העלות מעט מעל הערך שהופק.` });
+    if (evm.AC > 0 && evm.unpaid / evm.AC > 0.15) out.push({ t: "פער תשלומים", tone: "warn", body: `${shekel(evm.unpaid)} מאושרים וטרם שולמו (${Math.round((evm.unpaid / evm.AC) * 100)}% מהמאושר).` });
+    if (endDelta != null && endDelta > 14) out.push({ t: "סטיית סיום", tone: endDelta > 30 ? "bad" : "warn", body: `סיום הפרויקט צפוי להתאחר ב-${endDelta} ימים מול הבסיס.` });
+    if (coPending > 0) out.push({ t: "פקודות שינוי ממתינות", tone: "info", body: `${shekel(coPending)} בפקודות שינוי שהוגשו וטרם אושרו.` });
+    return out;
+  }, [evm, endDelta, coPending]);
 
   return (
     <div dir="rtl" style={{ fontFamily: font, background: C.bg, minHeight: "100vh", color: C.ink, padding: "20px 22px" }}>
@@ -1302,8 +1462,11 @@ function App() {
           body { background: #fff; }
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print-only { display: block !important; }
-          .tab-panel, table, .avoid-break { break-inside: avoid; }
+          .tab-panel, .avoid-break { break-inside: avoid; }
+          thead { display: table-header-group; }
+          tr { break-inside: avoid; }
           .page-break { break-before: page; }
+          .report-sheet { border: none !important; border-radius: 0 !important; padding: 0 !important; max-width: none !important; }
           @page { size: A4 ${tab === "report" ? "portrait" : "landscape"}; margin: 12mm; }
         }
         .print-only { display: none; }
@@ -1311,17 +1474,20 @@ function App() {
         button:hover { filter: brightness(0.96); }
       `}</style>
 
-      <div className="print-only" style={{ marginBottom: 14, borderBottom: `2px solid ${C.ink}`, paddingBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Logo size={34} />
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>{projName}</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>
-              {{ base: "תכנית בסיס", cur: "תכנית מתעדכנת", comp: "השוואה + EVM", dash: "דשבורד", inv: "חשבונות", ai: "ניתוח AI", report: "דוח בקרה תקציבית" }[tab]} · הופק ב-{fmtDate(today)}
+      {/* generic print header — the report tab has its own cover page, so skip it there */}
+      {tab !== "report" && (
+        <div className="print-only" style={{ marginBottom: 14, borderBottom: `2px solid ${C.ink}`, paddingBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Logo size={34} />
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800 }}>{projName}</div>
+              <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>
+                {{ base: "תכנית בסיס", cur: "תכנית מתעדכנת", comp: "השוואה + EVM", dash: "דשבורד", inv: "חשבונות", ai: "ניתוח AI", report: "דוח בקרה תקציבית" }[tab]} · הופק ב-{fmtDate(today)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="no-print" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1337,6 +1503,25 @@ function App() {
               {saveState && <span style={{ marginInlineStart: 8, fontSize: 11.5, color: saveState.includes("✓") ? C.green : C.muted }}>{saveState}</span>}
             </div>
           </div>
+          {alerts.length > 0 && (
+            <div style={{ position: "relative" }}>
+              <button onClick={() => setAlertsOpen((o) => !o)} title="התראות פעילות" style={{
+                fontFamily: font, fontSize: 12, fontWeight: 800, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
+                border: `1px solid ${alerts.some((a) => a.tone === "bad") ? "#E5B8B2" : "#EAD9AE"}`,
+                background: alerts.some((a) => a.tone === "bad") ? "#FBEEEC" : "#FDF6E9",
+                color: alerts.some((a) => a.tone === "bad") ? C.red : "#B26A00",
+              }}>⚠ {alerts.length} התראות</button>
+              {alertsOpen && (
+                <div style={{ position: "absolute", top: "115%", insetInlineStart: 0, zIndex: 60, width: 360, background: "#fff", border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: "0 10px 28px rgba(18,41,59,.16)", padding: "12px 14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <b style={{ fontSize: 13 }}>התראות פעילות</b>
+                    <button onClick={() => setAlertsOpen(false)} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 15, color: C.muted }}>×</button>
+                  </div>
+                  <Narrative items={alerts} plain />
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: "4px 8px" }}>
@@ -1611,6 +1796,65 @@ function App() {
                 "חוזה מצטבר" = סעיפי החוזה. "חריגים/נוספים" = פקודות שינוי מצטבר. יחד = <b>מאושר מצטבר</b>, שהוא ה-AC ב-EVM (הקו הכתום). "שולם מצטבר" = הכסף שיצא בפועל (הקו הירוק, תזרים) — אם משאירים ריק, מונח שהמאושר שולם במלואו. הפער ביניהם הוא מאושר שטרם שולם. עכבון {retention}% מנוכה מהמאושר; יתרתו משוחררת במסירה.
               </div>
             </div>
+
+            {/* ===== change-order journal ===== */}
+            <div className="tab-panel" style={panel}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px 6px" }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700 }}>יומן חריגים ופקודות שינוי</div>
+                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>
+                    רישום פרטני של כל חריג — במקום מספר מצטבר אחד. מאושרים: <b style={{ color: C.green }}>{shekel(coApproved)}</b>
+                    {coPending > 0 && <> · ממתינים לאישור: <b style={{ color: "#B26A00" }}>{shekel(coPending)}</b></>}
+                    {(() => {
+                      const lastExtras = lastInv ? Number(lastInv.extras) || 0 : 0;
+                      const gap = lastExtras - coApproved;
+                      return Math.abs(gap) > 500 && changeOrders.length > 0
+                        ? <span style={{ color: C.red }}> · פער מול "חריגים/נוספים" בחשבון האחרון: {shekel(gap)}</span>
+                        : null;
+                    })()}
+                  </div>
+                </div>
+                <button className="no-print" style={btn} onClick={addCO}>+ הוסף חריג</button>
+              </div>
+              {changeOrders.length === 0 ? (
+                <div style={{ padding: "10px 16px 16px", fontSize: 12.5, color: C.muted }}>אין חריגים רשומים. לחץ "+ הוסף חריג" כדי לרשום פקודת שינוי ראשונה.</div>
+              ) : (
+                <div style={{ overflowX: "auto", padding: "4px 10px 8px" }}>
+                  <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ color: C.muted, fontSize: 11.5, textAlign: "right" }}>
+                        {["תאריך", "תיאור", "סכום", "סטטוס", "הערה", ""].map((h) => <th key={h} style={{ padding: "6px 12px", fontWeight: 600 }}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {changeOrders.map((c) => {
+                        const st = CO_STATUS.find((s) => s.id === c.status) || CO_STATUS[0];
+                        return (
+                          <tr key={c.id} style={{ borderTop: `1px solid ${C.border}` }}>
+                            <td style={{ padding: "4px 12px" }}><input type="date" dir="ltr" value={c.date} onChange={(e) => setCO(c.id, "date", e.target.value)} style={{ ...cell, width: 130, textAlign: "center" }} /></td>
+                            <td style={{ padding: "4px 12px" }}><input value={c.name} placeholder="תיאור החריג / פקודת השינוי" onChange={(e) => setCO(c.id, "name", e.target.value)} style={{ ...cell, width: 260 }} /></td>
+                            <td style={{ padding: "4px 12px" }}><input type="number" value={c.amount} onChange={(e) => setCO(c.id, "amount", parseFloat(e.target.value) || 0)} style={{ ...cell, width: 110, textAlign: "left" }} /></td>
+                            <td style={{ padding: "4px 12px" }}>
+                              <select value={c.status} onChange={(e) => setCO(c.id, "status", e.target.value)}
+                                style={{ ...cell, width: 100, cursor: "pointer", fontWeight: 700, color: st.color, background: st.bg }}>
+                                {CO_STATUS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ padding: "4px 12px" }}><input value={c.note || ""} placeholder="—" onChange={(e) => setCO(c.id, "note", e.target.value)} style={{ ...cell, width: 200 }} /></td>
+                            <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                              <button onClick={() => rmCO(c.id)} style={{ border: "none", background: "none", color: C.red, cursor: "pointer", fontSize: 16 }}>×</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: C.muted, padding: "2px 16px 14px", lineHeight: 1.6 }}>
+                היומן הוא רישום ניהולי ואינו משנה את החישובים — סכום ה"חריגים/נוספים" בטבלת החשבונות הוא הקובע ל-EVM. מומלץ לוודא שסך המאושרים ביומן תואם את החשבון האחרון.
+              </div>
+            </div>
           </>
         );
       })()}
@@ -1639,25 +1883,53 @@ function App() {
                 background: aiBusy ? "#8A99A8" : C.ink, color: "#fff", cursor: aiBusy ? "wait" : "pointer", width: "100%",
               }}>{aiBusy ? "⏳ מנתח את הפרויקט…" : "✦ הפק ניתוח AI"}</button>
               {aiErr && <div style={{ marginTop: 10, fontSize: 12.5, color: C.red, background: "#FBEEEC", borderRadius: 8, padding: "8px 10px", lineHeight: 1.6 }}>{aiErr}</div>}
-              {aiText && (
+              {aiView && (
                 <label style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 12, fontSize: 12.5, cursor: "pointer" }}>
                   <input type="checkbox" checked={aiInReport} onChange={(e) => setAiInReport(e.target.checked)} />
-                  כלול את ניתוח ה-AI בדוח המודפס (לשונית ⑦)
+                  כלול את הניתוח המוצג בדוח המודפס (לשונית ⑦)
                 </label>
+              )}
+
+              {aiHistory.length > 0 && (
+                <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>היסטוריית ניתוחים ({aiHistory.length})</div>
+                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, lineHeight: 1.6 }}>
+                    הניתוחים נשמרים עם הפרויקט {usingCloud ? "בענן" : "בדפדפן"} וזמינים גם אחרי רענון. לחץ לצפייה.
+                  </div>
+                  <div style={{ maxHeight: 260, overflowY: "auto" }}>
+                    {aiHistory.map((h) => {
+                      const sel = aiView && h.id === aiView.id;
+                      return (
+                        <div key={h.id} onClick={() => setAiViewId(h.id)} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, cursor: "pointer",
+                          padding: "7px 10px", borderRadius: 8, marginBottom: 4, border: `1px solid ${sel ? C.ink : C.border}`,
+                          background: sel ? "#F0F4F8" : "#fff",
+                        }}>
+                          <div>
+                            <div style={{ fontSize: 12.5, fontWeight: sel ? 800 : 600 }}>✦ {fmtDate(toDate(h.dateISO))}{h.statusDate ? ` · סטטוס ${h.statusDate}` : ""}</div>
+                            <div style={{ fontSize: 10.5, color: C.muted }}>{AI_MODELS.find((m) => m.id === h.model)?.label || h.model}</div>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); deleteAiEntry(h.id); }} title="מחק ניתוח"
+                            style={{ border: "none", background: "none", color: C.red, cursor: "pointer", fontSize: 15 }}>×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
 
             {/* result / built-in insights */}
             <div style={{ flex: "2 1 480px", minWidth: 320 }}>
-              {aiText ? (
+              {aiView ? (
                 <div className="tab-panel" style={{ ...panel, padding: "18px 22px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div style={{ fontSize: 15, fontWeight: 800 }}>✦ ניתוח Claude — {projName}</div>
                     <button className="no-print" onClick={() => window.print()} style={{ ...btn, fontSize: 12, padding: "6px 12px" }}>🖨 הדפס</button>
                   </div>
-                  <Md text={aiText} />
+                  <Md text={aiView.text} />
                   <div style={{ fontSize: 10.5, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 8, marginTop: 12 }}>
-                    נוצר על ידי {AI_MODELS.find((m) => m.id === aiModel)?.label || aiModel} · {fmtDate(new Date())} · יש לוודא מסקנות מול הנתונים בפועל
+                    נוצר על ידי {AI_MODELS.find((m) => m.id === aiView.model)?.label || aiView.model} · {fmtDate(toDate(aiView.dateISO))} · נשמר עם הפרויקט · יש לוודא מסקנות מול הנתונים בפועל
                   </div>
                 </div>
               ) : (
@@ -1673,141 +1945,304 @@ function App() {
         </>
       )}
 
-      {/* ===== TAB 5: PRINTABLE REPORT ===== */}
-      {tab === "report" && (
-        <>
-          <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-            <button style={{ ...btn, background: C.ink, color: "#fff", border: "none" }} onClick={() => window.print()}>🖨 הדפס / שמור כ-PDF</button>
-          </div>
-          <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 12, padding: "28px 32px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, borderBottom: `2px solid ${C.ink}`, paddingBottom: 14, marginBottom: 18 }}>
-              <Logo size={46} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 22, fontWeight: 800 }}>דוח בקרה תקציבית חודשי</div>
-                <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>{projName} · תאריך סטטוס {fmtDate(evm.statusDate)}</div>
+      {/* ===== TAB 7: PRINTABLE REPORT ===== */}
+      {tab === "report" && (() => {
+        const spi = evm.SPI, cpi = evm.CPI;
+        const isBad = (spi != null && spi < 0.85) || (cpi != null && cpi < 0.85) || (endDelta != null && endDelta > 30);
+        const isWarn = !isBad && ((spi != null && spi < 0.97) || (cpi != null && cpi < 0.97) || (endDelta != null && endDelta > 7) || (evm.AC > 0 && evm.unpaid / evm.AC > 0.15));
+        const health = isBad
+          ? { label: "חריגה מהותית — נדרשת התערבות", color: "#C0392B", bg: "#FBEEEC", border: "#E5B8B2" }
+          : isWarn
+            ? { label: "טעון מעקב", color: "#B26A00", bg: "#FDF6E9", border: "#EAD9AE" }
+            : { label: "הפרויקט במסלול", color: "#2F8F63", bg: "#EEF7F1", border: "#CDE8D8" };
+        const lastSnap = snapshots[0] || null;
+        const approvedCOs = changeOrders.filter((c) => c.status === "approved");
+        const curSnapValues = { pct: evm.pctComplete, SPI: evm.SPI, CPI: evm.CPI, AC: evm.AC, extras: lastInv ? Number(lastInv.extras) || 0 : 0, endDelta };
+        let sec = 0;
+        const thCell = { padding: "6px 9px", fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" };
+        const tdCell = { padding: "5px 9px", whiteSpace: "nowrap" };
+        return (
+          <>
+            <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10, maxWidth: 880, marginInline: "auto" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted }}>
+                <button style={btn} onClick={saveSnapshot}>📸 שמור תמונת מצב להשוואה</button>
+                {lastSnap && (
+                  <span>
+                    נשמרו {snapshots.length} · אחרונה: {fmtDate(toDate(lastSnap.dateISO))}
+                    <button title="מחק את תמונת המצב האחרונה" onClick={() => rmSnapshot(lastSnap.id)} style={{ border: "none", background: "none", color: C.red, cursor: "pointer", fontSize: 14, marginInlineStart: 2 }}>×</button>
+                  </span>
+                )}
               </div>
-              <div style={{ textAlign: "left", fontSize: 11.5, color: C.muted }} dir="ltr">{fmtDate(today)}</div>
+              <button style={{ ...btn, background: C.ink, color: "#fff", border: "none" }} onClick={() => window.print()}>🖨 הדפס / שמור כ-PDF</button>
             </div>
 
-            {/* KPI snapshot */}
-            <div className="avoid-break" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-              {[
-                ["תקציב (BAC)", shekelShort(evm.BAC), null],
-                ["השלמה", `${evm.pctComplete.toFixed(0)}%`, null],
-                ["SPI", ratio(evm.SPI), evm.SPI == null ? null : evm.SPI >= 1],
-                ["CPI", ratio(evm.CPI), evm.CPI == null ? null : evm.CPI >= 1],
-                ["EAC", shekelShort(evm.EAC), evm.VAC == null ? null : evm.VAC >= 0],
-                ["סטיית סיום", endDelta == null ? "—" : `${endDelta > 0 ? "+" : ""}${endDelta} ימים`, endDelta == null ? null : endDelta <= 0],
-              ].map(([k, v, good]) => (
-                <div key={k} style={{ flex: "1 1 90px", border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 10px", textAlign: "center" }}>
-                  <div style={{ fontSize: 10.5, color: C.muted }}>{k}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: good == null ? C.ink : good ? C.green : C.red }}>{v}</div>
+            <div className="report-sheet" style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 12, padding: "34px 40px", maxWidth: 880, margin: "0 auto" }}>
+
+              {/* ============ COVER ============ */}
+              <div style={{ display: "flex", flexDirection: "column", minHeight: "60vh" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${C.border}`, paddingBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <Logo size={30} />
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: C.muted }}>מערכת בקרה תקציבית</span>
+                  </div>
+                  <span style={{ fontSize: 11.5, color: C.muted }} dir="ltr">{fmtDate(today)}</span>
                 </div>
-              ))}
-            </div>
 
-            {/* S-curve for print */}
-            <div className="avoid-break" style={{ maxWidth: 700, margin: "0 auto 20px" }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>עקומות S — בסיס · מתעדכן · בפועל</div>
-              <div style={{ direction: "ltr", width: "100%", height: 240 }}>
-                <ResponsiveContainer>
-                  <ComposedChart data={compMonths} margin={{ top: 6, right: 10, bottom: 4, left: 10 }}>
-                    <CartesianGrid stroke={C.border} vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 9.5, fill: C.muted }} tickMargin={5} />
-                    <YAxis tick={{ fontSize: 9.5, fill: C.muted }} tickFormatter={shekelShort} width={52} />
-                    <Legend wrapperStyle={{ fontFamily: font, fontSize: 11 }} />
-                    <Line dataKey="baseCum" name="בסיס" stroke={C.baseGray} strokeWidth={2} strokeDasharray="6 4" dot={false} />
-                    <Line dataKey="curCum" name="מתעדכן" stroke={C.ink} strokeWidth={2.2} dot={false} />
-                    <Line dataKey="actualCum" name="מאושר בפועל" stroke={C.amber} strokeWidth={2.2} dot={false} connectNulls={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {aiText && aiInReport && (
-              <div className="avoid-break" style={{ marginBottom: 20, background: "#F7F9FB", border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px" }}>
-                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>✦ ניתוח AI</div>
-                <Md text={aiText} />
-                <div style={{ fontSize: 10, color: C.muted, marginTop: 8 }}>נוצר באמצעות Claude · יש לוודא מסקנות מול הנתונים בפועל</div>
-              </div>
-            )}
-
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>ניתוח וממצאים</div>
-            <div style={{ marginBottom: 20 }}>
-              {narrative.map((it, i) => (
-                <div key={i} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 2 }}>{it.t}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.7, color: C.ink, whiteSpace: "pre-line" }}>{it.body}</div>
+                <div style={{ textAlign: "center", margin: "40px 0 26px" }}>
+                  <Logo size={64} />
+                  <div style={{ fontSize: 27, fontWeight: 800, marginTop: 16, letterSpacing: -0.4 }}>דוח בקרה תקציבית חודשי</div>
+                  <div style={{ fontSize: 18, color: C.muted, marginTop: 6 }}>{projName}</div>
+                  <div style={{ fontSize: 12.5, color: C.muted, marginTop: 10 }}>
+                    תאריך סטטוס: <b style={{ color: C.ink }}>{fmtDate(evm.statusDate)}</b> · הופק: {fmtDate(today)}
+                    {baseModel.totals.endDate && <> · סיום מתוכנן: <b style={{ color: C.ink }}>{fmtDate(curModel.totals.endDate)}</b></>}
+                  </div>
                 </div>
-              ))}
+
+                {/* status banner */}
+                <div style={{ background: health.bg, border: `1.5px solid ${health.border}`, borderRadius: 12, padding: "13px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", background: health.color, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16.5, fontWeight: 800, color: health.color }}>{health.label}</div>
+                    <div style={{ fontSize: 12.5, color: C.ink, marginTop: 2 }}>
+                      בוצע {evm.pctComplete.toFixed(0)}% · SPI {ratio(evm.SPI)} · CPI {ratio(evm.CPI)}
+                      {endDelta != null && <> · סטיית סיום {endDelta > 0 ? `+${endDelta}` : endDelta} ימים</>}
+                      {evm.AC > 0 && evm.unpaid > 1000 && <> · טרם שולם {shekelShort(evm.unpaid)}</>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* KPI grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 18 }}>
+                  {[
+                    ["תקציב (BAC)", shekel(evm.BAC), null, null],
+                    ["השלמה", `${evm.pctComplete.toFixed(0)}%`, `EV ${shekelShort(evm.EV)}`, null],
+                    ["מאושר בפועל (AC)", shekel(evm.AC), evm.paidCash != null && evm.paidCash !== evm.AC ? `שולם ${shekelShort(evm.paidCash)}` : null, null],
+                    ["SPI — לו״ז", ratio(evm.SPI), evm.SV != null ? `SV ${shekelShort(evm.SV)}` : null, evm.SPI == null ? null : evm.SPI >= 1],
+                    ["CPI — עלות", ratio(evm.CPI), evm.CV != null ? `CV ${shekelShort(evm.CV)}` : null, evm.CPI == null ? null : evm.CPI >= 1],
+                    ["תחזית בהשלמה (EAC)", shekel(evm.EAC), evm.VAC != null ? `VAC ${shekelShort(evm.VAC)}` : null, evm.VAC == null ? null : evm.VAC >= 0],
+                  ].map(([k, v, sub, good]) => (
+                    <div key={k} style={{ border: `1px solid ${C.border}`, borderRadius: 11, padding: "11px 13px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10.5, color: C.muted }}>{k}</div>
+                      <div style={{ fontSize: 19, fontWeight: 800, marginTop: 2, color: good == null ? C.ink : good ? C.green : C.red }}>{v}</div>
+                      {sub && <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>{sub}</div>}
+                    </div>
+                  ))}
+                </div>
+
+                {prevSnap && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 7 }}>מה השתנה מאז תמונת המצב הקודמת ({fmtDate(toDate(prevSnap.dateISO))})</div>
+                    <DeltaChips prev={prevSnap} cur={curSnapValues} />
+                  </div>
+                )}
+
+                <div style={{ marginTop: "auto", fontSize: 11, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
+                  <span>אומדן לאחר הנחה ({discount}%) · עכבון {retention}%</span>
+                  <span>{current.length} פעילויות · {invoices.length} חשבונות{approvedCOs.length ? ` · ${approvedCOs.length} פקודות שינוי מאושרות` : ""}</span>
+                </div>
+              </div>
+
+              <div className="page-break" />
+
+              {/* ============ 1. chapter progress ============ */}
+              <RSec n={++sec} title="התקדמות לפי פרקים">
+                <ChapterProgress rows={groupRows} />
+              </RSec>
+
+              {/* ============ 2. slips ============ */}
+              <RSec n={++sec} title="פעילויות בפיגור מול תכנית הבסיס">
+                {slips.length === 0 ? (
+                  <div style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>אין סטיות לו״ז מול תכנית הבסיס ✓</div>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+                    <thead>
+                      <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
+                        {["סעיף", "פעילות", "% ביצוע", "% מתוכנן", "סטיית סיום"].map((h) => <th key={h} style={thCell}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {slips.map((r) => {
+                        const act = current.find((a) => a.wbs === r.wbs);
+                        const planned = act ? Math.round(plannedFrac(act.start, act.finish, statusDate) * 100) : null;
+                        return (
+                          <tr key={r.wbs} style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ ...tdCell, color: C.muted }}>{r.wbs}</td>
+                            <td style={{ ...tdCell, whiteSpace: "normal" }}>{r.name}</td>
+                            <td style={tdCell}>{act ? `${act.progress || 0}%` : "—"}</td>
+                            <td style={tdCell}>{planned != null ? `${planned}%` : "—"}</td>
+                            <td style={{ ...tdCell, fontWeight: 800, color: r.slip > 0 ? C.red : C.green }}>{r.slip > 0 ? `+${r.slip}` : r.slip} ימים</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </RSec>
+
+              {/* ============ 3. monthly tracking ============ */}
+              <RSec n={++sec} title="מעקב חודשי — מתוכנן מול ביצוע">
+                {/* fixed chart width — ResponsiveContainer keeps its screen size when printing, so it must also fit A4 (~700px) */}
+                <div style={{ direction: "ltr", width: 650, maxWidth: "100%", marginInline: "auto", height: 195, marginBottom: 14 }}>
+                  <ResponsiveContainer>
+                    <ComposedChart data={monthlyTrack} margin={{ top: 6, right: 8, bottom: 2, left: 8 }}>
+                      <CartesianGrid stroke={C.border} vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9.5, fill: C.muted }} tickMargin={4} />
+                      <YAxis tick={{ fontSize: 9.5, fill: C.muted }} tickFormatter={shekelShort} width={50} />
+                      <Legend wrapperStyle={{ fontFamily: font, fontSize: 11 }} />
+                      <Bar dataKey="curPlan" name="מתוכנן לחודש" fill={C.baseGray} radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="approved" name="בוצע בפועל" fill={C.amber} radius={[3, 3, 0, 0]} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
+                  <thead>
+                    <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
+                      {["חודש", "מתוכנן לחודש", "בוצע לחודש", "% ביצוע", "שולם לחודש", "מתוכנן מצטבר", "בוצע מצטבר"].map((h) => <th key={h} style={thCell}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyTrack.map((m) => (
+                      <tr key={m.label} style={{ borderBottom: `1px solid ${C.border}`, color: m.isFuture ? C.muted : C.ink, background: m.isFuture ? "#FBFCFD" : "transparent" }}>
+                        <td style={{ ...tdCell, fontWeight: 600 }}>{m.label}</td>
+                        <td style={tdCell}>{shekel(m.curPlan)}</td>
+                        <td style={tdCell}>{m.approved != null && !m.isFuture ? shekel(m.approved) : "—"}</td>
+                        <td style={{ ...tdCell, fontWeight: 700, color: m.exec == null || m.isFuture ? C.muted : m.exec >= 85 ? C.green : m.exec >= 60 ? "#B26A00" : C.red }}>
+                          {m.exec != null && !m.isFuture ? `${Math.round(m.exec)}%` : "—"}
+                        </td>
+                        <td style={tdCell}>{m.paid != null && !m.isFuture ? shekel(m.paid) : "—"}</td>
+                        <td style={{ ...tdCell, color: C.muted }}>{shekel(m.curCum)}</td>
+                        <td style={{ ...tdCell, fontWeight: 600 }}>{m.actualCum != null ? shekel(m.actualCum) : "—"}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ borderTop: `2px solid ${C.ink}`, fontWeight: 800 }}>
+                      <td style={tdCell}>סה״כ</td>
+                      <td style={tdCell}>{shekel(monthlyTrack.reduce((s, m) => s + (m.curPlan || 0), 0))}</td>
+                      <td style={tdCell}>{shekel(evm.AC)}</td>
+                      <td style={tdCell}>{(() => { const p = monthlyTrack.filter((m) => !m.isFuture).reduce((s, m) => s + (m.curPlan || 0), 0); return p > 0 ? `${Math.round((evm.AC / p) * 100)}%` : "—"; })()}</td>
+                      <td style={tdCell}>{evm.paidCash != null ? shekel(evm.paidCash) : "—"}</td>
+                      <td style={tdCell} colSpan={2} />
+                    </tr>
+                  </tbody>
+                </table>
+                <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>"בוצע לחודש" — הגידול בחשבון המאושר המצטבר באותו חודש. "% ביצוע" — בוצע מול מתוכנן באותו החודש. שורות אפורות — חודשים עתידיים (תכנון בלבד).</div>
+              </RSec>
+
+              <div className="page-break" />
+
+              {/* ============ 4. S-curves + EVM ============ */}
+              <RSec n={++sec} title="עקומות S ומדדי EVM">
+                <div style={{ direction: "ltr", width: 650, maxWidth: "100%", marginInline: "auto", height: 235, marginBottom: 14 }}>
+                  <ResponsiveContainer>
+                    <ComposedChart data={compMonths} margin={{ top: 6, right: 10, bottom: 4, left: 10 }}>
+                      <CartesianGrid stroke={C.border} vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9.5, fill: C.muted }} tickMargin={5} />
+                      <YAxis tick={{ fontSize: 9.5, fill: C.muted }} tickFormatter={shekelShort} width={52} />
+                      <Legend wrapperStyle={{ fontFamily: font, fontSize: 11 }} />
+                      <Line dataKey="baseCum" name="בסיס" stroke={C.baseGray} strokeWidth={2} strokeDasharray="6 4" dot={false} />
+                      <Line dataKey="curCum" name="מתעדכן" stroke={C.ink} strokeWidth={2.2} dot={false} />
+                      <Line dataKey="actualCum" name="מאושר בפועל" stroke={C.amber} strokeWidth={2.2} dot={false} connectNulls={false} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 7 }}>
+                  {[
+                    ["BAC", "תקציב בסיס", shekel(evm.BAC), null],
+                    ["PV", "ערך מתוכנן", shekel(evm.PV), null],
+                    ["EV", "ערך מזוכה", shekel(evm.EV), null],
+                    ["AC", "עלות בפועל", shekel(evm.AC), null],
+                    ["SV", "סטיית לו״ז", shekel(evm.SV), evm.SV == null ? null : evm.SV >= 0],
+                    ["CV", "סטיית עלות", shekel(evm.CV), evm.CV == null ? null : evm.CV >= 0],
+                    ["SPI", "מדד לו״ז", ratio(evm.SPI), evm.SPI == null ? null : evm.SPI >= 1],
+                    ["CPI", "מדד עלות", ratio(evm.CPI), evm.CPI == null ? null : evm.CPI >= 1],
+                    ["EAC", "אומדן בהשלמה", shekel(evm.EAC), null],
+                    ["ETC", "עלות להשלמה", shekel(evm.ETC), null],
+                    ["VAC", "סטייה בהשלמה", shekel(evm.VAC), evm.VAC == null ? null : evm.VAC >= 0],
+                    ["השלמה", "EV / BAC", `${evm.pctComplete.toFixed(1)}%`, null],
+                  ].map(([k, d, v, good]) => (
+                    <div key={k} style={{ border: `1px solid ${C.border}`, borderRadius: 9, padding: "7px 10px" }}>
+                      <div style={{ fontSize: 10, color: C.muted }}><b>{k}</b> · {d}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 800, marginTop: 1, color: good == null ? C.ink : good ? C.green : C.red }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </RSec>
+
+              {/* ============ 5. narrative ============ */}
+              <RSec n={++sec} title="ניתוח וממצאים">
+                {narrative.map((it, i) => (
+                  <div key={i} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 2 }}>{it.t}</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.7, color: C.ink, whiteSpace: "pre-line" }}>{it.body}</div>
+                  </div>
+                ))}
+              </RSec>
+
+              {/* ============ 6. AI analysis (saved) ============ */}
+              {aiView && aiInReport && (
+                <RSec n={++sec} title="ניתוח AI — Claude" noBreak>
+                  <div style={{ background: "#F7F9FB", border: `1px solid ${C.border}`, borderRadius: 10, padding: "13px 17px" }}>
+                    <Md text={aiView.text} />
+                    <div style={{ fontSize: 10, color: C.muted, marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 7 }}>
+                      נוצר ב-{fmtDate(toDate(aiView.dateISO))} · {AI_MODELS.find((m) => m.id === aiView.model)?.label || aiView.model} · יש לוודא מסקנות מול הנתונים בפועל
+                    </div>
+                  </div>
+                </RSec>
+              )}
+
+              {/* ============ 7. invoices + change orders ============ */}
+              <RSec n={++sec} title={`חשבונות ופקודות שינוי (עכבון ${retention}%)`}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginBottom: approvedCOs.length ? 16 : 0 }}>
+                  <thead>
+                    <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
+                      {["תאריך", "חוזה מצטבר", "חריגים/נוספים", "סה״כ מצטבר", "חודשי", "נטו לאחר עכבון"].map((h) => <th key={h} style={thCell}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((inv, idx) => (
+                      <tr key={inv.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <td style={tdCell}>{fmtDate(toDate(inv.date))}</td>
+                        <td style={tdCell}>{shekel(inv.cumulative)}</td>
+                        <td style={{ ...tdCell, color: (inv.extras || 0) > 0 ? "#B26A00" : C.muted }}>{shekel(inv.extras || 0)}</td>
+                        <td style={{ ...tdCell, fontWeight: 600 }}>{shekel(invTotal(inv))}</td>
+                        <td style={{ ...tdCell, color: C.muted }}>{shekel(invTotal(inv) - (idx > 0 ? invTotal(invoices[idx - 1]) : 0))}</td>
+                        <td style={{ ...tdCell, fontWeight: 600 }}>{shekel(invTotal(inv) * (1 - retention / 100))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {approvedCOs.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>פקודות שינוי מאושרות ({approvedCOs.length}) — סה״כ {shekel(coApproved)}</div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
+                          {["תאריך", "תיאור", "סכום", "הערה"].map((h) => <th key={h} style={thCell}>{h}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {approvedCOs.map((c) => (
+                          <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <td style={tdCell}>{fmtDate(toDate(c.date))}</td>
+                            <td style={{ ...tdCell, whiteSpace: "normal" }}>{c.name || "—"}</td>
+                            <td style={{ ...tdCell, fontWeight: 600 }}>{shekel(c.amount)}</td>
+                            <td style={{ ...tdCell, whiteSpace: "normal", color: C.muted }}>{c.note || ""}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                )}
+              </RSec>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 16, marginTop: 8 }}>
+                <span>הוכן ע״י: ________________</span>
+                <span>חתימה: ________________</span>
+                <span>תאריך: {fmtDate(today)}</span>
+              </div>
             </div>
-
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>מדדי EVM</div>
-            <table style={{ width: "100%", maxWidth: 620, borderCollapse: "collapse", fontSize: 13, marginBottom: 20 }}>
-              <tbody>
-                {[["BAC — תקציב בסיס", shekel(evm.BAC)], ["PV — ערך מתוכנן", shekel(evm.PV)], ["EV — ערך מזוכה", shekel(evm.EV)],
-                  ["AC — עלות בפועל", shekel(evm.AC)], ["SV — סטיית לו\"ז", shekel(evm.SV)], ["CV — סטיית עלות", shekel(evm.CV)],
-                  ["SPI", ratio(evm.SPI)], ["CPI", ratio(evm.CPI)], ["EAC — אומדן בהשלמה", shekel(evm.EAC)],
-                  ["ETC — עלות להשלמה", shekel(evm.ETC)], ["VAC — סטייה בהשלמה", shekel(evm.VAC)]].map(([k, v]) => (
-                  <tr key={k} style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <td style={{ padding: "6px 10px", color: C.muted }}>{k}</td>
-                    <td style={{ padding: "6px 10px", fontWeight: 600 }}>{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>חשבונות מצטברים (עכבון {retention}%)</div>
-            <table style={{ width: "100%", maxWidth: 620, borderCollapse: "collapse", fontSize: 13, marginBottom: 20 }}>
-              <thead>
-                <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
-                  {["תאריך", "חוזה מצטבר", "חריגים/נוספים", "סה\"כ מצטבר", "חודשי", "נטו מצטבר"].map((h) => <th key={h} style={{ padding: "7px 10px", fontWeight: 600 }}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv, idx) => (
-                  <tr key={inv.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <td style={{ padding: "6px 10px" }}>{fmtDate(toDate(inv.date))}</td>
-                    <td style={{ padding: "6px 10px" }}>{shekel(inv.cumulative)}</td>
-                    <td style={{ padding: "6px 10px", color: (inv.extras || 0) > 0 ? C.amber : C.muted }}>{shekel(inv.extras || 0)}</td>
-                    <td style={{ padding: "6px 10px", fontWeight: 600 }}>{shekel(invTotal(inv))}</td>
-                    <td style={{ padding: "6px 10px", color: C.muted }}>{shekel(invTotal(inv) - (idx > 0 ? invTotal(invoices[idx - 1]) : 0))}</td>
-                    <td style={{ padding: "6px 10px", fontWeight: 600 }}>{shekel(invTotal(inv) * (1 - retention / 100))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>השוואת תזרים חודשית</div>
-            <table style={{ width: "100%", maxWidth: 720, borderCollapse: "collapse", fontSize: 12.5, marginBottom: 24 }}>
-              <thead>
-                <tr style={{ background: "#F0F4F8", color: C.muted, textAlign: "right" }}>
-                  {["חודש", "מצטבר בסיס", "מצטבר מתעדכן", "חשבונות בפועל", "פער בפועל מול בסיס"].map((h) => <th key={h} style={{ padding: "7px 10px", fontWeight: 600 }}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {compMonths.map((m) => (
-                  <tr key={m.label} style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <td style={{ padding: "5px 10px" }}>{m.label}</td>
-                    <td style={{ padding: "5px 10px" }}>{shekel(m.baseCum)}</td>
-                    <td style={{ padding: "5px 10px" }}>{shekel(m.curCum)}</td>
-                    <td style={{ padding: "5px 10px" }}>{m.actualCum != null ? shekel(m.actualCum) : "—"}</td>
-                    <td style={{ padding: "5px 10px", color: m.actualCum != null && m.actualCum - m.baseCum < 0 ? C.red : C.green }}>
-                      {m.actualCum != null ? shekel(m.actualCum - m.baseCum) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-              <span>הוכן ע"י: ________________</span>
-              <span>חתימה: ________________</span>
-              <span>תאריך: {fmtDate(today)}</span>
-            </div>
-          </div>
-        </>
-      )}
+          </>
+        );
+      })()}
 
       <div className="no-print" style={{ fontSize: 11, color: C.muted, marginTop: 12, lineHeight: 1.6 }}>
         הנתונים נשמרים אוטומטית ונטענים בפתיחה מחדש. פעילות עם משך 0 מוצגת כאבן דרך ◆. הנתיב הקריטי (אדום) מחושב משרשראות התלויות — הוסף קשרי "קודמת" כדי שהנתיב יתעדכן. עקומת "נטו לאחר עכבון" מציגה את התקבולים בפועל בניכוי {retention}% עכבון.
