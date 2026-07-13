@@ -4,8 +4,9 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import * as XLSX from "xlsx";
+import Anthropic from "@anthropic-ai/sdk";
 
-import { storage } from "./storage";
+import { storage, usingCloud } from "./storage";
 
 /* ================= design tokens ================= */
 const C = {
@@ -71,7 +72,7 @@ function cascade(list, anchorId) {
 const TODAY0 = new Date();
 const RAW = [
   { wbs: "0.1",  name: "◆ קבלת היתר בניה",                        cost: 0,         start: "2025-10-28", finish: "2025-10-28" },
-  { wbs: "1.1",  name: "עבודות פירוק והכנות שטח בריכה וחדר חשמל", cost: 203873.37, start: "2026-11-01", finish: "2026-11-12" },
+  { wbs: "1.1",  name: "עבודות פירוק והכנות שטח בריכה וחדר חשמל", cost: 203873.37, start: "2025-11-01", finish: "2025-11-12" },
   { wbs: "2.01", name: "הכנת שתית",                               cost: 29760,     start: "2025-11-01", finish: "2025-11-12" },
   { wbs: "2.02", name: "קידוח כלונסאות",                          cost: 970128,    start: "2025-11-20", finish: "2025-12-24", pred: "2.01" },
   { wbs: "2.03", name: "חציבות ראשי כלונסאות, ניקיון, בדיקות",    cost: 8721.6,    start: "2025-12-24", finish: "2026-01-04", pred: "2.02" },
@@ -146,16 +147,19 @@ function buildModel(activities, discountPct) {
     m++; if (m > 11) { m = 0; y++; }
   }
   const disc = 1 - (Number(discountPct) || 0) / 100;
+  /* cost is spread day-proportionally across the activity span (consistent with PV) */
   rows.forEach((a) => {
     const after = a.cost * disc;
     const meta = metaOf(a.wbs);
-    let n = 0;
-    months.forEach((mo) => { if (a.s <= mo.end && a.f >= mo.start) n++; });
-    const perMonth = n > 0 ? after / n : 0;
+    const totalDays = Math.round((a.f - a.s) / DAY) + 1;
     months.forEach((mo) => {
       if (a.s <= mo.end && a.f >= mo.start) {
-        mo.planned += perMonth;
-        mo.groups[meta.key] = (mo.groups[meta.key] || 0) + perMonth;
+        const os = a.s > mo.start ? a.s : mo.start;
+        const oe = a.f < mo.end ? a.f : mo.end;
+        const overlap = Math.round((oe - os) / DAY) + 1;
+        const share = totalDays > 0 ? after * (overlap / totalDays) : 0;
+        mo.planned += share;
+        mo.groups[meta.key] = (mo.groups[meta.key] || 0) + share;
       }
     });
   });
@@ -232,7 +236,7 @@ const InvDot = (props) => {
 
 /* ================= Gantt: responsive, grouped, critical path, milestones ================= */
 const ROW_H = 28, HEADER_H = 40, LABEL_W = 240;
-function Gantt({ title, activities, discount, onShift, onResize, baselineByWbs, readOnly }) {
+const Gantt = React.memo(function Gantt({ title, activities, discount, onShift, onResize, baselineByWbs, readOnly }) {
   const dragRef = useRef(null);
   const wrapRef = useRef(null);
   const [availW, setAvailW] = useState(900);
@@ -449,10 +453,10 @@ function Gantt({ title, activities, discount, onShift, onResize, baselineByWbs, 
       </div>
     </div>
   );
-}
+});
 
 /* ================= monthly stacked chart ================= */
-function FlowChart({ title, months, groupsPresent, todayLabel, font, extraLine, netLine }) {
+const FlowChart = React.memo(function FlowChart({ title, months, groupsPresent, todayLabel, font, extraLine, netLine }) {
   return (
     <div style={{ ...panel, padding: "16px 12px 8px" }}>
       <div style={{ fontSize: 15, fontWeight: 700, padding: "0 8px 10px" }}>{title}</div>
@@ -479,10 +483,10 @@ function FlowChart({ title, months, groupsPresent, todayLabel, font, extraLine, 
       </div>
     </div>
   );
-}
+});
 
 /* ================= activity table ================= */
-function ActivityTable({ acts, setters, discount, exec, locked, font }) {
+const ActivityTable = React.memo(function ActivityTable({ acts, setters, discount, exec, locked, font }) {
   const { setField, setFieldCascade, setStart, setFinish, setDuration, remove, add } = setters;
   const btn = { fontFamily: font, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", background: C.ink, color: "#fff", cursor: "pointer", opacity: locked ? 0.5 : 1 };
   const dis = locked;
@@ -546,7 +550,7 @@ function ActivityTable({ acts, setters, discount, exec, locked, font }) {
       </div>
     </div>
   );
-}
+});
 
 const EvmCard = ({ label, value, sub, good }) => (
   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", flex: "1 1 130px", minWidth: 130 }}>
@@ -655,9 +659,256 @@ function Narrative({ items }) {
   );
 }
 
+/* ================= logo ================= */
+function Logo({ size = 38 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" style={{ flexShrink: 0, display: "block" }} aria-label="לוגו">
+      <rect x="2" y="2" width="60" height="60" rx="14" fill={C.ink} />
+      <rect x="13" y="34" width="9" height="16" rx="2" fill="#1D6FA3" />
+      <rect x="27" y="26" width="9" height="24" rx="2" fill="#E0A020" />
+      <rect x="41" y="18" width="9" height="32" rx="2" fill="#2F8F63" />
+      <path d="M13 26 L30 16 L40 21 L51 11" stroke="#fff" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ================= error boundary ================= */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div dir="rtl" style={{ fontFamily: "'Assistant',sans-serif", padding: 40, textAlign: "center" }}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>😕</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>משהו השתבש בתצוגה</div>
+          <div style={{ fontSize: 13, color: "#5C7282", marginBottom: 16 }}>{String(this.state.error?.message || this.state.error)}</div>
+          <button onClick={() => this.setState({ error: null })} style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: "#12293B", color: "#fff", fontFamily: "inherit", fontSize: 14, cursor: "pointer" }}>נסה שוב</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ================= SPI/CPI gauge ================= */
+function Gauge({ label, value, sub }) {
+  const v = value == null || isNaN(value) ? null : Math.max(0.5, Math.min(1.5, value));
+  const frac = v == null ? 0 : (v - 0.5) / 1.0;               // 0..1 across the arc
+  const ang = Math.PI * (1 - frac);                            // PI (left) .. 0 (right)
+  const cx = 90, cy = 84, r = 66;
+  const nx = cx + r * 0.78 * Math.cos(ang), ny = cy - r * 0.78 * Math.sin(ang);
+  const arc = (a0, a1, color) => {
+    const x0 = cx + r * Math.cos(a0), y0 = cy - r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1), y1 = cy - r * Math.sin(a1);
+    return <path d={`M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}`} stroke={color} strokeWidth="13" fill="none" strokeLinecap="round" />;
+  };
+  const good = value != null && value >= 1;
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px 8px", textAlign: "center", flex: "1 1 180px", minWidth: 180 }}>
+      <div style={{ fontSize: 12.5, color: C.muted, fontWeight: 600 }}>{label}</div>
+      <svg width="180" height="100" viewBox="0 0 180 100" style={{ display: "block", margin: "0 auto" }}>
+        {arc(Math.PI, Math.PI * 0.55, C.red)}
+        {arc(Math.PI * 0.55, Math.PI * 0.45, C.amber)}
+        {arc(Math.PI * 0.45, 0, C.green)}
+        {v != null && <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={C.ink} strokeWidth="3.5" strokeLinecap="round" />}
+        <circle cx={cx} cy={cy} r="5.5" fill={C.ink} />
+        <text x="14" y="98" fontSize="9" fill={C.muted}>0.5</text>
+        <text x="158" y="98" fontSize="9" fill={C.muted}>1.5</text>
+      </svg>
+      <div style={{ fontSize: 22, fontWeight: 800, marginTop: -26, color: value == null ? C.muted : good ? C.green : value < 0.95 ? C.red : C.amber }}>{ratio(value)}</div>
+      {sub && <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2, marginBottom: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ================= per-chapter progress bars ================= */
+function GroupBars({ rows }) {
+  const maxB = Math.max(...rows.map((r) => r.budget), 1);
+  return (
+    <div style={{ ...panel, padding: "16px 16px 12px" }}>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>התקדמות לפי פרקים — תקציב מול ערך שבוצע</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {rows.map((r) => (
+          <div key={r.key}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+              <span style={{ fontWeight: 600 }}>
+                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: r.color, marginInlineEnd: 6 }} />
+                {r.id > 0 ? `${r.id} · ` : ""}{r.name}
+              </span>
+              <span style={{ color: C.muted }}>{shekelShort(r.earned)} / {shekelShort(r.budget)} · <b style={{ color: r.pct >= 99.5 ? C.green : C.ink }}>{Math.round(r.pct)}%</b></span>
+            </div>
+            <div style={{ height: 14, background: "#EDF1F5", borderRadius: 7, overflow: "hidden", position: "relative" }}>
+              <div style={{ position: "absolute", inset: 0, width: `${(r.budget / maxB) * 100}%`, background: r.color, opacity: 0.22, borderRadius: 7 }} />
+              <div style={{ position: "absolute", insetBlock: 0, insetInlineStart: 0, width: `${(r.budget / maxB) * (r.pct / 100) * 100}%`, background: r.color, borderRadius: 7 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================= milestones ================= */
+function MilestoneList({ items }) {
+  if (!items.length) return null;
+  return (
+    <div style={{ ...panel, padding: "16px 16px 10px", flex: "1 1 320px", minWidth: 300 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>אבני דרך</div>
+      {items.map((m, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 2px", borderTop: i ? `1px solid ${C.border}` : "none" }}>
+          <span style={{ fontSize: 15, color: m.done ? C.green : m.late ? C.red : C.amber }}>{m.done ? "✔" : "◆"}</span>
+          <span style={{ fontSize: 13, flex: 1 }}>{m.name}</span>
+          <span dir="ltr" style={{ fontSize: 12.5, color: C.muted }}>{m.dateStr}</span>
+          {m.delta != null && m.delta !== 0 && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: m.delta > 0 ? C.red : C.green }}>{m.delta > 0 ? `+${m.delta}` : m.delta} ימים</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================= schedule slip table ================= */
+function SlipTable({ rows }) {
+  return (
+    <div style={{ ...panel, padding: "16px 16px 10px", flex: "1 1 320px", minWidth: 300 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>סטיות לו״ז מול בסיס — חמש הגדולות</div>
+      {rows.length === 0 && <div style={{ fontSize: 12.5, color: C.muted, paddingBottom: 8 }}>אין סטיות מול תכנית הבסיס 👍</div>}
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 2px", borderTop: i ? `1px solid ${C.border}` : "none" }}>
+          <span style={{ fontSize: 11, color: C.muted, minWidth: 28 }}>{r.wbs}</span>
+          <span style={{ fontSize: 13, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: r.slip > 0 ? C.red : C.green, whiteSpace: "nowrap" }}>{r.slip > 0 ? `+${r.slip}` : r.slip} ימים</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================= tiny markdown renderer (for AI output) ================= */
+function MdInline({ text }) {
+  const parts = String(text).split(/\*\*(.+?)\*\*/g);
+  return <>{parts.map((p, i) => (i % 2 ? <b key={i}>{p}</b> : p))}</>;
+}
+function Md({ text }) {
+  const lines = String(text || "").split("\n");
+  const out = [];
+  let list = null;
+  const flush = () => { if (list) { out.push(<ul key={out.length} style={{ margin: "4px 0 10px", paddingInlineStart: 20 }}>{list}</ul>); list = null; } };
+  lines.forEach((ln, i) => {
+    const t = ln.trim();
+    if (/^#{1,3}\s/.test(t)) { flush(); out.push(<div key={i} style={{ fontSize: 14.5, fontWeight: 800, margin: "12px 0 4px" }}><MdInline text={t.replace(/^#{1,3}\s/, "")} /></div>); }
+    else if (/^[-•*]\s/.test(t)) { (list = list || []).push(<li key={i} style={{ marginBottom: 3 }}><MdInline text={t.replace(/^[-•*]\s/, "")} /></li>); }
+    else if (/^\d+[.)]\s/.test(t)) { (list = list || []).push(<li key={i} style={{ marginBottom: 3 }}><MdInline text={t.replace(/^\d+[.)]\s/, "")} /></li>); }
+    else if (t === "") { flush(); }
+    else { flush(); out.push(<div key={i} style={{ marginBottom: 6 }}><MdInline text={t} /></div>); }
+  });
+  flush();
+  return <div style={{ fontSize: 13.5, lineHeight: 1.75 }}>{out}</div>;
+}
+
+/* ================= extra rule-based insights (beyond the narrative) ================= */
+function buildInsights({ evm, curModel, invoices, retention, current, baseByWbs, discount, statusDate }) {
+  const out = [];
+  const disc = 1 - discount / 100;
+
+  /* payment gap */
+  if (evm.unpaid > 1000) {
+    const pct = evm.AC > 0 ? (evm.unpaid / evm.AC) * 100 : 0;
+    out.push({
+      t: "פער אישור–תשלום", tone: pct > 15 ? "bad" : "warn",
+      body: `${shekel(evm.unpaid)} (${pct.toFixed(0)}% מהמאושר) אושרו אך טרם שולמו. פער מתמשך פוגע בתזרים הקבלן ועלול להאט את קצב הביצוע.`,
+    });
+  }
+
+  /* cash need — next 3 months from status date */
+  const from = statusDate, to = new Date(statusDate.getFullYear(), statusDate.getMonth() + 3, statusDate.getDate());
+  const need = curModel.months.filter((m) => m.start >= new Date(from.getFullYear(), from.getMonth(), 1) && m.start <= to).reduce((s, m) => s + m.planned, 0);
+  if (need > 0) out.push({ t: "צפי תזרים — שלושה חודשים קרובים", tone: "info", body: `על פי התכנית המתעדכנת, בשלושת החודשים הקרובים מתוכננות עבודות בהיקף של כ-${shekel(need)}. ודא מסגרת תקציבית ותזרימית מתאימה.` });
+
+  /* lagging activities */
+  const lag = current
+    .map((a) => {
+      const b = baseByWbs[a.wbs];
+      const budget = ((b ? b.cost : a.cost) || 0) * disc;
+      const planned = plannedFrac(a.start, a.finish, statusDate);
+      const gap = planned - (Number(a.progress) || 0) / 100;
+      return { a, gapValue: gap * budget, gap, planned };
+    })
+    .filter((x) => x.gap > 0.15 && x.gapValue > 10000)
+    .sort((x, y) => y.gapValue - x.gapValue)
+    .slice(0, 3);
+  if (lag.length) out.push({
+    t: "פעילויות בפיגור ביצוע", tone: "warn",
+    body: lag.map((x) => `• ${x.a.name} — בוצע ${x.a.progress || 0}% מול ${Math.round(x.planned * 100)}% מתוכנן (פער ${shekelShort(x.gapValue)})`).join("\n"),
+  });
+
+  /* extras trend */
+  const dated = invoices.filter((i) => toDate(i.date)).sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (dated.length >= 3) {
+    const lastEx = Number(dated.at(-1).extras) || 0, prevEx = Number(dated.at(-3).extras) || 0;
+    if (lastEx - prevEx > 10000) out.push({ t: "מגמת חריגים", tone: "warn", body: `החריגים גדלו ב-${shekel(lastEx - prevEx)} בשני החשבונות האחרונים (סה"כ ${shekel(lastEx)}). מומלץ להסדיר פקודות שינוי מול המזמין לפני שהפער מצטבר.` });
+  }
+
+  /* retention */
+  if (evm.AC > 0 && retention > 0) out.push({ t: "עכבון צבור", tone: "info", body: `נכון להיום מוחזק עכבון של ${shekel(evm.AC * retention / 100)} (${retention}% מהמאושר). סכום זה ישוחרר במסירה — יש להביאו בחשבון בתחזית התזרים של הקבלן.` });
+
+  return out;
+}
+
+/* ================= Claude AI analysis ================= */
+const AI_MODELS = [
+  { id: "claude-opus-4-8", label: "Claude Opus 4.8 — המומלץ" },
+  { id: "claude-sonnet-5", label: "Claude Sonnet 5 — מהיר" },
+  { id: "claude-haiku-4-5", label: "Claude Haiku 4.5 — חסכוני" },
+];
+const AI_KEY_LS = "budget-ai-key", AI_MODEL_LS = "budget-ai-model";
+
+async function runAiAnalysis({ apiKey, model, payload }) {
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+    defaultHeaders: { "anthropic-dangerous-direct-browser-access": "true" },
+  });
+  const req = {
+    model,
+    max_tokens: 4000,
+    system:
+      "אתה יועץ בכיר לבקרת פרויקטים בתחום הבנייה והתשתיות, מומחה לניתוח Earned Value Management. " +
+      "תקבל נתוני פרויקט בפורמט JSON (סכומים בש\"ח). כתוב ניתוח מקצועי בעברית, בפורמט Markdown, עם הכותרות: " +
+      "## תמצית מנהלים (3-4 משפטים), ## ניתוח לוח זמנים, ## ניתוח עלות ותזרים, ## סיכונים מרכזיים (ממוינים לפי חומרה), " +
+      "## המלצות אופרטיביות (ממוספרות, קונקרטיות), ## תחזית. היה ישיר וכמותי — עגן כל קביעה במספר מהנתונים. אל תמציא נתונים שאינם קיימים.",
+    messages: [{ role: "user", content: `נתוני הפרויקט:\n${JSON.stringify(payload, null, 1)}` }],
+  };
+  if (!model.startsWith("claude-haiku")) req.thinking = { type: "adaptive" };
+  const msg = await client.messages.create(req);
+  if (msg.stop_reason === "refusal") throw new Error("הבקשה נדחתה על ידי מסנני הבטיחות של המודל.");
+  const text = msg.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+  if (!text) throw new Error("המודל החזיר תשובה ריקה.");
+  return text;
+}
+
+function aiErrorMessage(e) {
+  const status = e?.status;
+  if (status === 401) return "מפתח ה-API אינו תקין. בדוק שהעתקת אותו במלואו.";
+  if (status === 429) return "חריגה ממכסת הבקשות (Rate Limit). המתן דקה ונסה שוב.";
+  if (status === 400) return "בקשה שגויה: " + (e?.message || "");
+  if (status >= 500) return "שירות ה-AI עמוס כרגע. נסה שוב בעוד רגע.";
+  if (e?.message?.includes("Failed to fetch") || e?.message?.includes("fetch")) return "שגיאת רשת — בדוק את החיבור לאינטרנט (ייתכן שחומת אש חוסמת את api.anthropic.com).";
+  return e?.message || "שגיאה לא צפויה.";
+}
+
 /* ================= main ================= */
-export default function App() {
+function App() {
   const [tab, setTab] = useState("base");
+  const [dashView, setDashView] = useState("exec");
+  const [aiKey, setAiKey] = useState(() => { try { return localStorage.getItem(AI_KEY_LS) || ""; } catch (e) { return ""; } });
+  const [aiModel, setAiModel] = useState(() => { try { return localStorage.getItem(AI_MODEL_LS) || AI_MODELS[0].id; } catch (e) { return AI_MODELS[0].id; } });
+  const [aiText, setAiText] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  const [aiInReport, setAiInReport] = useState(true);
   const [baseline, setBaseline] = useState(BASE_SEED);
   const [current, setCurrent] = useState(CUR_SEED);
   const [invoices, setInvoices] = useState(INV_SEED);
@@ -671,13 +922,9 @@ export default function App() {
   const fileRef = useRef(null);
   const loadedRef = useRef(false);
 
-  useEffect(() => {
-    const l = document.createElement("link");
-    l.rel = "stylesheet";
-    l.href = "https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;600;800&display=swap";
-    document.head.appendChild(l);
-    return () => { try { document.head.removeChild(l); } catch (e) {} };
-  }, []);
+  /* fonts are loaded from index.html; persist AI settings locally (never synced to the cloud) */
+  useEffect(() => { try { localStorage.setItem(AI_KEY_LS, aiKey); } catch (e) {} }, [aiKey]);
+  useEffect(() => { try { localStorage.setItem(AI_MODEL_LS, aiModel); } catch (e) {} }, [aiModel]);
 
   /* ---- payload helpers ---- */
   const defaultPayload = () => ({ baseline: BASE_SEED, current: CUR_SEED, invoices: INV_SEED, discount: 11.11, retention: 5, locked: true, statusISO: "" });
@@ -738,15 +985,23 @@ export default function App() {
 
   const projName = projects.find((p) => p.id === projectId)?.name || "פרויקט";
 
+  /* flush the debounced autosave before leaving a project, so no <700ms edit is lost */
+  const persistNow = async () => {
+    if (!loadedRef.current || !projectId) return;
+    try { await storage.set(PROJ_PREFIX + projectId, JSON.stringify(currentPayload())); } catch (e) {}
+  };
+
   const switchProject = async (id) => {
     if (!id || id === projectId) return;
+    await persistNow();
     let payload = defaultPayload();
     try { const r = await storage.get(PROJ_PREFIX + id); if (r?.value) payload = JSON.parse(r.value); } catch (e) {}
-    applyPayload(payload); setProjectId(id); setTab("base");
+    applyPayload(payload); setProjectId(id); setTab("base"); setAiText(""); setAiErr("");
   };
   const createProject = async () => {
     const name = window.prompt("שם הפרויקט החדש:", "פרויקט חדש");
     if (!name) return;
+    await persistNow();
     const id = newId();
     const payload = emptyPayload();
     try { await storage.set(PROJ_PREFIX + id, JSON.stringify(payload)); } catch (e) {}
@@ -927,6 +1182,8 @@ export default function App() {
           };
         }).filter((a) => a.name);
         if (!parsed.length) { alert("לא נמצאו פעילויות בקובץ."); return; }
+        const target = tab === "base" ? "תכנית הבסיס" : "התכנית המתעדכנת";
+        if (!window.confirm(`הייבוא יחליף את ${target} הנוכחית ב-${parsed.length} פעילויות מהקובץ. להמשיך?`)) return;
         if (tab === "base") setBaseline(cascade(parsed));
         else setCurrent(cascade(parsed));
       } catch (err) { alert("שגיאה בקריאת הקובץ: " + err.message); }
@@ -973,32 +1230,112 @@ export default function App() {
     baseAfter: baseModel.totals.totalAfter || 0, curAfter: curModel.totals.totalAfter || 0, critNames,
   }), [evm, endDelta, retention, invoices, baseModel, curModel, critNames]);
 
+  /* ---- dashboard data ---- */
+  const disc = 1 - discount / 100;
+  const groupRows = useMemo(() => GROUP_META.concat([OTHER]).map((g) => {
+    const acts = current.filter((a) => metaOf(a.wbs).key === g.key);
+    const budget = acts.reduce((s, a) => s + (a.cost || 0) * disc, 0);
+    const earned = acts.reduce((s, a) => s + (a.cost || 0) * disc * ((Number(a.progress) || 0) / 100), 0);
+    return { key: g.key, id: g.id, name: g.name, color: g.color, budget, earned, pct: budget > 0 ? (earned / budget) * 100 : 0 };
+  }).filter((r) => r.budget > 0), [current, disc]);
+
+  const milestones = useMemo(() => current
+    .filter((a) => a.duration === 0 && toDate(a.start))
+    .sort((a, b) => toDate(a.start) - toDate(b.start))
+    .map((a) => {
+      const d = toDate(a.start);
+      const b = baseByWbs[a.wbs];
+      const delta = b && toDate(b.start) ? Math.round((d - toDate(b.start)) / DAY) : null;
+      const done = (Number(a.progress) || 0) >= 100;
+      return { name: a.name.replace(/^◆\s*/, ""), dateStr: fmtDate(d), done, late: !done && d < new Date(), delta };
+    }), [current, baseByWbs]);
+
+  const slips = useMemo(() => current
+    .map((a) => {
+      const b = baseByWbs[a.wbs];
+      if (!b || !toDate(a.finish) || !toDate(b.finish)) return null;
+      return { wbs: a.wbs, name: a.name.replace(/^◆\s*/, ""), slip: Math.round((toDate(a.finish) - toDate(b.finish)) / DAY) };
+    })
+    .filter((x) => x && x.slip !== 0)
+    .sort((x, y) => y.slip - x.slip)
+    .slice(0, 5), [current, baseByWbs]);
+
+  const insights = useMemo(() => buildInsights({ evm, curModel, invoices, retention, current, baseByWbs, discount, statusDate }),
+    [evm, curModel, invoices, retention, current, baseByWbs, discount, statusDate]);
+
+  /* ---- compact project snapshot sent to the AI ---- */
+  const aiPayload = useMemo(() => {
+    const r = (n) => (n == null || isNaN(n) ? null : Math.round(n));
+    const dated = invoices.filter((i) => toDate(i.date)).sort((a, b) => (a.date > b.date ? 1 : -1));
+    return {
+      project: projName, currency: "ILS", statusDate: fmtDate(evm.statusDate),
+      budget: { estimateBeforeDiscount: r(curModel.totals.totalCost), BAC: r(evm.BAC), discountPct: discount, retentionPct: retention },
+      evm: { PV: r(evm.PV), EV: r(evm.EV), AC_approved: r(evm.AC), paidActual: r(evm.paidCash), SPI: evm.SPI?.toFixed(2), CPI: evm.CPI?.toFixed(2), EAC: r(evm.EAC), ETC: r(evm.ETC), VAC: r(evm.VAC), pctComplete: evm.pctComplete?.toFixed(1) },
+      schedule: {
+        baselineFinish: fmtDate(baseModel.totals.endDate), currentFinish: fmtDate(curModel.totals.endDate),
+        finishDeltaDays: endDelta, criticalPath: critNames.slice(0, 6),
+        topSlipsDays: slips.map((s) => ({ name: s.name, days: s.slip })),
+        milestones: milestones.map((m) => ({ name: m.name, date: m.dateStr, done: m.done, deltaDays: m.delta })),
+      },
+      chapters: groupRows.map((g) => ({ name: g.name, budget: r(g.budget), earned: r(g.earned), pctComplete: Math.round(g.pct) })),
+      invoicesCumulative: dated.slice(-8).map((i) => ({ date: fmtDate(toDate(i.date)), contract: r(i.cumulative), extras: r(i.extras || 0), approvedTotal: r(invApproved(i)), paid: r(invPaidC(i)) })),
+      cashflow: { peakMonth: curModel.totals.peakLabel, peakAmount: r(curModel.totals.peakMonthly) },
+    };
+  }, [projName, evm, curModel, baseModel, discount, retention, endDelta, critNames, slips, milestones, groupRows, invoices]);
+
+  const generateAi = async () => {
+    if (!aiKey.trim()) { setAiErr("הזן מפתח API כדי להפיק ניתוח."); return; }
+    setAiBusy(true); setAiErr("");
+    try {
+      const text = await runAiAnalysis({ apiKey: aiKey.trim(), model: aiModel, payload: aiPayload });
+      setAiText(text);
+    } catch (e) {
+      setAiErr(aiErrorMessage(e));
+    } finally { setAiBusy(false); }
+  };
+
   return (
     <div dir="rtl" style={{ fontFamily: font, background: C.bg, minHeight: "100vh", color: C.ink, padding: "20px 22px" }}>
       <style>{`
         @media print {
           .no-print { display: none !important; }
           body { background: #fff; }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print-only { display: block !important; }
-          .tab-panel { break-inside: avoid; }
-          @page { size: A4 landscape; margin: 12mm; }
+          .tab-panel, table, .avoid-break { break-inside: avoid; }
+          .page-break { break-before: page; }
+          @page { size: A4 ${tab === "report" ? "portrait" : "landscape"}; margin: 12mm; }
         }
         .print-only { display: none; }
+        input:focus, select:focus { outline: 2px solid #1D6FA3; outline-offset: 1px; }
+        button:hover { filter: brightness(0.96); }
       `}</style>
 
       <div className="print-only" style={{ marginBottom: 14, borderBottom: `2px solid ${C.ink}`, paddingBottom: 8 }}>
-        <div style={{ fontSize: 20, fontWeight: 800 }}>{projName}</div>
-        <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>
-          {{ base: "תכנית בסיס", cur: "תכנית מתעדכנת", comp: "השוואה + EVM", inv: "חשבונות", report: "דוח בקרה תקציבית" }[tab]} · הופק ב-{fmtDate(today)}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Logo size={34} />
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800 }}>{projName}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>
+              {{ base: "תכנית בסיס", cur: "תכנית מתעדכנת", comp: "השוואה + EVM", dash: "דשבורד", inv: "חשבונות", ai: "ניתוח AI", report: "דוח בקרה תקציבית" }[tab]} · הופק ב-{fmtDate(today)}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="no-print" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-        <div>
-          <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4 }}>{projName}</div>
-          <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>
-            בקרה תקציבית: בסיס · מתעדכן · השוואה + EVM · דוח
-            {saveState && <span style={{ marginInlineStart: 10, fontSize: 11.5, color: saveState.includes("✓") ? C.green : C.muted }}>{saveState}</span>}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Logo />
+          <div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4 }}>{projName}</div>
+            <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>
+              בקרה תקציבית לפרויקטי בנייה ותשתית
+              <span title={usingCloud ? "הנתונים נשמרים בענן ומשותפים בין מכשירים" : "הנתונים נשמרים בדפדפן זה בלבד"}
+                style={{ marginInlineStart: 10, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: usingCloud ? "#EEF7F1" : "#F0F4F8", color: usingCloud ? C.green : C.muted, border: `1px solid ${usingCloud ? "#CDE8D8" : C.border}` }}>
+                {usingCloud ? "☁ ענן" : "💾 מקומי"}
+              </span>
+              {saveState && <span style={{ marginInlineStart: 8, fontSize: 11.5, color: saveState.includes("✓") ? C.green : C.muted }}>{saveState}</span>}
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -1036,8 +1373,10 @@ export default function App() {
         {tabBtn("base", "① תכנית בסיס")}
         {tabBtn("cur", "② תכנית מתעדכנת")}
         {tabBtn("comp", "③ השוואה + EVM")}
-        {tabBtn("inv", "④ חשבונות")}
-        {tabBtn("report", "⑤ דוח")}
+        {tabBtn("dash", "④ דשבורד")}
+        {tabBtn("inv", "⑤ חשבונות")}
+        {tabBtn("ai", "⑥ ניתוח AI ✦")}
+        {tabBtn("report", "⑦ דוח")}
       </div>
 
       {/* ===== TAB 1: BASELINE ===== */}
@@ -1088,10 +1427,13 @@ export default function App() {
             <div style={{ fontSize: 15, fontWeight: 700 }}>מדדי EVM — לתאריך חשבון <span style={{ fontWeight: 400, fontSize: 12, color: C.muted }}>(AC לפי {evm.acSource})</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 9, padding: "6px 10px" }}>
               <span style={{ fontSize: 12, color: C.muted }}>תאריך סטטוס</span>
-              <select value={statusISO} onChange={(e) => setStatusISO(e.target.value)} style={{ ...cell, fontFamily: font, cursor: "pointer" }}>
+              <select value={datedInv.some((i) => i.date === statusISO) ? statusISO : ""} onChange={(e) => setStatusISO(e.target.value)} style={{ ...cell, fontFamily: font, cursor: "pointer" }}>
                 <option value="">אחרון ({fmtDate(evm.statusDate)})</option>
                 {datedInv.map((i) => <option key={i.id} value={i.date}>{fmtDate(toDate(i.date))}</option>)}
               </select>
+              <span style={{ fontSize: 12, color: C.muted }}>או</span>
+              <input type="date" dir="ltr" value={statusISO} onChange={(e) => setStatusISO(e.target.value)} title="בחר תאריך סטטוס חופשי"
+                style={{ ...cell, width: 130, textAlign: "center" }} />
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
@@ -1153,6 +1495,70 @@ export default function App() {
         </>
       )}
 
+      {/* ===== TAB: DASHBOARD ===== */}
+      {tab === "dash" && (
+        <>
+          <div className="no-print" style={{ display: "flex", gap: 6, marginBottom: 14, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content" }}>
+            {[["exec", "🎯 מנהלים"], ["sched", "🗓 לוח זמנים"], ["fin", "💰 כספים"]].map(([id, label]) => (
+              <button key={id} onClick={() => setDashView(id)} style={{
+                fontFamily: font, fontSize: 13, fontWeight: dashView === id ? 800 : 600, padding: "7px 16px", borderRadius: 7,
+                border: "none", cursor: "pointer", background: dashView === id ? C.ink : "transparent", color: dashView === id ? "#fff" : C.muted,
+              }}>{label}</button>
+            ))}
+          </div>
+
+          {dashView === "exec" && (
+            <>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                <Kpi label="השלמה (EV/BAC)" value={`${evm.pctComplete.toFixed(0)}%`} sub={`${shekelShort(evm.EV)} מתוך ${shekelShort(evm.BAC)}`} />
+                <Kpi label="סיום צפוי" value={fmtDate(curModel.totals.endDate)} accent={endDelta > 0 ? C.red : C.ink} sub={endDelta ? `${endDelta > 0 ? "+" : ""}${endDelta} ימים מול בסיס` : "בהתאם לבסיס"} />
+                <Kpi label="אומדן בהשלמה (EAC)" value={shekelShort(evm.EAC)} accent={evm.VAC != null && evm.VAC < 0 ? C.red : C.green} sub={evm.VAC == null ? "" : evm.VAC >= 0 ? `צפי עודף ${shekelShort(evm.VAC)}` : `צפי חריגה ${shekelShort(-evm.VAC)}`} />
+                <Kpi label="שולם בפועל" value={shekelShort(evm.paidCash)} sub={evm.unpaid > 0 ? `ממתין לתשלום ${shekelShort(evm.unpaid)}` : "אין פער תשלומים"} />
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                <Gauge label="SPI — ביצוע לוח זמנים" value={evm.SPI} sub={evm.SV >= 0 ? `מקדים בשווי ${shekelShort(evm.SV)}` : `מפגר בשווי ${shekelShort(-evm.SV)}`} />
+                <Gauge label="CPI — יעילות עלות" value={evm.CPI} sub={evm.CV >= 0 ? `חיסכון ${shekelShort(evm.CV)}` : `חריגה ${shekelShort(-evm.CV)}`} />
+                <MilestoneList items={milestones} />
+              </div>
+              <GroupBars rows={groupRows} />
+              <Narrative items={narrative.slice(0, 1).concat(narrative.filter((n) => n.t === "המלצות"))} />
+            </>
+          )}
+
+          {dashView === "sched" && (
+            <>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                <Gauge label="SPI — ביצוע לוח זמנים" value={evm.SPI} sub={`סטיית סיום: ${endDelta == null ? "—" : endDelta === 0 ? "ללא" : `${endDelta > 0 ? "+" : ""}${endDelta} ימים`}`} />
+                <SlipTable rows={slips} />
+                <MilestoneList items={milestones} />
+              </div>
+              <Gantt title="גאנט השוואתי — מתעדכן מול בסיס (אפור)" activities={current} discount={discount}
+                baselineByWbs={baseByWbs} readOnly onShift={() => {}} onResize={() => {}} />
+            </>
+          )}
+
+          {dashView === "fin" && (() => {
+            const last = datedInv.length ? datedInv.at(-1) : null;
+            const totApproved = last ? invApproved(last) : 0;
+            const totPaid = last ? invPaidC(last) : 0;
+            return (
+              <>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                  <Kpi label="מאושר מצטבר" value={shekel(totApproved)} sub={last ? `נכון ל-${fmtDate(toDate(last.date))}` : ""} />
+                  <Kpi label="שולם בפועל" value={shekel(totPaid)} accent={C.green} sub={`${totApproved > 0 ? ((totPaid / totApproved) * 100).toFixed(0) : 0}% מהמאושר`} />
+                  <Kpi label="פער אישור–תשלום" value={shekel(totApproved - totPaid)} accent={totApproved - totPaid > 0 ? C.red : C.ink} />
+                  <Kpi label={`עכבון ${retention}%`} value={shekel(totApproved * retention / 100)} accent={C.red} sub="ישוחרר במסירה" />
+                  <Kpi label="שיא תזרים חודשי" value={shekelShort(curModel.totals.peakMonthly)} sub={`בחודש ${curModel.totals.peakLabel || "—"}`} />
+                </div>
+                <Gauge label="CPI — יעילות עלות" value={evm.CPI} sub={evm.CV >= 0 ? `חיסכון ${shekelShort(evm.CV)}` : `חריגה ${shekelShort(-evm.CV)}`} />
+                <div style={{ height: 12 }} />
+                <FlowChart title="תזרים חודשי — מתוכנן מול חשבונות ותשלומים" months={curMonthsWithActual} groupsPresent={curModel.groupsPresent} todayLabel={labelOfToday(curModel.months)} font={font} extraLine netLine />
+              </>
+            );
+          })()}
+        </>
+      )}
+
       {/* ===== TAB 4: INVOICES ===== */}
       {tab === "inv" && (() => {
         const last = invoices.length ? [...invoices].sort((a, b) => (a.date > b.date ? 1 : -1)).at(-1) : null;
@@ -1209,6 +1615,64 @@ export default function App() {
         );
       })()}
 
+      {/* ===== TAB: AI ANALYSIS ===== */}
+      {tab === "ai" && (
+        <>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" }}>
+            {/* settings + generate */}
+            <div style={{ ...panel, padding: "16px 18px", flex: "1 1 330px", maxWidth: 460 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>✦ ניתוח AI — Claude</div>
+              <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.7, marginBottom: 12 }}>
+                שליחת תמצית נתוני הפרויקט (מספרים בלבד) ל-Claude לקבלת סקירת מנהלים, ניתוח סיכונים והמלצות.
+                נדרש מפתח API אישי מ-<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{ color: "#1D6FA3" }}>console.anthropic.com</a>.
+                המפתח נשמר <b>בדפדפן זה בלבד</b> ולא נשלח לענן האפליקציה.
+              </div>
+              <label style={{ fontSize: 12, color: C.muted }}>מפתח API</label>
+              <input type="password" dir="ltr" value={aiKey} onChange={(e) => setAiKey(e.target.value)} placeholder="sk-ant-..."
+                style={{ ...cell, width: "100%", marginTop: 4, marginBottom: 10, textAlign: "left" }} />
+              <label style={{ fontSize: 12, color: C.muted }}>מודל</label>
+              <select value={aiModel} onChange={(e) => setAiModel(e.target.value)} style={{ ...cell, width: "100%", marginTop: 4, marginBottom: 14, fontFamily: font, cursor: "pointer" }}>
+                {AI_MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+              </select>
+              <button onClick={generateAi} disabled={aiBusy} style={{
+                fontFamily: font, fontSize: 14, fontWeight: 700, padding: "10px 18px", borderRadius: 9, border: "none",
+                background: aiBusy ? "#8A99A8" : C.ink, color: "#fff", cursor: aiBusy ? "wait" : "pointer", width: "100%",
+              }}>{aiBusy ? "⏳ מנתח את הפרויקט…" : "✦ הפק ניתוח AI"}</button>
+              {aiErr && <div style={{ marginTop: 10, fontSize: 12.5, color: C.red, background: "#FBEEEC", borderRadius: 8, padding: "8px 10px", lineHeight: 1.6 }}>{aiErr}</div>}
+              {aiText && (
+                <label style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 12, fontSize: 12.5, cursor: "pointer" }}>
+                  <input type="checkbox" checked={aiInReport} onChange={(e) => setAiInReport(e.target.checked)} />
+                  כלול את ניתוח ה-AI בדוח המודפס (לשונית ⑦)
+                </label>
+              )}
+            </div>
+
+            {/* result / built-in insights */}
+            <div style={{ flex: "2 1 480px", minWidth: 320 }}>
+              {aiText ? (
+                <div className="tab-panel" style={{ ...panel, padding: "18px 22px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800 }}>✦ ניתוח Claude — {projName}</div>
+                    <button className="no-print" onClick={() => window.print()} style={{ ...btn, fontSize: 12, padding: "6px 12px" }}>🖨 הדפס</button>
+                  </div>
+                  <Md text={aiText} />
+                  <div style={{ fontSize: 10.5, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 8, marginTop: 12 }}>
+                    נוצר על ידי {AI_MODELS.find((m) => m.id === aiModel)?.label || aiModel} · {fmtDate(new Date())} · יש לוודא מסקנות מול הנתונים בפועל
+                  </div>
+                </div>
+              ) : (
+                <div style={{ ...panel, padding: "18px 22px", textAlign: "center", color: C.muted, fontSize: 13 }}>
+                  <div style={{ fontSize: 34, marginBottom: 6 }}>✦</div>
+                  הניתוח יופיע כאן. בינתיים — למטה מוצגות תובנות אוטומטיות המחושבות מהנתונים ללא AI.
+                </div>
+              )}
+              <div style={{ height: 12 }} />
+              <Narrative items={insights.length ? insights : [{ t: "אין תובנות נוספות", tone: "info", body: "הזן חשבונות ואחוזי ביצוע כדי לקבל תובנות אוטומטיות." }]} />
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ===== TAB 5: PRINTABLE REPORT ===== */}
       {tab === "report" && (
         <>
@@ -1216,10 +1680,57 @@ export default function App() {
             <button style={{ ...btn, background: C.ink, color: "#fff", border: "none" }} onClick={() => window.print()}>🖨 הדפס / שמור כ-PDF</button>
           </div>
           <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 12, padding: "28px 32px" }}>
-            <div style={{ borderBottom: `2px solid ${C.ink}`, paddingBottom: 14, marginBottom: 18 }}>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>דוח בקרה תקציבית חודשי</div>
-              <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>{projName} · תאריך סטטוס {fmtDate(evm.statusDate)}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, borderBottom: `2px solid ${C.ink}`, paddingBottom: 14, marginBottom: 18 }}>
+              <Logo size={46} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 800 }}>דוח בקרה תקציבית חודשי</div>
+                <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>{projName} · תאריך סטטוס {fmtDate(evm.statusDate)}</div>
+              </div>
+              <div style={{ textAlign: "left", fontSize: 11.5, color: C.muted }} dir="ltr">{fmtDate(today)}</div>
             </div>
+
+            {/* KPI snapshot */}
+            <div className="avoid-break" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              {[
+                ["תקציב (BAC)", shekelShort(evm.BAC), null],
+                ["השלמה", `${evm.pctComplete.toFixed(0)}%`, null],
+                ["SPI", ratio(evm.SPI), evm.SPI == null ? null : evm.SPI >= 1],
+                ["CPI", ratio(evm.CPI), evm.CPI == null ? null : evm.CPI >= 1],
+                ["EAC", shekelShort(evm.EAC), evm.VAC == null ? null : evm.VAC >= 0],
+                ["סטיית סיום", endDelta == null ? "—" : `${endDelta > 0 ? "+" : ""}${endDelta} ימים`, endDelta == null ? null : endDelta <= 0],
+              ].map(([k, v, good]) => (
+                <div key={k} style={{ flex: "1 1 90px", border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 10.5, color: C.muted }}>{k}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: good == null ? C.ink : good ? C.green : C.red }}>{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* S-curve for print */}
+            <div className="avoid-break" style={{ maxWidth: 700, margin: "0 auto 20px" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>עקומות S — בסיס · מתעדכן · בפועל</div>
+              <div style={{ direction: "ltr", width: "100%", height: 240 }}>
+                <ResponsiveContainer>
+                  <ComposedChart data={compMonths} margin={{ top: 6, right: 10, bottom: 4, left: 10 }}>
+                    <CartesianGrid stroke={C.border} vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 9.5, fill: C.muted }} tickMargin={5} />
+                    <YAxis tick={{ fontSize: 9.5, fill: C.muted }} tickFormatter={shekelShort} width={52} />
+                    <Legend wrapperStyle={{ fontFamily: font, fontSize: 11 }} />
+                    <Line dataKey="baseCum" name="בסיס" stroke={C.baseGray} strokeWidth={2} strokeDasharray="6 4" dot={false} />
+                    <Line dataKey="curCum" name="מתעדכן" stroke={C.ink} strokeWidth={2.2} dot={false} />
+                    <Line dataKey="actualCum" name="מאושר בפועל" stroke={C.amber} strokeWidth={2.2} dot={false} connectNulls={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {aiText && aiInReport && (
+              <div className="avoid-break" style={{ marginBottom: 20, background: "#F7F9FB", border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px" }}>
+                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>✦ ניתוח AI</div>
+                <Md text={aiText} />
+                <div style={{ fontSize: 10, color: C.muted, marginTop: 8 }}>נוצר באמצעות Claude · יש לוודא מסקנות מול הנתונים בפועל</div>
+              </div>
+            )}
 
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>ניתוח וממצאים</div>
             <div style={{ marginBottom: 20 }}>
@@ -1302,5 +1813,13 @@ export default function App() {
         הנתונים נשמרים אוטומטית ונטענים בפתיחה מחדש. פעילות עם משך 0 מוצגת כאבן דרך ◆. הנתיב הקריטי (אדום) מחושב משרשראות התלויות — הוסף קשרי "קודמת" כדי שהנתיב יתעדכן. עקומת "נטו לאחר עכבון" מציגה את התקבולים בפועל בניכוי {retention}% עכבון.
       </div>
     </div>
+  );
+}
+
+export default function AppRoot() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   );
 }

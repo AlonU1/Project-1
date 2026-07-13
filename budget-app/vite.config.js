@@ -12,6 +12,7 @@ export default defineConfig({
           charts: ["recharts"],
           xlsx: ["xlsx"],
           supabase: ["@supabase/supabase-js"],
+          anthropic: ["@anthropic-ai/sdk"],
         },
       },
     },
