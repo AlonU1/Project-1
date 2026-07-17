@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alon Urlainis | Civil Engineering | Ariel University</title>
   <meta name="description" content="Academic website of Dr. Alon Urlainis, Senior Lecturer at the Department of Civil Engineering, Ariel University. Research in seismic risk, critical infrastructure resilience, BIM, and AI in construction." />
+  <meta name="theme-color" content="#0e1621" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;1,400&family=Big+Shoulders:opsz,wght@10..72,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -34,6 +35,7 @@
 
 <!-- ========== HERO ========== -->
 <section id="home">
+  <canvas class="net" aria-hidden="true"></canvas>
   <div class="hero-inner">
     <div class="hero-text">
       <p class="hero-eyebrow"><span class="kw dom-bim">BIM</span> &middot; <span class="kw dom-ai">AI</span> &middot; <span class="kw dom-risk">Risk Assessment</span> &middot; <span class="kw dom-cm">Construction Management</span></p>
@@ -80,7 +82,7 @@
 <!-- ========== ABOUT ========== -->
 <section id="about">
   <div class="section-inner">
-    <span class="sheet-code">S-01 &middot; General Notes</span>
+    <span class="sheet-code">about</span>
     <h2 class="section-title">About</h2>
     <p class="section-subtitle">Academic background and education</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -158,9 +160,9 @@
 <!-- ========== RESEARCH ========== -->
 <section id="research">
   <div class="section-inner">
-    <span class="sheet-code">S-02 &middot; Research Program</span>
+    <span class="sheet-code">research</span>
     <h2 class="section-title">Research Interests</h2>
-    <p class="section-subtitle">Four research domains, coded like disciplines in a drawing set</p>
+    <p class="section-subtitle">Four connected domains, from physical infrastructure to machine intelligence</p>
     <div class="dim-line" aria-hidden="true"></div>
 
     <div class="domains-grid">
@@ -229,7 +231,7 @@
 <!-- ========== PUBLICATIONS ========== -->
 <section id="publications">
   <div class="section-inner">
-    <span class="sheet-code">S-03 &middot; Publication Record</span>
+    <span class="sheet-code">publications</span>
     <h2 class="section-title">Publications</h2>
     <p class="section-subtitle">Peer-reviewed journal articles, conference proceedings, technical reports, and invited talks</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -605,7 +607,7 @@
 <!-- ========== TEACHING ========== -->
 <section id="teaching">
   <div class="section-inner">
-    <span class="sheet-code">S-04 &middot; Teaching Record</span>
+    <span class="sheet-code">teaching</span>
     <h2 class="section-title">Teaching</h2>
     <p class="section-subtitle">Courses taught as lecturer and as teaching assistant</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -673,7 +675,7 @@
 <!-- ========== STUDENTS ========== -->
 <section id="students">
   <div class="section-inner">
-    <span class="sheet-code">S-05 &middot; Supervision</span>
+    <span class="sheet-code">supervision</span>
     <h2 class="section-title">Student Supervision</h2>
     <p class="section-subtitle">Current and completed graduate students</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -741,7 +743,7 @@
 <!-- ========== AWARDS ========== -->
 <section id="awards">
   <div class="section-inner">
-    <span class="sheet-code">S-06 &middot; Recognition</span>
+    <span class="sheet-code">awards</span>
     <h2 class="section-title">Awards &amp; Honors</h2>
     <p class="section-subtitle">Recognition in research and teaching excellence</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -787,7 +789,7 @@
 <!-- ========== CONTACT ========== -->
 <section id="contact">
   <div class="section-inner">
-    <span class="sheet-code">S-07 &middot; Correspondence</span>
+    <span class="sheet-code">contact</span>
     <h2 class="section-title">Contact</h2>
     <p class="section-subtitle">Get in touch for collaborations, inquiries, or student supervision</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -836,8 +838,8 @@
   <div class="titleblock">
     <div class="tb-cell"><span>Project</span><strong>Alon Urlainis &mdash; Academic Record</strong></div>
     <div class="tb-cell"><span>Department</span><strong>Civil Engineering, Ariel University</strong></div>
-    <div class="tb-cell"><span>Revision</span><strong>May 2026</strong></div>
-    <div class="tb-cell"><span>Sheet</span><strong>1 of 1</strong></div>
+    <div class="tb-cell"><span>Last updated</span><strong>May 2026</strong></div>
+    <div class="tb-cell"><span>Build</span><strong>v3.0</strong></div>
   </div>
   <p class="tb-copy">&copy; 2026 Alon Urlainis &mdash; All rights reserved.</p>
 </footer>
@@ -849,6 +851,78 @@
     document.getElementById('pub-' + type).classList.add('active');
     event.target.classList.add('active');
   }
+
+  /* knowledge-graph animation behind the hero */
+  (function () {
+    const canvas = document.querySelector('.net');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const colors = ['#58a8d8', '#a98fe0', '#e0785a', '#63c08a'];
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let nodes = [], w = 0, h = 0, raf = null;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = rect.width; h = rect.height;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.max(26, Math.min(54, Math.round(w / 26)));
+      nodes = Array.from({ length: count }, (_, i) => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
+        r: Math.random() * 1.4 + 0.8,
+        c: i % 7 === 0 ? colors[i % colors.length] : null
+      }));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      const linkDist = 130;
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d = Math.hypot(dx, dy);
+          if (d < linkDist) {
+            ctx.strokeStyle = 'rgba(140, 170, 200, ' + (0.14 * (1 - d / linkDist)).toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+      for (const n of nodes) {
+        ctx.fillStyle = n.c || 'rgba(140, 170, 200, 0.45)';
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.c ? n.r + 0.8 : n.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function step() {
+      for (const n of nodes) {
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > w) n.vx *= -1;
+        if (n.y < 0 || n.y > h) n.vy *= -1;
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+
+    resize();
+    window.addEventListener('resize', () => { resize(); if (reduced) draw(); });
+    if (reduced) { draw(); } else { step(); }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { cancelAnimationFrame(raf); }
+      else if (!reduced) { step(); }
+    });
+  })();
 </script>
 
 </body>
