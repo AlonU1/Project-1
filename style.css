@@ -23,6 +23,12 @@
   --radius:     2px;
   --max-w:      1080px;
 
+  /* research domain accents (drawing-set discipline colors) */
+  --dom-bim:    #2e6e8e;   /* B — BIM, markup blue */
+  --dom-ai:     #6b4e8e;   /* A — AI & ML, plot purple */
+  --dom-risk:   #c63d12;   /* R — risk assessment, trace red */
+  --dom-cm:     #2f6b3c;   /* C — construction management, approval green */
+
   --font-display: "Big Shoulders", "Big Shoulders Display", "Archivo Narrow", "Arial Narrow", sans-serif;
   --font-body:    "Archivo", "Segoe UI", system-ui, sans-serif;
   --font-mono:    "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
@@ -136,9 +142,16 @@ nav {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--signal);
+  color: var(--ink-soft);
   margin-bottom: 1rem;
 }
+.hero-eyebrow .kw { color: var(--dc, var(--ink)); }
+
+/* domain accent modifiers — set --dc for any component */
+.dom-bim  { --dc: var(--dom-bim); }
+.dom-ai   { --dc: var(--dom-ai); }
+.dom-risk { --dc: var(--dom-risk); }
+.dom-cm   { --dc: var(--dom-cm); }
 
 .hero-text h1 {
   font-family: var(--font-display);
@@ -373,33 +386,84 @@ section {
   margin-top: 0.25rem;
 }
 
-/* ---- RESEARCH INTERESTS ---- */
-.interests-grid {
+/* ---- RESEARCH DOMAINS ---- */
+.domains-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
 }
 
-.interest-card {
+.domain-card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-top: 2px solid var(--ink);
+  border-top: 3px solid var(--dc, var(--ink));
   border-radius: var(--radius);
-  padding: 1.3rem 1.4rem;
-  transition: border-top-color 0.2s;
+  padding: 1.5rem 1.6rem;
 }
-.interest-card:hover { border-top-color: var(--signal); }
 
-.interest-card h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 0.4rem;
+.domain-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
 }
-.interest-card p {
-  font-size: 0.86rem;
+
+.domain-code {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--dc, var(--ink));
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  transition: background 0.2s, color 0.2s;
+}
+.domain-card:hover .domain-code {
+  background: var(--dc, var(--ink));
+  color: var(--card);
+}
+
+.domain-head h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.domain-card > p {
+  font-size: 0.9rem;
   color: var(--ink-soft);
   line-height: 1.55;
+  margin-bottom: 1rem;
+}
+
+.domain-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.domain-tags span {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.14rem 0.5rem;
+  transition: color 0.2s, border-color 0.2s;
+}
+.domain-card:hover .domain-tags span {
+  color: var(--dc, var(--ink));
+  border-color: var(--dc, var(--line));
 }
 
 /* ---- PUBLICATIONS ---- */
@@ -745,7 +809,7 @@ footer {
   .teaching-grid,
   .students-grid,
   .contact-grid,
-  .interests-grid { grid-template-columns: 1fr; }
+  .domains-grid { grid-template-columns: 1fr; }
 
   .titleblock { grid-template-columns: 1fr 1fr; }
   .tb-cell:nth-child(2) { border-right: none; }

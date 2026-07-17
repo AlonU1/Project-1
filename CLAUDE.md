@@ -24,7 +24,7 @@ The project is intentionally **minimal** — a pure HTML/CSS static site with no
 |---------------|-----------|---------|
 | `#home`       | (title sheet) | Hero: name, animated seismogram SVG, instrument-readout stats, contact links |
 | `#about`      | S-01 | Education timeline + academic positions + impact metrics |
-| `#research`   | S-02 | Six research-interest cards |
+| `#research`   | S-02 | Four color-coded research-domain panels (BIM / AI / Risk / Construction Mgmt) |
 | `#publications` | S-03 | Tabbed list: journal articles / conference papers / technical reports / invited talks |
 | `#teaching`   | S-04 | Cards per institution/role |
 | `#students`   | S-05 | Ongoing and completed graduate students |
@@ -48,6 +48,7 @@ All design tokens are defined as CSS custom properties at the top of the file:
   --line                 /* hairline rules */
   --signal               /* seismic-trace red (#c63d12) — accents, years, sheet codes */
   --anno                 /* markup blue (#2e6e8e) — links, metadata */
+  --dom-bim, --dom-ai, --dom-risk, --dom-cm  /* research-domain accents */
   --radius, --max-w
   --font-display         /* Big Shoulders (condensed, uppercase headings) */
   --font-body            /* Archivo */
@@ -84,6 +85,13 @@ The tab buttons in `.pub-tabs` show the count inline; update these when adding n
 
 ### Publication Tab JavaScript
 A single global function `showPubs(type)` is defined at the bottom of `index.html`. It hides all `.pub-list` divs, removes `.active` from all `.pub-tab` buttons, then activates the selected tab and list by their `id` (`pub-journals`, `pub-conferences`, `pub-reports`, `pub-talks`).
+
+### Research Domains
+The research section is a 2×2 grid of `.domain-card` panels, one per domain, each carrying a
+modifier class that sets the accent via `--dc`: `.dom-bim` (B, blue), `.dom-ai` (A, purple),
+`.dom-risk` (R, red), `.dom-cm` (C, green). Each card has a `.domain-code` letter chip,
+a display-face `h3`, a description, and mono `.domain-tags` topic chips. The hero eyebrow
+reuses the same modifier classes to color its keywords (`.kw.dom-*`).
 
 ### Adding Students
 Students go inside `.students-grid > .student-group` divs. Degree badge classes (outlined chips):
