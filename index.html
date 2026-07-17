@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alon Urlainis | Civil Engineering | Ariel University</title>
-  <meta name="description" content="Academic website of Dr. Alon Urlainis, Lecturer at the Department of Civil Engineering, Ariel University. Research in seismic risk, critical infrastructure resilience, and BIM." />
+  <meta name="description" content="Academic website of Dr. Alon Urlainis, Senior Lecturer at the Department of Civil Engineering, Ariel University. Research in seismic risk, critical infrastructure resilience, BIM, and AI in construction." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;1,400&family=Big+Shoulders:opsz,wght@10..72,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -33,44 +36,54 @@
 <section id="home">
   <div class="hero-inner">
     <div class="hero-text">
+      <p class="hero-eyebrow">BIM &middot; Risk Management &middot; Fragility Curves &middot; AI in Construction</p>
       <h1>Alon Urlainis</h1>
-      <p class="title">Lecturer &mdash; Department of Civil Engineering</p>
+      <p class="title">Senior Lecturer &mdash; Department of Civil Engineering</p>
       <p class="institution">Ariel University, Israel &nbsp;|&nbsp; Ph.D., Ben-Gurion University of the Negev</p>
-
-      <div class="hero-stats">
-        <div class="stat">
-          <div class="stat-num">11</div>
-          <div class="stat-label">H-index (GS)</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">323+</div>
-          <div class="stat-label">Citations (GS)</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">16</div>
-          <div class="stat-label">Journal Articles</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">12</div>
-          <div class="stat-label">Conference Papers</div>
-        </div>
-      </div>
+      <p class="hero-thesis">Probabilistic risk assessment and resilience of critical infrastructures under extreme events &mdash; from seismic fragility curves to BIM and machine-learning workflows.</p>
 
       <div class="hero-contacts">
-        <a href="mailto:alonu@ariel.ac.il">&#9993; alonu@ariel.ac.il</a>
-        <a href="tel:+972507116951">&#128222; +972-50-711-6951</a>
-        <a href="https://scholar.google.com" target="_blank" rel="noopener">&#128218; Google Scholar</a>
+        <a href="mailto:alonu@ariel.ac.il">alonu@ariel.ac.il</a>
+        <a href="tel:+972507116951">+972-50-711-6951</a>
+        <a href="https://scholar.google.com" target="_blank" rel="noopener">Google Scholar &#8599;</a>
       </div>
     </div>
-    <div class="hero-avatar">&#128100;</div>
+
+    <svg class="seismo" viewBox="0 0 1200 170" preserveAspectRatio="none" aria-hidden="true">
+      <line class="baseline" x1="0" y1="85" x2="1200" y2="85" />
+      <path class="trace" pathLength="1" d="M0,85 L60,84 L120,86 L170,84.5 L215,85.5 L250,84 L275,86 L295,85 L305,66 L313,108 L321,52 L329,124 L337,34 L345,136 L352,26 L359,142 L367,38 L375,124 L383,48 L391,116 L401,56 L411,110 L423,62 L435,104 L448,66 L461,100 L476,70 L491,97 L508,73 L525,94 L544,76 L563,92 L584,78 L605,90 L628,80 L651,88 L676,81 L701,87 L728,82 L756,86.5 L786,83 L817,86 L850,84 L884,85.8 L920,84.4 L958,85.4 L998,84.8 L1040,85.2 L1090,85 L1200,85" />
+      <circle class="pga-dot" cx="352" cy="26" r="2.5" />
+      <text class="pga-label" x="364" y="30">PGA</text>
+    </svg>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">11</div>
+        <div class="stat-label">H-index (GS)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">428</div>
+        <div class="stat-label">Citations (GS)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">16</div>
+        <div class="stat-label">Journal Articles</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">12</div>
+        <div class="stat-label">Conference Papers</div>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ========== ABOUT ========== -->
 <section id="about">
   <div class="section-inner">
+    <span class="sheet-code">S-01 &middot; General Notes</span>
     <h2 class="section-title">About</h2>
     <p class="section-subtitle">Academic background and education</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="grid">
       <div class="about-block">
@@ -80,7 +93,7 @@
           <div class="degree">Ph.D. &mdash; Structural Engineering</div>
           <div class="year">2019</div>
           <div class="school">Ben-Gurion University of the Negev</div>
-          <div class="school" style="font-size:0.82rem;margin-top:0.3rem;color:#475569;">
+          <div class="school edu-note">
             Thesis: <em>Probabilistic Risk Appraisal and Mitigation of Critical Infrastructures for Extreme Events</em><br>
             Advisor: Prof. Igal M. Shohet
           </div>
@@ -95,8 +108,13 @@
         <h3 style="margin-top:1.8rem;">Academic Positions</h3>
 
         <div class="edu-item">
+          <div class="degree">Senior Lecturer &mdash; Civil Engineering</div>
+          <div class="year">2026 &ndash; Present</div>
+          <div class="school">Ariel University</div>
+        </div>
+        <div class="edu-item">
           <div class="degree">Lecturer &mdash; Civil Engineering</div>
-          <div class="year">2020 &ndash; Present</div>
+          <div class="year">2020 &ndash; 2026</div>
           <div class="school">Ariel University</div>
         </div>
         <div class="edu-item">
@@ -118,7 +136,7 @@
 
       <div class="about-block">
         <h3>Research Profile</h3>
-        <p>Dr. Alon Urlainis is a Lecturer in the Department of Civil Engineering at Ariel University, specializing in the probabilistic risk assessment and resilience of critical infrastructures under extreme events &mdash; particularly seismic hazards.</p>
+        <p>Dr. Alon Urlainis is a Senior Lecturer in the Department of Civil Engineering at Ariel University, specializing in the probabilistic risk assessment and resilience of critical infrastructures under extreme events &mdash; particularly seismic hazards.</p>
         <br>
         <p>His interdisciplinary work bridges structural engineering, construction management, and emerging technologies such as BIM and machine learning to develop robust risk mitigation frameworks for essential facilities.</p>
         <br>
@@ -127,9 +145,10 @@
 
         <h3>Impact Metrics</h3>
         <ul>
-          <li><strong>H-index:</strong> 11 (Google Scholar) &nbsp;|&nbsp; 8 (WoS)</li>
-          <li><strong>Total Citations:</strong> 323 (GS) &nbsp;|&nbsp; 172 (WoS)</li>
-          <li><strong>Without self-citations (WoS):</strong> 137</li>
+          <li><strong>H-index:</strong> 11 (Google Scholar) &nbsp;|&nbsp; 10 (WoS)</li>
+          <li><strong>i10-index:</strong> 11 (Google Scholar)</li>
+          <li><strong>Total Citations:</strong> 428 (GS) &nbsp;|&nbsp; 213 (WoS)</li>
+          <li><strong>Without self-citations (WoS):</strong> 178</li>
         </ul>
       </div>
     </div>
@@ -139,37 +158,33 @@
 <!-- ========== RESEARCH ========== -->
 <section id="research">
   <div class="section-inner">
+    <span class="sheet-code">S-02 &middot; Research Program</span>
     <h2 class="section-title">Research Interests</h2>
     <p class="section-subtitle">Key areas of scholarly investigation</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="interests-grid">
       <div class="interest-card">
-        <div class="interest-icon">&#127923;</div>
         <h3>Seismic Risk Assessment</h3>
         <p>Development of seismic fragility curves and risk indicators for critical infrastructure including oil stations, power grids, and transportation networks.</p>
       </div>
       <div class="interest-card">
-        <div class="interest-icon">&#127963;</div>
         <h3>Critical Infrastructure Resilience</h3>
         <p>Probabilistic risk appraisal and multi-hazard mitigation strategies for facilities essential to societal functioning under extreme events.</p>
       </div>
       <div class="interest-card">
-        <div class="interest-icon">&#128296;</div>
         <h3>BIM for Risk &amp; Infrastructure</h3>
         <p>Integrating Building Information Modeling workflows for seismic risk assessment, building permit coordination, and digital building logbooks.</p>
       </div>
       <div class="interest-card">
-        <div class="interest-icon">&#129302;</div>
         <h3>Machine Learning in Engineering</h3>
         <p>Applying transfer learning, ML coupled with numerical analysis, and large language models to geotechnical and structural engineering challenges.</p>
       </div>
       <div class="interest-card">
-        <div class="interest-icon">&#128202;</div>
         <h3>Construction Safety &amp; Management</h3>
         <p>Safety climate in SMEs, optimal allocation of safety resources, service life prediction, and life-cycle cost analysis of building components.</p>
       </div>
       <div class="interest-card">
-        <div class="interest-icon">&#127984;</div>
         <h3>Maintenance &amp; Fragility Modeling</h3>
         <p>Corrosion-adjusted seismic fragility frameworks and integrated maintenance strategies for long-term infrastructure resilience.</p>
       </div>
@@ -180,13 +195,16 @@
 <!-- ========== PUBLICATIONS ========== -->
 <section id="publications">
   <div class="section-inner">
+    <span class="sheet-code">S-03 &middot; Publication Record</span>
     <h2 class="section-title">Publications</h2>
-    <p class="section-subtitle">Peer-reviewed journal articles, conference proceedings, and technical reports</p>
+    <p class="section-subtitle">Peer-reviewed journal articles, conference proceedings, technical reports, and invited talks</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="pub-tabs">
       <button class="pub-tab active" onclick="showPubs('journals')">Journal Articles (16)</button>
       <button class="pub-tab" onclick="showPubs('conferences')">Conference Papers (12)</button>
       <button class="pub-tab" onclick="showPubs('reports')">Technical Reports (3)</button>
+      <button class="pub-tab" onclick="showPubs('talks')">Invited Talks (2)</button>
     </div>
 
     <!-- JOURNALS -->
@@ -198,8 +216,9 @@
         <div class="pub-authors">Urlainis, A., Giat, Y., &amp; Mitelman, A.</div>
         <div class="pub-venue">Buildings, 15(18), 3399</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Cite Score Q1</span>
-          <span class="pub-badge badge-q2">JIF Q2 (3.1)</span>
+          <span class="pub-badge badge-jif">JIF 3.1 &middot; Q2</span>
+          <span class="pub-badge badge-q1">CiteScore 3.4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">3 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/buildings15183399" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -210,8 +229,9 @@
         <div class="pub-authors">Phuor, T., Trapper, P. A., Urlainis, A., &amp; Ganz, A.</div>
         <div class="pub-venue">Mathematics, 13(9), 1387</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF &amp; Cite Score)</span>
-          <span class="pub-badge badge-cite">1 citation</span>
+          <span class="pub-badge badge-jif">JIF 2.3 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">4 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/math13091387" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -222,7 +242,8 @@
         <div class="pub-authors">Borenshtain, T., Urlainis, A., &amp; Mitelman, A.</div>
         <div class="pub-venue">International Journal of Protective Structures</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q2">JIF Q2 (2.1)</span>
+          <span class="pub-badge badge-jif">JIF 2.1 &middot; Q2</span>
+          <span class="pub-badge badge-q2">CiteScore 4.3 &middot; Q2</span>
           <span class="pub-badge badge-cite">1 citation</span>
           <span class="pub-doi"><a href="https://doi.org/10.1177/20414196251333080" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
@@ -234,8 +255,9 @@
         <div class="pub-authors">Urlainis, A., &amp; Mitelman, A.</div>
         <div class="pub-venue">Journal of Information Technology in Construction, 30, 319&ndash;334</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 3.6 &amp; Cite Score 6.9)</span>
-          <span class="pub-badge badge-cite">3 citations</span>
+          <span class="pub-badge badge-jif">JIF 3.6 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 6.9 &middot; Q1</span>
+          <span class="pub-badge badge-cite">4 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.36680/j.itcon.2025.013" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -246,8 +268,9 @@
         <div class="pub-authors">Bachar, R., Urlainis, A., Wang, K.-C., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Safety Science, 181, 106680</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 4.7 &amp; Cite Score 13)</span>
-          <span class="pub-badge badge-cite">18 citations</span>
+          <span class="pub-badge badge-jif">JIF 4.7 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 13 &middot; Q1</span>
+          <span class="pub-badge badge-cite">35 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.1016/j.ssci.2024.106680" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -258,8 +281,9 @@
         <div class="pub-authors">Mitelman, A., Eilat, T., &amp; Urlainis, A.</div>
         <div class="pub-venue">Steel and Composite Structures, 53(5), 565&ndash;573</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 4.0 &amp; Cite Score 8.5)</span>
-          <span class="pub-badge badge-cite">1 citation</span>
+          <span class="pub-badge badge-jif">JIF 4.0 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 8.5 &middot; Q1</span>
+          <span class="pub-badge badge-cite">2 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.12989/scs.2024.53.5.565" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -270,8 +294,9 @@
         <div class="pub-authors">Urlainis, A., Lifshitz Sherzer, G., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Applied Sciences, 14(19), 8789</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 2.5 &amp; Cite Score 5.3)</span>
-          <span class="pub-badge badge-cite">4 citations</span>
+          <span class="pub-badge badge-jif">JIF 2.5 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 5.3 &middot; Q1</span>
+          <span class="pub-badge badge-cite">8 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/app14198789" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -282,8 +307,9 @@
         <div class="pub-authors">Kima, O., Urlainis, A., Wang, K.-C., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Smart and Sustainable Built Environment</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 4.6 &amp; Cite Score 9.2)</span>
-          <span class="pub-badge badge-cite">17 citations</span>
+          <span class="pub-badge badge-jif">JIF 4.6 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 9.2 &middot; Q1</span>
+          <span class="pub-badge badge-cite">24 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.1108/SASBE-01-2024-0038" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -294,8 +320,9 @@
         <div class="pub-authors">Lifshitz Sherzer, G., Urlainis, A., Moyal, S., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Applied Sciences, 14(9), 3835</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 2.5 &amp; Cite Score 5.3)</span>
-          <span class="pub-badge badge-cite">16 citations</span>
+          <span class="pub-badge badge-jif">JIF 2.5 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 5.3 &middot; Q1</span>
+          <span class="pub-badge badge-cite">27 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/app14093835" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -306,7 +333,8 @@
         <div class="pub-authors">Urlainis, A., Paciuk, M., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Applied Sciences, 14(3), 1233</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 2.5 &amp; Cite Score 5.3)</span>
+          <span class="pub-badge badge-jif">JIF 2.5 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 5.3 &middot; Q1</span>
           <span class="pub-badge badge-cite">7 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/app14031233" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
@@ -318,8 +346,9 @@
         <div class="pub-authors">Urlainis, A., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Buildings, 13(9), 2265</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Cite Score Q1</span>
-          <span class="pub-badge badge-cite">12 citations</span>
+          <span class="pub-badge badge-jif">JIF 3.1 &middot; Q2</span>
+          <span class="pub-badge badge-q1">CiteScore 3.4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">20 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/buildings13092265" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -330,8 +359,9 @@
         <div class="pub-authors">Mitelman, A., Yang, B., Urlainis, A., &amp; Elmo, D.</div>
         <div class="pub-venue">Geosciences, 13(7), 196</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (Cite Score 5.3)</span>
-          <span class="pub-badge badge-cite">22 citations</span>
+          <span class="pub-badge badge-jif">JIF 3.1 &middot; Q2</span>
+          <span class="pub-badge badge-q1">CiteScore 5.3 &middot; Q1</span>
+          <span class="pub-badge badge-cite">36 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/geosciences13070196" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -342,8 +372,9 @@
         <div class="pub-authors">Mitelman, A., &amp; Urlainis, A.</div>
         <div class="pub-venue">Mathematics, 11(7), 1623</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 2.3 &amp; Cite Score 4)</span>
-          <span class="pub-badge badge-cite">15 citations</span>
+          <span class="pub-badge badge-jif">JIF 2.3 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">17 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/math11071623" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -352,10 +383,11 @@
         <div class="pub-num">Journal 3 &bull; 2022</div>
         <div class="pub-title">Seismic Risk Mitigation and Management for Critical Infrastructures Using an RMIR Indicator</div>
         <div class="pub-authors">Urlainis, A., &amp; Shohet, I. M.</div>
-        <div class="pub-venue">Buildings, 12(10)</div>
+        <div class="pub-venue">Buildings, 12(10), 1748</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Cite Score Q1</span>
-          <span class="pub-badge badge-cite">18 citations</span>
+          <span class="pub-badge badge-jif">JIF 3.1 &middot; Q2</span>
+          <span class="pub-badge badge-q1">CiteScore 3.4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">21 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/buildings12101748" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -364,10 +396,11 @@
         <div class="pub-num">Journal 2 &bull; 2022</div>
         <div class="pub-title">Development of Exclusive Seismic Fragility Curves for Critical Infrastructure: An Oil Pumping Station Case Study</div>
         <div class="pub-authors">Urlainis, A., &amp; Shohet, I. M.</div>
-        <div class="pub-venue">Buildings, 12(842)</div>
+        <div class="pub-venue">Buildings, 12(6), 842</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Cite Score Q1</span>
-          <span class="pub-badge badge-cite">14 citations</span>
+          <span class="pub-badge badge-jif">JIF 3.1 &middot; Q2</span>
+          <span class="pub-badge badge-q1">CiteScore 3.4 &middot; Q1</span>
+          <span class="pub-badge badge-cite">16 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.3390/buildings12060842" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -378,8 +411,9 @@
         <div class="pub-authors">Urlainis, A., Ornai, D., Levy, R., Vilnay, O., &amp; Shohet, I. M.</div>
         <div class="pub-venue">Safety Science, 147, 105587</div>
         <div class="pub-meta">
-          <span class="pub-badge badge-q1">Q1 (JIF 4.7 &amp; Cite Score 13)</span>
-          <span class="pub-badge badge-cite">74 citations</span>
+          <span class="pub-badge badge-jif">JIF 4.7 &middot; Q1</span>
+          <span class="pub-badge badge-q1">CiteScore 13 &middot; Q1</span>
+          <span class="pub-badge badge-cite">96 citations</span>
           <span class="pub-doi"><a href="https://doi.org/10.1016/J.SSCI.2021.105587" target="_blank" rel="noopener">DOI &rarr;</a></span>
         </div>
       </div>
@@ -410,6 +444,7 @@
         <div class="pub-title">Seismic Risk Assessment for Critical Infrastructure Using BIM: A Component-Level Approach</div>
         <div class="pub-authors">Urlainis, A., Isaac, S., &amp; Mitelman, A.</div>
         <div class="pub-venue">International Conference on Digital Frontiers in Buildings and Infrastructure (DFBI2025)</div>
+        <div class="pub-meta"><span class="pub-doi"><a href="https://submission.dfbi.org/index.php/dfbi/article/view/256" target="_blank" rel="noopener">Paper &rarr;</a></span></div>
       </div>
 
       <div class="pub-item">
@@ -468,7 +503,7 @@
       </div>
 
       <div class="pub-item">
-        <div class="pub-num">Conference &bull; 2015 &mdash; CCC2015, Krakow, Poland &nbsp;&bull; 31 citations</div>
+        <div class="pub-num">Conference &bull; 2015 &mdash; CCC2015, Krakow, Poland &nbsp;&bull; 40 citations</div>
         <div class="pub-title">Probabilistic Risk Assessment of Oil and Gas Infrastructures for Extreme Seismic Events</div>
         <div class="pub-authors">Urlainis, A., Shohet, I. M., &amp; Levy, R.</div>
         <div class="pub-venue">Procedia Engineering, 123, 590&ndash;598</div>
@@ -476,7 +511,7 @@
       </div>
 
       <div class="pub-item">
-        <div class="pub-num">Conference &bull; 2014 &mdash; CCC2014, Budapest, Hungary &nbsp;&bull; 50 citations</div>
+        <div class="pub-num">Conference &bull; 2014 &mdash; CCC2014, Budapest, Hungary &nbsp;&bull; 57 citations</div>
         <div class="pub-title">Damage in Critical Infrastructures due to Natural and Man-Made Extreme Events &mdash; A Critical Review</div>
         <div class="pub-authors">Urlainis, A., Shohet, I. M., Levy, R., Ornai, D., &amp; Vilnay, O.</div>
         <div class="pub-venue">Procedia Engineering, 85, 529&ndash;535</div>
@@ -511,14 +546,35 @@
 
     </div><!-- /pub-reports -->
 
+    <!-- INVITED TALKS -->
+    <div id="pub-talks" class="pub-list">
+
+      <div class="pub-item">
+        <div class="pub-num">Invited Lecture &bull; 2025 &mdash; MTCEMS 2025, Ariel, Israel</div>
+        <div class="pub-title">Enhancing Infrastructure Resilience: A BIM-Based Methodology for Seismic Risk Assessment</div>
+        <div class="pub-authors">Urlainis, A.</div>
+        <div class="pub-venue">Modern Trends in Civil Engineering and Materials Science (MTCEMS 2025), Ariel University</div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-num">Invited Lecture &bull; 2014 &mdash; Be&apos;er-Sheva, Israel</div>
+        <div class="pub-title">HAZUS-Based Methods for Risk and Damage Assessment to Critical Infrastructure Facilities due to Earthquake Events</div>
+        <div class="pub-authors">Urlainis, A.</div>
+        <div class="pub-venue">Ministry of Science, Technology and Space Symposium on Earthquake Preparedness &mdash; Analysis, Evaluation, and Risk Management</div>
+      </div>
+
+    </div><!-- /pub-talks -->
+
   </div>
 </section>
 
 <!-- ========== TEACHING ========== -->
 <section id="teaching">
   <div class="section-inner">
+    <span class="sheet-code">S-04 &middot; Teaching Record</span>
     <h2 class="section-title">Teaching</h2>
     <p class="section-subtitle">Courses taught as lecturer and as teaching assistant</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="teaching-grid">
 
@@ -567,6 +623,15 @@
         </ul>
       </div>
 
+      <div class="teaching-card">
+        <h3>Sami Shamoon College &mdash; Teaching Assistant</h3>
+        <div class="period">2016 &ndash; 2018 &nbsp;|&nbsp; Civil Engineering</div>
+        <ul>
+          <li>Dynamics of Structures</li>
+          <li>Construction Management</li>
+        </ul>
+      </div>
+
     </div>
   </div>
 </section>
@@ -574,8 +639,10 @@
 <!-- ========== STUDENTS ========== -->
 <section id="students">
   <div class="section-inner">
+    <span class="sheet-code">S-05 &middot; Supervision</span>
     <h2 class="section-title">Student Supervision</h2>
     <p class="section-subtitle">Current and completed graduate students</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="students-grid">
 
@@ -640,14 +707,15 @@
 <!-- ========== AWARDS ========== -->
 <section id="awards">
   <div class="section-inner">
+    <span class="sheet-code">S-06 &middot; Recognition</span>
     <h2 class="section-title">Awards &amp; Honors</h2>
     <p class="section-subtitle">Recognition in research and teaching excellence</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="awards-list">
 
       <div class="award-item">
         <div class="award-year">2025</div>
-        <div class="award-icon">&#127942;</div>
         <div class="award-text">
           <h4>Best Paper Award &mdash; Creative Construction Conference (CCC2025)</h4>
           <p>Zadar, Croatia &nbsp;&bull;&nbsp; Paper: <em>"Time-Dependent Corrosion and Seismic Fragility: A Framework for Long-Term Risk Mitigation"</em></p>
@@ -656,7 +724,6 @@
 
       <div class="award-item">
         <div class="award-year">2023</div>
-        <div class="award-icon">&#127891;</div>
         <div class="award-text">
           <h4>Excellence in Teaching Award</h4>
           <p>Ariel University &nbsp;&bull;&nbsp; Department of Civil Engineering</p>
@@ -665,7 +732,6 @@
 
       <div class="award-item">
         <div class="award-year">2022</div>
-        <div class="award-icon">&#127891;</div>
         <div class="award-text">
           <h4>Excellence in Teaching Award</h4>
           <p>Ariel University &nbsp;&bull;&nbsp; Department of Civil Engineering</p>
@@ -674,7 +740,6 @@
 
       <div class="award-item">
         <div class="award-year">2021</div>
-        <div class="award-icon">&#127891;</div>
         <div class="award-text">
           <h4>Excellence in Teaching Award</h4>
           <p>Ariel University &nbsp;&bull;&nbsp; Department of Civil Engineering</p>
@@ -688,53 +753,43 @@
 <!-- ========== CONTACT ========== -->
 <section id="contact">
   <div class="section-inner">
+    <span class="sheet-code">S-07 &middot; Correspondence</span>
     <h2 class="section-title">Contact</h2>
     <p class="section-subtitle">Get in touch for collaborations, inquiries, or student supervision</p>
+    <div class="dim-line" aria-hidden="true"></div>
 
     <div class="contact-grid">
       <div class="contact-info">
         <h3>Contact Details</h3>
 
         <div class="contact-item">
-          <div class="icon">&#9993;</div>
-          <div class="detail">
-            <div class="label">Email</div>
-            <a href="mailto:alonu@ariel.ac.il">alonu@ariel.ac.il</a>
-          </div>
+          <div class="label">Email</div>
+          <div class="detail"><a href="mailto:alonu@ariel.ac.il">alonu@ariel.ac.il</a></div>
         </div>
 
         <div class="contact-item">
-          <div class="icon">&#128222;</div>
-          <div class="detail">
-            <div class="label">Phone</div>
-            <a href="tel:+972507116951">+972-50-711-6951</a>
-          </div>
+          <div class="label">Phone</div>
+          <div class="detail"><a href="tel:+972507116951">+972-50-711-6951</a></div>
         </div>
 
         <div class="contact-item">
-          <div class="icon">&#127963;</div>
-          <div class="detail">
-            <div class="label">Institution</div>
-            <span>Department of Civil Engineering<br>Ariel University, Ariel, Israel</span>
-          </div>
+          <div class="label">Institution</div>
+          <div class="detail"><span>Department of Civil Engineering<br>Ariel University, Ariel, Israel</span></div>
         </div>
 
         <div class="contact-item">
-          <div class="icon">&#128218;</div>
-          <div class="detail">
-            <div class="label">Google Scholar</div>
-            <a href="https://scholar.google.com" target="_blank" rel="noopener">View Profile</a>
-          </div>
+          <div class="label">Google Scholar</div>
+          <div class="detail"><a href="https://scholar.google.com" target="_blank" rel="noopener">View Profile &#8599;</a></div>
         </div>
       </div>
 
       <div class="contact-map">
         <h3>Location</h3>
-        <p>&#128205; Ariel University</p>
+        <p>Ariel University</p>
         <p>Kyriat Hamada 3, Ariel 40700</p>
         <p>Israel</p>
         <br>
-        <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;">
+        <p class="contact-note">
           Open to research collaborations, joint grants, conference invitations, and graduate student co-supervision.
         </p>
       </div>
@@ -744,7 +799,13 @@
 
 <!-- ========== FOOTER ========== -->
 <footer>
-  <p>&copy; 2025 Alon Urlainis &mdash; Department of Civil Engineering, Ariel University &mdash; All rights reserved.</p>
+  <div class="titleblock">
+    <div class="tb-cell"><span>Project</span><strong>Alon Urlainis &mdash; Academic Record</strong></div>
+    <div class="tb-cell"><span>Department</span><strong>Civil Engineering, Ariel University</strong></div>
+    <div class="tb-cell"><span>Revision</span><strong>May 2026</strong></div>
+    <div class="tb-cell"><span>Sheet</span><strong>1 of 1</strong></div>
+  </div>
+  <p class="tb-copy">&copy; 2026 Alon Urlainis &mdash; All rights reserved.</p>
 </footer>
 
 <script>
