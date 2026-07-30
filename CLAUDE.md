@@ -61,7 +61,8 @@ throughout. No utility classes — layout is component-scoped.
 
 ### Profile Links
 - ORCID: https://orcid.org/0000-0002-8125-1818 (hero chip, At-a-glance card, contact section)
-- Google Scholar: placeholder (scholar.google.com) — replace with the real profile URL
+- Google Scholar: https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=Alon+Urlainis
+  (search-results link supplied by the owner; swap for `citations?user=…` if the author profile URL becomes available)
 - ResearchGate: https://www.researchgate.net/profile/Alon-Urlainis (unverified guess — confirm)
 
 ### Responsive Breakpoints
