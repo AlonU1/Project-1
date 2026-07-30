@@ -13,54 +13,51 @@ Project-1/
 └── CLAUDE.md       # This file
 ```
 
-The project is intentionally **minimal** — a pure HTML/CSS static site with no build tools, no frameworks, and no dependencies. One inline `<script>` block in `index.html` handles the publication tab switching and the hero knowledge-graph canvas animation.
+The project is intentionally **minimal** — a pure HTML/CSS static site with no build tools, no frameworks, and no dependencies. One small inline `<script>` block in `index.html` handles the publication tab switching.
 
 ## Architecture
 
 ### Single-Page Layout
 `index.html` is organized as a set of `<section>` elements, each with a unique `id` used for smooth-scroll navigation:
 
-| Section ID    | Path chip | Content |
+| Section ID    | Sheet code | Content |
 |---------------|-----------|---------|
-| `#home`       | (console) | Hero: name, knowledge-graph canvas, seismogram SVG, monitor-style stat cards, contact links |
-| `#about`      | ❯about | Education timeline + academic positions + impact metrics |
-| `#research`   | ❯research | Four color-coded research-domain panels (BIM / AI / Risk / Construction Mgmt) |
-| `#publications` | ❯publications | Tabbed list: journal articles / conference papers / technical reports / invited talks |
-| `#teaching`   | ❯teaching | Cards per institution/role |
-| `#students`   | ❯supervision | Ongoing and completed graduate students |
-| `#awards`     | ❯awards | Awards and honors |
-| `#contact`    | ❯contact | Contact info + address |
+| `#home`       | (title sheet) | Hero: name, animated seismogram SVG, instrument-readout stats, contact links |
+| `#about`      | S-01 | Education timeline + academic positions + impact metrics |
+| `#research`   | S-02 | Four color-coded research-domain panels (BIM / AI / Risk / Construction Mgmt) |
+| `#publications` | S-03 | Tabbed list: journal articles / conference papers / technical reports / invited talks |
+| `#teaching`   | S-04 | Cards per institution/role |
+| `#students`   | S-05 | Ongoing and completed graduate students |
+| `#awards`     | S-06 | Awards and honors |
+| `#contact`    | S-07 | Contact info + address |
 
 ### Design Language
-The visual identity is a "computational research workstation": a dark graphite-blue ground with
-a fixed left-rail navigation on desktop (top bar on mobile), terminal-path section chips
-(`.sheet-code`, rendered as `❯name`), an ambient knowledge-graph canvas animation behind the
-hero (`.net`, drawn in the inline script), the seismic identity kept as a teal accelerogram
-trace (`.seismo`) with an amber PGA annotation, and a build-manifest footer (`.titleblock`).
-Metadata badges are luminous pill chips. Single committed dark theme.
+The visual identity is "structural drawing set × strong-motion record": section headers carry
+drawing-sheet codes (`.sheet-code`), rules are CAD-style dimension lines (`.dim-line`), metadata
+badges are outlined stamps, and the footer is a drawing title block (`.titleblock`). The hero's
+signature element is an animated SVG accelerogram trace (`.seismo`) with a PGA annotation.
 
 ### CSS Design System (`style.css`)
 All design tokens are defined as CSS custom properties at the top of the file:
 
 ```css
 :root {
-  --bg, --bg-grid        /* graphite-blue night ground + faint grid */
-  --surface, --surface-2 /* raised panels / hover state */
-  --text, --muted        /* primary and secondary text */
-  --edge                 /* hairline borders */
-  --accent               /* computational teal (#46c2b0) — links, active states, trace */
-  --amber                /* annotation amber (#e0a458) — years, PGA marker */
-  --dom-bim, --dom-ai, --dom-risk, --dom-cm  /* luminous research-domain accents */
-  --radius, --max-w, --rail
-  --font-display         /* Sora (headings) */
-  --font-body            /* IBM Plex Sans */
-  --font-mono            /* IBM Plex Mono (paths, years, stats, badges) */
+  --paper, --paper-grid  /* drafting-paper background + faint grid */
+  --card                 /* card background */
+  --ink, --ink-soft      /* steel blue-black text + annotation gray */
+  --line                 /* hairline rules */
+  --signal               /* seismic-trace red (#c63d12) — accents, years, sheet codes */
+  --anno                 /* markup blue (#2e6e8e) — links, metadata */
+  --dom-bim, --dom-ai, --dom-risk, --dom-cm  /* research-domain accents */
+  --radius, --max-w
+  --font-display         /* Big Shoulders (condensed, uppercase headings) */
+  --font-body            /* Archivo */
+  --font-mono            /* IBM Plex Mono (labels, years, stats, badges) */
 }
 ```
 
-Fonts load from Google Fonts via a `<link>` in `index.html`. Layout uses CSS Grid and Flexbox;
-the desktop sidebar is the fixed `nav` plus `margin-left: var(--rail)` on `section, footer`,
-collapsing to a sticky top bar under 900px. No utility classes — layout is component-scoped.
+Fonts load from Google Fonts via a `<link>` in `index.html`. Layout uses CSS Grid and Flexbox
+throughout. No utility classes — layout is component-scoped.
 
 ### Responsive Breakpoints
 - `≤ 768px`: single-column layouts, hamburger nav, smaller hero
