@@ -13,51 +13,56 @@ Project-1/
 └── CLAUDE.md       # This file
 ```
 
-The project is intentionally **minimal** — a pure HTML/CSS static site with no build tools, no frameworks, and no dependencies. One small inline `<script>` block in `index.html` handles the publication tab switching.
+The project is intentionally **minimal** — a pure HTML/CSS static site with no build tools, no frameworks, and no dependencies. One small inline `<script>` block in `index.html` handles the publication tab switching. The live site is deployed on Vercel at https://alon-urlainis.vercel.app (project `alon-urlainis`).
 
 ## Architecture
 
 ### Single-Page Layout
 `index.html` is organized as a set of `<section>` elements, each with a unique `id` used for smooth-scroll navigation:
 
-| Section ID    | Sheet code | Content |
-|---------------|-----------|---------|
-| `#home`       | (title sheet) | Hero: name, animated seismogram SVG, instrument-readout stats, contact links |
-| `#about`      | S-01 | Education timeline + academic positions + impact metrics |
-| `#research`   | S-02 | Four color-coded research-domain panels (BIM / AI / Risk / Construction Mgmt) |
-| `#publications` | S-03 | Tabbed list: journal articles / conference papers / technical reports / invited talks |
-| `#teaching`   | S-04 | Cards per institution/role |
-| `#students`   | S-05 | Ongoing and completed graduate students |
-| `#awards`     | S-06 | Awards and honors |
-| `#contact`    | S-07 | Contact info + address |
+| Section ID    | Eyebrow | Content |
+|---------------|---------|---------|
+| `#home`       | —       | Navy hero: badge chip, name, tagline, CTA buttons, profile-link chips, AU avatar with gradient ring |
+| `#about`      | About   | Tagline headline + 3-paragraph profile, "At a glance" card (position/institution/PhD/ORCID/citations), education + impact-metrics cards |
+| `#research`   | Research | Four color-coded research-domain cards (BIM / AI / Risk / Construction Mgmt) |
+| `#publications` | Publications | Tabbed list: journal articles / conference papers / technical reports / invited talks |
+| `#teaching`   | Teaching | Cards per institution/role |
+| `#students`   | Supervision | Ongoing and completed graduate students |
+| `#awards`     | Awards  | Awards and honors |
+| `#contact`    | Contact | Navy section: contact card + location card |
 
 ### Design Language
-The visual identity is "structural drawing set × strong-motion record": section headers carry
-drawing-sheet codes (`.sheet-code`), rules are CAD-style dimension lines (`.dim-line`), metadata
-badges are outlined stamps, and the footer is a drawing title block (`.titleblock`). The hero's
-signature element is an animated SVG accelerogram trace (`.seismo`) with a PGA annotation.
+Modern academic profile: deep navy hero and contact band with a faint grid, light blue-tinted
+body with white rounded cards and soft shadows, blue primary buttons, amber accent (badge dot,
+years, avatar ring). Section eyebrows (`.sheet-code`) are small uppercase blue labels. Metadata
+badges are tinted pills. The hero avatar (`.avatar` in `.avatar-ring`) shows "AU" and can be
+replaced with a photo (`<img>` inside `.avatar`).
 
 ### CSS Design System (`style.css`)
 All design tokens are defined as CSS custom properties at the top of the file:
 
 ```css
 :root {
-  --paper, --paper-grid  /* drafting-paper background + faint grid */
-  --card                 /* card background */
-  --ink, --ink-soft      /* steel blue-black text + annotation gray */
-  --line                 /* hairline rules */
-  --signal               /* seismic-trace red (#c63d12) — accents, years, sheet codes */
-  --anno                 /* markup blue (#2e6e8e) — links, metadata */
+  --hero-1, --hero-2     /* deep navy hero gradient */
+  --bg, --card           /* light body / white cards */
+  --navy, --body, --muted /* heading / body / secondary text */
+  --line, --shadow
+  --blue, --blue-deep, --blue-soft  /* primary actions, links, hero subtitle */
+  --amber                /* accent: badge dot, years, avatar ring */
   --dom-bim, --dom-ai, --dom-risk, --dom-cm  /* research-domain accents */
-  --radius, --max-w
-  --font-display         /* Big Shoulders (condensed, uppercase headings) */
-  --font-body            /* Archivo */
-  --font-mono            /* IBM Plex Mono (labels, years, stats, badges) */
+  --radius, --radius-sm, --max-w
+  --font-display         /* Plus Jakarta Sans (headings, buttons) */
+  --font-body            /* Inter */
 }
 ```
 
 Fonts load from Google Fonts via a `<link>` in `index.html`. Layout uses CSS Grid and Flexbox
 throughout. No utility classes — layout is component-scoped.
+
+### Profile Links
+- ORCID: https://orcid.org/0000-0002-8125-1818 (hero chip, At-a-glance card, contact section)
+- Google Scholar: placeholder (scholar.google.com) — replace with the real profile URL
+- ResearchGate: https://www.researchgate.net/profile/Alon-Urlainis (unverified guess — confirm)
 
 ### Responsive Breakpoints
 - `≤ 768px`: single-column layouts, hamburger nav, smaller hero

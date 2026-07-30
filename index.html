@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alon Urlainis | Civil Engineering | Ariel University</title>
   <meta name="description" content="Academic website of Dr. Alon Urlainis, Senior Lecturer at the Department of Civil Engineering, Ariel University. Research in seismic risk, critical infrastructure resilience, BIM, and AI in construction." />
+  <meta name="theme-color" content="#0a1a33" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;1,400&family=Big+Shoulders:opsz,wght@10..72,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,19 +16,21 @@
 <!-- ========== NAV ========== -->
 <nav>
   <div class="nav-inner">
-    <span class="nav-logo">Alon Urlainis</span>
+    <a class="nav-brand" href="#home">
+      <span class="nav-mark">AU</span>
+      <span class="nav-logo">Alon Urlainis</span>
+    </a>
     <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
     <ul class="nav-links">
-      <li><a href="#home">Home</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#research">Research</a></li>
       <li><a href="#publications">Publications</a></li>
       <li><a href="#teaching">Teaching</a></li>
       <li><a href="#students">Students</a></li>
       <li><a href="#awards">Awards</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a class="nav-cta" href="#contact">Contact</a></li>
     </ul>
   </div>
 </nav>
@@ -36,42 +39,27 @@
 <section id="home">
   <div class="hero-inner">
     <div class="hero-text">
-      <p class="hero-eyebrow"><span class="kw dom-bim">BIM</span> &middot; <span class="kw dom-ai">AI</span> &middot; <span class="kw dom-risk">Risk Assessment</span> &middot; <span class="kw dom-cm">Construction Management</span></p>
-      <h1>Alon Urlainis</h1>
-      <p class="title">Senior Lecturer &mdash; Department of Civil Engineering</p>
-      <p class="institution">Ariel University, Israel &nbsp;|&nbsp; Ph.D., Ben-Gurion University of the Negev</p>
-      <p class="hero-thesis">Probabilistic risk assessment and resilience of critical infrastructures under extreme events &mdash; from seismic fragility curves to BIM and machine-learning workflows.</p>
+      <span class="hero-badge"><span class="dot" aria-hidden="true"></span>Civil Engineering &middot; Ariel University</span>
+      <h1>Dr. Alon Urlainis</h1>
+      <p class="title">Senior Lecturer, Department of Civil Engineering</p>
+      <p class="hero-thesis">Advancing digital construction, infrastructure resilience, and artificial intelligence in construction &mdash; for safer, smarter, and more efficient infrastructure systems.</p>
 
-      <div class="hero-contacts">
-        <a href="mailto:alonu@ariel.ac.il">alonu@ariel.ac.il</a>
-        <a href="tel:+972507116951">+972-50-711-6951</a>
-        <a href="https://scholar.google.com" target="_blank" rel="noopener">Google Scholar &#8599;</a>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#publications">View Publications</a>
+        <a class="btn btn-ghost" href="#contact">Get in Touch</a>
+      </div>
+
+      <div class="hero-links">
+        <a href="mailto:alonu@ariel.ac.il">Email</a>
+        <a href="https://scholar.google.com" target="_blank" rel="noopener">Google Scholar</a>
+        <a href="https://orcid.org/0000-0002-8125-1818" target="_blank" rel="noopener">ORCID</a>
+        <a href="https://www.researchgate.net/profile/Alon-Urlainis" target="_blank" rel="noopener">ResearchGate</a>
       </div>
     </div>
 
-    <svg class="seismo" viewBox="0 0 1200 170" preserveAspectRatio="none" aria-hidden="true">
-      <line class="baseline" x1="0" y1="85" x2="1200" y2="85" />
-      <path class="trace" pathLength="1" d="M0,85 L60,84 L120,86 L170,84.5 L215,85.5 L250,84 L275,86 L295,85 L305,66 L313,108 L321,52 L329,124 L337,34 L345,136 L352,26 L359,142 L367,38 L375,124 L383,48 L391,116 L401,56 L411,110 L423,62 L435,104 L448,66 L461,100 L476,70 L491,97 L508,73 L525,94 L544,76 L563,92 L584,78 L605,90 L628,80 L651,88 L676,81 L701,87 L728,82 L756,86.5 L786,83 L817,86 L850,84 L884,85.8 L920,84.4 L958,85.4 L998,84.8 L1040,85.2 L1090,85 L1200,85" />
-      <circle class="pga-dot" cx="352" cy="26" r="2.5" />
-      <text class="pga-label" x="364" y="30">PGA</text>
-    </svg>
-
-    <div class="hero-stats">
-      <div class="stat">
-        <div class="stat-num">11</div>
-        <div class="stat-label">H-index (GS)</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">428</div>
-        <div class="stat-label">Citations (GS)</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">16</div>
-        <div class="stat-label">Journal Articles</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">12</div>
-        <div class="stat-label">Conference Papers</div>
+    <div class="hero-avatar-wrap">
+      <div class="avatar-ring">
+        <div class="avatar">AU</div>
       </div>
     </div>
   </div>
@@ -80,10 +68,55 @@
 <!-- ========== ABOUT ========== -->
 <section id="about">
   <div class="section-inner">
-    <span class="sheet-code">S-01 &middot; General Notes</span>
-    <h2 class="section-title">About</h2>
-    <p class="section-subtitle">Bridging advanced computational methods with practical engineering challenges</p>
-    <div class="dim-line" aria-hidden="true"></div>
+    <span class="sheet-code">About</span>
+
+    <div class="about-layout">
+      <div class="about-main">
+        <h2 class="section-title">Bridging advanced computational methods with practical engineering challenges</h2>
+        <p>Dr. Alon Urlainis is a Senior Lecturer in the Department of Civil Engineering at Ariel University. His research focuses on digital construction, infrastructure resilience, and artificial intelligence in construction. He develops BIM-based workflows, probabilistic risk assessment methods, and AI-driven tools to support engineering decision-making throughout the project lifecycle.</p>
+        <p>His work addresses the resilience of critical infrastructure under earthquakes and other extreme events, automated construction-site monitoring, progress assessment, defect and safety detection, digital building logbooks, and machine-learning applications in civil engineering.</p>
+        <p>Dr. Urlainis holds a Ph.D. in Civil Engineering from Ben-Gurion University of the Negev. His research and teaching bridge advanced computational methods with practical engineering challenges, aiming to promote safer, more resilient, and more efficient construction and infrastructure systems.</p>
+      </div>
+
+      <aside class="glance-card">
+        <h3>At a glance</h3>
+        <div class="glance-item">
+          <span class="glance-icon" aria-hidden="true">&#127891;</span>
+          <div>
+            <div class="label">Position</div>
+            <div class="value">Senior Lecturer, Civil Engineering</div>
+          </div>
+        </div>
+        <div class="glance-item">
+          <span class="glance-icon" aria-hidden="true">&#127963;</span>
+          <div>
+            <div class="label">Institution</div>
+            <div class="value">Ariel University, Israel</div>
+          </div>
+        </div>
+        <div class="glance-item">
+          <span class="glance-icon" aria-hidden="true">&#127979;</span>
+          <div>
+            <div class="label">PhD</div>
+            <div class="value">Ben-Gurion University of the Negev</div>
+          </div>
+        </div>
+        <div class="glance-item">
+          <span class="glance-icon" aria-hidden="true">&#128279;</span>
+          <div>
+            <div class="label">ORCID</div>
+            <div class="value"><a href="https://orcid.org/0000-0002-8125-1818" target="_blank" rel="noopener">0000-0002-8125-1818</a></div>
+          </div>
+        </div>
+        <div class="glance-item">
+          <span class="glance-icon" aria-hidden="true">&#128202;</span>
+          <div>
+            <div class="label">Citations</div>
+            <div class="value">428 (Google Scholar) &middot; H-index 11</div>
+          </div>
+        </div>
+      </aside>
+    </div>
 
     <div class="grid">
       <div class="about-block">
@@ -135,18 +168,13 @@
       </div>
 
       <div class="about-block">
-        <h3>Research Profile</h3>
-        <p>Dr. Alon Urlainis is a Senior Lecturer in the Department of Civil Engineering at Ariel University. His research bridges advanced computational methods with practical engineering challenges &mdash; BIM-based workflows, probabilistic risk assessment, and AI-driven tools that support engineering decision-making across the project lifecycle.</p>
-        <br>
-        <p>His work spans the resilience of critical infrastructure under earthquakes and extreme events, automated construction-site monitoring and safety detection, digital building logbooks, and machine-learning applications in civil engineering. He holds a Ph.D. from Ben-Gurion University of the Negev.</p>
-        <br>
-
         <h3>Impact Metrics</h3>
         <ul>
           <li><strong>H-index:</strong> 11 (Google Scholar) &nbsp;|&nbsp; 10 (WoS)</li>
           <li><strong>i10-index:</strong> 11 (Google Scholar)</li>
           <li><strong>Total Citations:</strong> 428 (GS) &nbsp;|&nbsp; 213 (WoS)</li>
           <li><strong>Without self-citations (WoS):</strong> 178</li>
+          <li><strong>Journal articles:</strong> 16 &nbsp;|&nbsp; <strong>Conference papers:</strong> 12</li>
         </ul>
       </div>
     </div>
@@ -156,7 +184,7 @@
 <!-- ========== RESEARCH ========== -->
 <section id="research">
   <div class="section-inner">
-    <span class="sheet-code">S-02 &middot; Research Program</span>
+    <span class="sheet-code">Research</span>
     <h2 class="section-title">Research Interests</h2>
     <p class="section-subtitle">Four research domains, coded like disciplines in a drawing set</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -227,7 +255,7 @@
 <!-- ========== PUBLICATIONS ========== -->
 <section id="publications">
   <div class="section-inner">
-    <span class="sheet-code">S-03 &middot; Publication Record</span>
+    <span class="sheet-code">Publications</span>
     <h2 class="section-title">Publications</h2>
     <p class="section-subtitle">Peer-reviewed journal articles, conference proceedings, technical reports, and invited talks</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -603,7 +631,7 @@
 <!-- ========== TEACHING ========== -->
 <section id="teaching">
   <div class="section-inner">
-    <span class="sheet-code">S-04 &middot; Teaching Record</span>
+    <span class="sheet-code">Teaching</span>
     <h2 class="section-title">Teaching</h2>
     <p class="section-subtitle">Courses taught as lecturer and as teaching assistant</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -671,7 +699,7 @@
 <!-- ========== STUDENTS ========== -->
 <section id="students">
   <div class="section-inner">
-    <span class="sheet-code">S-05 &middot; Supervision</span>
+    <span class="sheet-code">Supervision</span>
     <h2 class="section-title">Student Supervision</h2>
     <p class="section-subtitle">Current and completed graduate students</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -739,7 +767,7 @@
 <!-- ========== AWARDS ========== -->
 <section id="awards">
   <div class="section-inner">
-    <span class="sheet-code">S-06 &middot; Recognition</span>
+    <span class="sheet-code">Awards</span>
     <h2 class="section-title">Awards &amp; Honors</h2>
     <p class="section-subtitle">Recognition in research and teaching excellence</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -785,7 +813,7 @@
 <!-- ========== CONTACT ========== -->
 <section id="contact">
   <div class="section-inner">
-    <span class="sheet-code">S-07 &middot; Correspondence</span>
+    <span class="sheet-code">Contact</span>
     <h2 class="section-title">Contact</h2>
     <p class="section-subtitle">Get in touch for collaborations, inquiries, or student supervision</p>
     <div class="dim-line" aria-hidden="true"></div>
@@ -813,6 +841,11 @@
           <div class="label">Google Scholar</div>
           <div class="detail"><a href="https://scholar.google.com" target="_blank" rel="noopener">View Profile &#8599;</a></div>
         </div>
+
+        <div class="contact-item">
+          <div class="label">ORCID</div>
+          <div class="detail"><a href="https://orcid.org/0000-0002-8125-1818" target="_blank" rel="noopener">0000-0002-8125-1818</a></div>
+        </div>
       </div>
 
       <div class="contact-map">
@@ -831,13 +864,7 @@
 
 <!-- ========== FOOTER ========== -->
 <footer>
-  <div class="titleblock">
-    <div class="tb-cell"><span>Project</span><strong>Alon Urlainis &mdash; Academic Record</strong></div>
-    <div class="tb-cell"><span>Department</span><strong>Civil Engineering, Ariel University</strong></div>
-    <div class="tb-cell"><span>Revision</span><strong>May 2026</strong></div>
-    <div class="tb-cell"><span>Sheet</span><strong>1 of 1</strong></div>
-  </div>
-  <p class="tb-copy">&copy; 2026 Alon Urlainis &mdash; All rights reserved.</p>
+  <p class="tb-copy">&copy; 2026 Dr. Alon Urlainis &mdash; Department of Civil Engineering, Ariel University. All rights reserved.</p>
 </footer>
 
 <script>
