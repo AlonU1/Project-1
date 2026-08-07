@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Heebo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+
+  --color-brand: #1d5c8f;
+  --color-brand-strong: #164a75;
+  --color-navy: #12283f;
+  --color-accent: #e67e22;
+
+  /* צבעי סטטוס — קבועים בכל המערכת (רשימה, סיכה, גרף, דוח) */
+  --color-st-open: #dc2626;
+  --color-st-progress: #ea580c;
+  --color-st-review: #2563eb;
+  --color-st-rejected: #7c3aed;
+  --color-st-closed: #16a34a;
+  --color-st-cancelled: #64748b;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased;
+}
+
+/* מספרים וקודים בתוך טקסט RTL */
+.ltr-num {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 dark:bg-slate-700 rounded-full; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes pin-pulse {
+  0%, 100% { transform: translate(-50%, -100%) scale(var(--pin-scale, 1)); }
+  50% { transform: translate(-50%, -100%) scale(calc(var(--pin-scale, 1) * 1.35)); }
+}
