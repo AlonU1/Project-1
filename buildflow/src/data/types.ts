@@ -85,11 +85,21 @@ export interface PlanVersion extends Base {
   version_number: number
   blob_id: string
   file_type: 'svg' | 'png' | 'jpg' | 'pdf'
+  /** עבור PDF רב-עמודי — העמוד שרונדר */
+  page_number?: number
   width_px: number
   height_px: number
   notes?: string
   is_current: boolean
 }
+
+/** סימון וקטורי על גבי תמונה — SPEC §7.5. קואורדינטות יחסיות 0–1; המקור לא משתנה. */
+export type AnnoShape =
+  | { t: 'arrow'; x1: number; y1: number; x2: number; y2: number; c: string }
+  | { t: 'rect'; x: number; y: number; w: number; h: number; c: string }
+  | { t: 'ellipse'; cx: number; cy: number; rx: number; ry: number; c: string }
+  | { t: 'free'; pts: number[]; c: string }
+  | { t: 'text'; x: number; y: number; s: string; c: string }
 
 export interface Defect extends Base {
   project_id: string
@@ -141,6 +151,7 @@ export interface Attachment extends Base {
   taken_at?: string
   location_id?: string | null
   caption?: string
+  annotations?: AnnoShape[]
   phase: 'before' | 'after' | 'general'
 }
 

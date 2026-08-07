@@ -1,20 +1,28 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { FileSpreadsheet, FileText } from 'lucide-react'
+import { FileSpreadsheet, FileText, Printer } from 'lucide-react'
 import { db } from '../../data/db'
 import { useProject } from '../shell/ProjectContext'
-import { Btn, Card } from '../../components/ui'
+import { Btn, Card, Select } from '../../components/ui'
 import { SEVERITY_LABEL, STATUS_LABEL, TASK_STATUS_LABEL } from '../../lib/labels'
 import { can } from '../../lib/permissions'
 import { exportCsv } from '../../lib/csv'
-import { todayISO } from '../../lib/date'
+import { fmtDate, todayISO } from '../../lib/date'
 
 export function ReportsPage() {
-  const { project, me, companyMap, userMap, locName } = useProject()
+  const { project, me, href, companyMap, userMap, locName } = useProject()
+  const navigate = useNavigate()
   const canExport = can(me, 'report:export')
+
+  const [st, setSt] = useState<'open' | 'all'>('open')
+  const [by, setBy] = useState<'location' | 'contractor'>('location')
+  const [logId, setLogId] = useState('')
 
   const data = useLiveQuery(async () => ({
     defects: await db.defects.where('project_id').equals(project.id).and(d => !d.archived_at).toArray(),
     tasks: await db.tasks.where('project_id').equals(project.id).and(t => !t.archived_at).toArray(),
+    logs: (await db.daily_logs.where('project_id').equals(project.id).toArray()).sort((a, b) => b.date.localeCompare(a.date)),
   }), [project.id])
 
   function exportDefects() {
@@ -39,32 +47,87 @@ export function ReportsPage() {
       ]))
   }
 
-  const items = [
-    { icon: <FileSpreadsheet size={22} />, title: 'ייצוא ליקויים (CSV)', desc: 'כל הליקויים בפרויקט — נפתח באקסל', action: exportDefects, ready: true },
-    { icon: <FileSpreadsheet size={22} />, title: 'ייצוא משימות (CSV)', desc: 'כל המשימות בפרויקט', action: exportTasks, ready: true },
-    { icon: <FileText size={22} />, title: 'דוח ליקויים PDF', desc: 'דוח מעוצב עם תמונות, לפי מיקום או קבלן', ready: false },
-    { icon: <FileText size={22} />, title: 'דוח יומן עבודה PDF', desc: 'יום בודד או טווח תאריכים', ready: false },
-    { icon: <FileText size={22} />, title: 'דוח התקדמות להנהלה', desc: 'KPI, גרפים וחריגות', ready: false },
-  ]
+  const selectedLog = logId || data?.logs[0]?.id || ''
 
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
       <h1 className="text-lg font-extrabold mb-4">דוחות</h1>
       <div className="space-y-3">
-        {items.map((it, i) => (
-          <Card key={i} className="p-4 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">{it.icon}</div>
+
+        {/* דוח ליקויים מעוצב */}
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0"><Printer size={22} /></div>
             <div className="flex-1">
-              <div className="font-bold text-sm">{it.title}</div>
-              <div className="text-xs text-slate-400">{it.desc}</div>
+              <div className="font-bold text-sm">דוח ליקויים מעוצב (PDF)</div>
+              <div className="text-xs text-slate-400">טבלה עם תמונות, מקובצת — להדפסה או שמירה כ-PDF</div>
             </div>
-            {it.ready
-              ? <Btn size="sm" variant="primary" disabled={!canExport} onClick={it.action}>ייצא</Btn>
-              : <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full px-2.5 py-1">שלב 10</span>}
-          </Card>
-        ))}
+          </div>
+          <div className="flex items-center gap-2 mt-3 ps-15">
+            <Select value={st} onChange={e => setSt(e.target.value as 'open' | 'all')} className="max-w-36 text-xs">
+              <option value="open">פתוחים בלבד</option>
+              <option value="all">כל הליקויים</option>
+            </Select>
+            <Select value={by} onChange={e => setBy(e.target.value as 'location' | 'contractor')} className="max-w-36 text-xs">
+              <option value="location">קיבוץ לפי קומה</option>
+              <option value="contractor">קיבוץ לפי קבלן</option>
+            </Select>
+            <Btn size="sm" variant="primary" disabled={!canExport}
+              onClick={() => navigate(href(`print/defects?st=${st}&by=${by}`))}>הפק דוח</Btn>
+          </div>
+        </Card>
+
+        {/* יומן עבודה מעוצב */}
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0"><Printer size={22} /></div>
+            <div className="flex-1">
+              <div className="font-bold text-sm">דוח יומן עבודה (PDF)</div>
+              <div className="text-xs text-slate-400">יום בודד, כולל כוח אדם וחתימות</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3 ps-15">
+            <Select value={selectedLog} onChange={e => setLogId(e.target.value)} className="max-w-44 text-xs">
+              {(data?.logs ?? []).map(l => <option key={l.id} value={l.id}>{fmtDate(l.date)} {l.status === 'locked' ? '🔒' : ''}</option>)}
+            </Select>
+            <Btn size="sm" variant="primary" disabled={!canExport || !selectedLog}
+              onClick={() => navigate(href(`print/log/${selectedLog}`))}>הפק דוח</Btn>
+          </div>
+        </Card>
+
+        {/* דוח ליקוי בודד */}
+        <Card className="p-4 flex items-center gap-4">
+          <div className="w-11 h-11 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0"><FileText size={22} /></div>
+          <div className="flex-1">
+            <div className="font-bold text-sm">דוח ליקוי בודד (PDF)</div>
+            <div className="text-xs text-slate-400">זמין מכל כרטיס ליקוי — כפתור "PDF" בראש הכרטיס</div>
+          </div>
+          <Btn size="sm" onClick={() => navigate(href('defects'))}>לרשימת הליקויים</Btn>
+        </Card>
+
+        {/* CSV */}
+        <Card className="p-4 flex items-center gap-4">
+          <div className="w-11 h-11 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0"><FileSpreadsheet size={22} /></div>
+          <div className="flex-1">
+            <div className="font-bold text-sm">ייצוא לאקסל (CSV)</div>
+            <div className="text-xs text-slate-400">נתונים גולמיים לעיבוד — ליקויים או משימות</div>
+          </div>
+          <div className="flex gap-2">
+            <Btn size="sm" disabled={!canExport} onClick={exportDefects}>ליקויים</Btn>
+            <Btn size="sm" disabled={!canExport} onClick={exportTasks}>משימות</Btn>
+          </div>
+        </Card>
+
+        <Card className="p-4 flex items-center gap-4 opacity-70">
+          <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center shrink-0"><FileText size={22} /></div>
+          <div className="flex-1">
+            <div className="font-bold text-sm">דוח התקדמות להנהלה</div>
+            <div className="text-xs text-slate-400">KPI, גרפים ומגמות</div>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full px-2.5 py-1">בקרוב</span>
+        </Card>
       </div>
-      {!canExport && <p className="text-xs text-slate-400 mt-3">ייצוא דוחות זמין למנהלים ולמפקחים בלבד.</p>}
+      {!canExport && <p className="text-xs text-slate-400 mt-3">הפקת דוחות זמינה למנהלים ולמפקחים בלבד.</p>}
     </div>
   )
 }

@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRight, Camera, History, MapPin, Send, X } from 'lucide-react'
+import { ArrowRight, Camera, FileText, History, MapPin, Pencil, Send, X } from 'lucide-react'
 import { db } from '../../data/db'
 import { useProject } from '../shell/ProjectContext'
 import { Avatar, Badge, Btn, Card, Spinner, TextArea } from '../../components/ui'
 import { BlobImg } from '../../components/BlobImg'
-import { useBlobUrl } from '../../data/blobs'
+import { AnnotateDialog, AnnotatedImg } from '../photos/Annotate'
 import { SEVERITY_DOT, SEVERITY_LABEL, STATUS_BADGE, STATUS_LABEL } from '../../lib/labels'
 import { allowedTransitions, isOverdue } from '../../lib/status'
 import { addComment, addPhotos, changeStatus } from './defectService'
@@ -20,7 +20,8 @@ export function DefectDetailPage() {
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
   const [comment, setComment] = useState('')
-  const [lightbox, setLightbox] = useState<string | null>(null)
+  const [lightboxId, setLightboxId] = useState<string | null>(null)
+  const [annotateId, setAnnotateId] = useState<string | null>(null)
   const [rejectOpen, setRejectOpen] = useState<DefectStatus | null>(null)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -43,6 +44,8 @@ export function DefectDetailPage() {
 
   const overdue = isOverdue(d)
   const transitions = allowedTransitions(me, d)
+  const lightbox = lightboxId ? data.attachments.find(a => a.id === lightboxId) : null
+  const annotating = annotateId ? data.attachments.find(a => a.id === annotateId) : null
 
   async function doTransition(to: DefectStatus, withNote?: string) {
     if (!d || busy) return
@@ -83,6 +86,7 @@ export function DefectDetailPage() {
             )}
           </div>
         </div>
+        <Btn size="sm" onClick={() => navigate(href(`print/defect/${d.id}`))} title="דוח PDF לליקוי"><FileText size={14} /> PDF</Btn>
       </div>
 
       {/* פס פעולות סטטוס */}
@@ -126,12 +130,15 @@ export function DefectDetailPage() {
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {data.attachments.map(a => (
-              <button key={a.id} onClick={() => setLightbox(a.blob_id)} className="relative group">
+              <button key={a.id} onClick={() => setLightboxId(a.id)} className="relative group">
                 <BlobImg blobId={a.thumb_blob_id ?? a.blob_id} className="aspect-square w-full rounded-lg" />
                 <span className={cx('absolute bottom-1 start-1 text-[9px] font-bold px-1.5 py-0.5 rounded text-white',
                   a.phase === 'after' ? 'bg-st-closed' : a.phase === 'before' ? 'bg-st-open' : 'bg-slate-500')}>
                   {a.phase === 'after' ? 'אחרי' : a.phase === 'before' ? 'לפני' : 'כללי'}
                 </span>
+                {(a.annotations?.length ?? 0) > 0 && (
+                  <span className="absolute top-1 end-1 bg-accent text-white rounded-full p-1"><Pencil size={10} /></span>
+                )}
               </button>
             ))}
           </div>
@@ -201,11 +208,19 @@ export function DefectDetailPage() {
       </Card>
 
       {/* לייטבוקס */}
-      {lightbox && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+      {lightbox && !annotating && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center p-4 gap-3" onClick={() => setLightboxId(null)}>
           <button className="absolute top-4 end-4 text-white p-2"><X size={22} /></button>
-          <Lightbox blobId={lightbox} />
+          <div onClick={e => e.stopPropagation()}>
+            <AnnotatedImg att={lightbox} maxH="75vh" />
+          </div>
+          <Btn size="sm" variant="primary" onClick={() => setAnnotateId(lightbox.id)}>
+            <Pencil size={13} /> סמן על התמונה
+          </Btn>
         </div>
+      )}
+      {annotating && (
+        <AnnotateDialog att={annotating} me={me} onClose={() => setAnnotateId(null)} />
       )}
     </div>
   )
@@ -220,8 +235,3 @@ function Info({ label, value, danger }: { label: string; value: string; danger?:
   )
 }
 
-function Lightbox({ blobId }: { blobId: string }) {
-  const url = useBlobUrl(blobId)
-  if (!url) return null
-  return <img src={url} alt="" className="max-w-full max-h-full rounded-lg" onClick={e => e.stopPropagation()} />
-}

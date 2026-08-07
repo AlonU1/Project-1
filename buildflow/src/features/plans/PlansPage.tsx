@@ -66,31 +66,54 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const [sheet, setSheet] = useState('')
   const [disc, setDisc] = useState<Plan['discipline']>('architecture')
   const [file, setFile] = useState<File | null>(null)
+  const [pdfPages, setPdfPages] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
   const [floorIds, setFloorIds] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const floors = locations.filter(l => l.type === 'floor')
+
+  async function onFile(f: File | null) {
+    setFile(f)
+    setPdfPages(null)
+    setPage(1)
+    if (f && f.type === 'application/pdf') {
+      const { pdfPageCount } = await import('../../lib/pdf')
+      setPdfPages(await pdfPageCount(f))
+    }
+  }
 
   async function save() {
     if (!file || !name.trim()) return
     setBusy(true)
     try {
-      const dims = await imageDimensions(file)
-      const blobId = await putBlob(file)
+      const isPdf = file.type === 'application/pdf'
+      let blobId: string, w: number, h: number
+      if (isPdf) {
+        const { renderPdfPage } = await import('../../lib/pdf')
+        const r = await renderPdfPage(file, page)
+        blobId = await putBlob(r.blob)
+        w = r.width; h = r.height
+      } else {
+        const dims = await imageDimensions(file)
+        blobId = await putBlob(file)
+        w = dims.w; h = dims.h
+      }
       const plan = await dl.create<Plan>('plans', {
         project_id: project.id, name: name.trim(), discipline: disc,
         sheet_number: sheet || undefined, current_version_id: null,
       }, me)
       const ver = await dl.create<PlanVersion>('plan_versions', {
         plan_id: plan.id, version_number: 1, blob_id: blobId,
-        file_type: file.type.includes('svg') ? 'svg' : file.type.includes('png') ? 'png' : 'jpg',
-        width_px: dims.w, height_px: dims.h, is_current: true,
+        file_type: isPdf ? 'pdf' : file.type.includes('svg') ? 'svg' : file.type.includes('png') ? 'png' : 'jpg',
+        page_number: isPdf ? page : undefined,
+        width_px: w, height_px: h, is_current: true,
       }, me)
       await dl.update<Plan>('plans', plan.id, { current_version_id: ver.id }, me)
       for (const fid of floorIds) {
         await dl.update<LocationNode>('locations', fid, { plan_id: plan.id }, me)
       }
       onClose()
-      setName(''); setSheet(''); setFile(null); setFloorIds([])
+      setName(''); setSheet(''); setFile(null); setPdfPages(null); setFloorIds([])
     } finally {
       setBusy(false)
     }
@@ -99,9 +122,14 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
   return (
     <Dialog open={open} onClose={onClose} title="העלאת תוכנית">
       <div className="space-y-4">
-        <div><Label required>קובץ (PNG / JPG / SVG)</Label>
-          <Input type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={e => setFile(e.target.files?.[0] ?? null)} />
-          <p className="text-xs text-slate-400 mt-1">קבצי PDF — בשלב הבא (רינדור עם pdf.js).</p>
+        <div><Label required>קובץ (PDF / PNG / JPG / SVG)</Label>
+          <Input type="file" accept="application/pdf,image/png,image/jpeg,image/svg+xml" onChange={e => onFile(e.target.files?.[0] ?? null)} />
+          {pdfPages != null && (
+            <div className="flex items-center gap-2 mt-2 text-sm">
+              <span className="text-slate-500">PDF עם <b className="ltr-num">{pdfPages}</b> עמודים · עמוד להצגה:</span>
+              <Input type="number" min={1} max={pdfPages} value={page} onChange={e => setPage(+e.target.value || 1)} className="w-20 ltr-num" />
+            </div>
+          )}
         </div>
         <div><Label required>שם התוכנית</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="תוכנית קומה טיפוסית" /></div>
         <div className="grid grid-cols-2 gap-3">

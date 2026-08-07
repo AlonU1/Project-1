@@ -38,11 +38,17 @@ src/
 
 `useProject()` (features/shell/ProjectContext) provides project, me, users/companies maps, locations, `locName()`, `href()` — use it inside project pages instead of re-querying.
 
+## Feature notes
+
+- **PDF plans**: `lib/pdf.ts` rasterizes a chosen page via pdf.js (lazy-loaded chunk). The stored blob is a PNG; `plan_version.file_type='pdf'` + `page_number` record provenance.
+- **Image annotation**: `features/photos/Annotate.tsx`. Shapes are relative-coord vectors in `attachment.annotations`; originals are never modified. `AnnotatedImg` renders them read-only (also inside printed reports). Wrapper divs use explicit width + `aspect-ratio` — do NOT revert to `max-w-full` shrink-wrap (collapses to 0×0).
+- **Printed reports** (`features/reports/print/`): styled HTML routes + `window.print()` → browser "Save as PDF". Chosen over jsPDF because Hebrew/RTL is flawless with zero font embedding and works offline. Print routes live OUTSIDE ProjectLayout (no app chrome) and load their own data via `usePrintData`.
+
 ## Known tech debt (intentional, don't "fix" silently)
 
 - UI strings are Hebrew literals; i18n extraction (`t()`) is scheduled with the EN locale pass.
 - No backend: auth is a demo user picker; outbox never drains. Sync adapter is the next milestone (SPEC §8).
-- PDF plans, image annotation, pin clustering, checklists — later stages per SPEC §16.
+- Pin clustering, checklists/QA, plan version migration UI — later stages per SPEC §16.
 
 ## Conventions
 

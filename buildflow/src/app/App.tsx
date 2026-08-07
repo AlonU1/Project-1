@@ -19,6 +19,9 @@ import { DailyLogPage } from '../features/dailylog/DailyLogPage'
 import { PeoplePage } from '../features/people/PeoplePage'
 import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { ReportsPage } from '../features/reports/ReportsPage'
+import { DefectsPrint } from '../features/reports/print/DefectsPrint'
+import { DefectPrint } from '../features/reports/print/DefectPrint'
+import { LogPrint } from '../features/reports/print/LogPrint'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { MorePage } from '../features/shell/MorePage'
 
@@ -59,6 +62,10 @@ export function App() {
         <Route element={<RequireAuth />}>
           <Route path="/" element={<ProjectsPage />} />
           <Route path="/new" element={<NewProjectWizard />} />
+          {/* דוחות להדפסה — מחוץ למעטפת הפרויקט */}
+          <Route path="/p/:projectId/print/defects" element={<DefectsPrint />} />
+          <Route path="/p/:projectId/print/defect/:defectId" element={<DefectPrint />} />
+          <Route path="/p/:projectId/print/log/:logId" element={<LogPrint />} />
           <Route path="/p/:projectId" element={<ProjectLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="structure" element={<StructurePage />} />

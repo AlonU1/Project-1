@@ -6,7 +6,7 @@ import { db } from '../../data/db'
 import { useProject } from '../shell/ProjectContext'
 import { Chip, EmptyState, Spinner } from '../../components/ui'
 import { BlobImg } from '../../components/BlobImg'
-import { useBlobUrl } from '../../data/blobs'
+import { AnnotatedImg } from './Annotate'
 import { fmtDate, fmtDateTime } from '../../lib/date'
 import type { Attachment } from '../../data/types'
 
@@ -69,7 +69,9 @@ export function PhotosPage() {
       {open && (
         <div className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center p-4" onClick={() => setOpen(null)}>
           <button className="absolute top-4 end-4 text-white p-2"><X size={22} /></button>
-          <Big blobId={open.blob_id} />
+          <div onClick={e => e.stopPropagation()}>
+            <AnnotatedImg att={open} maxH="78vh" />
+          </div>
           <div className="text-white/90 text-xs mt-3 text-center space-y-1" onClick={e => e.stopPropagation()}>
             <div>{locName(open.location_id)} · {userMap.get(open.created_by)?.full_name} · <span className="ltr-num">{fmtDateTime(open.taken_at ?? open.created_at)}</span></div>
             {open.entity_type === 'defect' && (
@@ -82,8 +84,3 @@ export function PhotosPage() {
   )
 }
 
-function Big({ blobId }: { blobId: string }) {
-  const url = useBlobUrl(blobId)
-  if (!url) return <Spinner />
-  return <img src={url} alt="" className="max-w-full max-h-[80vh] rounded-lg" onClick={e => e.stopPropagation()} />
-}

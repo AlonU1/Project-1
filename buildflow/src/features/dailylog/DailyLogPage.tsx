@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarDays, Lock, Plus, Send } from 'lucide-react'
+import { CalendarDays, FileText, Lock, Plus, Send } from 'lucide-react'
 import { db } from '../../data/db'
 import { dl } from '../../data/layer'
 import { useProject } from '../shell/ProjectContext'
@@ -74,7 +75,8 @@ export function DailyLogPage() {
 }
 
 function LogEditor({ log, onBack }: { log: DailyLog; onBack: () => void }) {
-  const { me, companyMap, contractors } = useProject()
+  const { me, companyMap, contractors, href } = useProject()
+  const navigate = useNavigate()
   const locked = log.status === 'locked'
   const editable = !locked && can(me, 'log:fill')
 
@@ -90,6 +92,7 @@ function LogEditor({ log, onBack }: { log: DailyLog; onBack: () => void }) {
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-sm text-brand font-medium">← חזרה לרשימה</button>
         <div className="flex gap-2">
+          <Btn size="sm" onClick={() => navigate(href(`print/log/${log.id}`))}><FileText size={13} /> PDF</Btn>
           {editable && log.status === 'draft' && (
             <Btn size="sm" variant="primary" onClick={() => patch({ status: 'submitted' })}><Send size={13} /> הגש לאישור</Btn>
           )}

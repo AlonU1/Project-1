@@ -67,7 +67,7 @@ export function SettingsPage() {
         </Btn>
       </Card>
 
-      <p className="text-center text-[11px] text-slate-400">BuildFlow v0.1 · שלבים 1–5 מתוך SPEC.md · נבנה כ-PWA עם React + Dexie</p>
+      <p className="text-center text-[11px] text-slate-400">BuildFlow v0.2 · שלבים 1–7 + דוחות מתוך SPEC.md · נבנה כ-PWA עם React + Dexie</p>
     </div>
   )
 }

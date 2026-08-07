@@ -41,3 +41,9 @@ body {
   0%, 100% { transform: translate(-50%, -100%) scale(var(--pin-scale, 1)); }
   50% { transform: translate(-50%, -100%) scale(calc(var(--pin-scale, 1) * 1.35)); }
 }
+
+/* דוחות מודפסים */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: #fff !important; }
+}
