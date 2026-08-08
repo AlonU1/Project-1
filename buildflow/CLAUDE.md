@@ -44,10 +44,18 @@ src/
 - **Image annotation**: `features/photos/Annotate.tsx`. Shapes are relative-coord vectors in `attachment.annotations`; originals are never modified. `AnnotatedImg` renders them read-only (also inside printed reports). Wrapper divs use explicit width + `aspect-ratio` — do NOT revert to `max-w-full` shrink-wrap (collapses to 0×0).
 - **Printed reports** (`features/reports/print/`): styled HTML routes + `window.print()` → browser "Save as PDF". Chosen over jsPDF because Hebrew/RTL is flawless with zero font embedding and works offline. Print routes live OUTSIDE ProjectLayout (no app chrome) and load their own data via `usePrintData`.
 
+## Sync (Supabase)
+
+- `src/data/sync/`: `config.ts` (URL + anon key; sync is OFF until the key is set), `engine.ts` (push outbox → pull changes, LWW by `updated_at`, Realtime on `bf_rows`, 30s heartbeat).
+- Remote model is a single generic row store `bf_rows(tbl,id,data,updated_at)` — schema in `supabase/schema.sql` (idempotent; run in the Supabase SQL Editor). All BuildFlow objects are prefixed `bf_`; storage bucket `buildflow`.
+- Blobs upload on push; `getBlob()` falls back to the public bucket URL and caches locally.
+- Engine writes to Dexie directly on pull (bypassing `dl`) — deliberate, so pulls don't re-enqueue outbox rows.
+- Current RLS is demo-grade (anon read/write on bf_ tables only). Real per-user auth replaces these policies later.
+
 ## Known tech debt (intentional, don't "fix" silently)
 
 - UI strings are Hebrew literals; i18n extraction (`t()`) is scheduled with the EN locale pass.
-- No backend: auth is a demo user picker; outbox never drains. Sync adapter is the next milestone (SPEC §8).
+- Auth is a demo user picker; RLS is open to anon (see Sync above).
 - Pin clustering, checklists/QA, plan version migration UI — later stages per SPEC §16.
 
 ## Conventions

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ICON } from '../lib/brand'
 import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { seedIfNeeded } from '../data/seed'
+import { startSync } from '../data/sync/engine'
 import { useSession } from '../state/session'
 import { LoginPage } from '../features/auth/LoginPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
@@ -40,10 +41,12 @@ export function App() {
   const theme = useSession(s => s.theme)
 
   useEffect(() => {
-    seedIfNeeded().then(() => setReady(true)).catch(e => {
-      console.error('seed failed', e)
-      setReady(true)
-    })
+    seedIfNeeded()
+      .then(() => { setReady(true); startSync() })
+      .catch(e => {
+        console.error('seed failed', e)
+        setReady(true)
+      })
   }, [])
 
   useEffect(() => {

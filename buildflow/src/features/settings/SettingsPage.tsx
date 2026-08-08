@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Moon, RefreshCw, Sun } from 'lucide-react'
+import { CloudUpload, Moon, RefreshCw, Sun } from 'lucide-react'
 import { db } from '../../data/db'
 import { resetDemo } from '../../data/seed'
+import { syncEnabled } from '../../data/sync/config'
+import { syncNow, useSyncState } from '../../data/sync/engine'
 import { useSession } from '../../state/session'
 import { useProject } from '../shell/ProjectContext'
 import { Avatar, Btn, Card } from '../../components/ui'
 import { ROLE_LABEL } from '../../lib/labels'
+import { fmtRel } from '../../lib/date'
 
 export function SettingsPage() {
   const { me, companyMap, project } = useProject()
@@ -46,13 +49,7 @@ export function SettingsPage() {
         </Btn>
       </Card>
 
-      <Card className="p-4">
-        <div className="font-bold text-sm mb-1">סנכרון</div>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          הגרסה הנוכחית עובדת local-first: כל הנתונים נשמרים במכשיר (IndexedDB) וזמינים גם ללא רשת.
-          {' '}<b className="ltr-num">{outboxCount}</b> פעולות ממתינות בתור הסנכרון — הן יעלו לענן אוטומטית כשיחובר שרת (שלב הבא במפת הדרכים).
-        </p>
-      </Card>
+      <SyncCard outboxCount={outboxCount ?? 0} />
 
       <Card className="p-4">
         <div className="font-bold text-sm mb-1">פרויקט נוכחי</div>
@@ -67,7 +64,49 @@ export function SettingsPage() {
         </Btn>
       </Card>
 
-      <p className="text-center text-[11px] text-slate-400">BuildFlow v0.2 · שלבים 1–7 + דוחות מתוך SPEC.md · נבנה כ-PWA עם React + Dexie</p>
+      <p className="text-center text-[11px] text-slate-400">BuildFlow v0.3 · שלבים 1–7 + דוחות + סנכרון ענן · נבנה כ-PWA עם React + Dexie + Supabase</p>
     </div>
+  )
+}
+
+function SyncCard({ outboxCount }: { outboxCount: number }) {
+  const sync = useSyncState()
+  const [busy, setBusy] = useState(false)
+
+  if (!syncEnabled) {
+    return (
+      <Card className="p-4">
+        <div className="font-bold text-sm mb-1">סנכרון בין מכשירים</div>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          חיבור הענן עדיין לא הוגדר — הנתונים נשמרים במכשיר זה בלבד (וזמינים גם ללא רשת).
+          {' '}<b className="ltr-num">{outboxCount}</b> פעולות ממתינות בתור ויעלו אוטומטית ברגע שהחיבור יופעל.
+        </p>
+      </Card>
+    )
+  }
+
+  const statusLabel =
+    sync.status === 'syncing' ? 'מסנכרן…' :
+    sync.status === 'error' ? 'שגיאה' :
+    outboxCount > 0 ? 'ממתין לדחיפה' : 'מסונכרן'
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-1">
+        <div className="font-bold text-sm">סנכרון בין מכשירים</div>
+        <Btn size="sm" disabled={busy || sync.status === 'syncing'} onClick={async () => { setBusy(true); await syncNow(); setBusy(false) }}>
+          <CloudUpload size={14} /> סנכרן עכשיו
+        </Btn>
+      </div>
+      <p className="text-xs text-slate-400 leading-relaxed">
+        מצב: <b>{statusLabel}</b>
+        {sync.lastSync && <> · סנכרון אחרון {fmtRel(sync.lastSync)}</>}
+        {' '}· <b className="ltr-num">{outboxCount}</b> פעולות בתור.
+        שינויים שתבצע כאן יופיעו בכל מכשיר שפתוח על אותה כתובת, גם בנייד.
+      </p>
+      {sync.status === 'error' && (
+        <p className="text-xs text-st-open mt-2 break-all">{sync.error}</p>
+      )}
+    </Card>
   )
 }

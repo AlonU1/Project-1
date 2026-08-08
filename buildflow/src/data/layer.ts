@@ -14,6 +14,8 @@ const now = () => new Date().toISOString()
 
 async function enqueue(op: 'create' | 'update' | 'archive' | 'bulk', table: string, entity_id: string) {
   await db.outbox.add({ op, table, entity_id, at: now(), status: 'pending' })
+  // עדכון עדין למנוע הסנכרון (אם מחובר) — טעינה עצלה למניעת תלות מעגלית
+  import('./sync/engine').then(m => m.poke()).catch(() => {})
 }
 
 export function stamp(user: User | null | undefined) {

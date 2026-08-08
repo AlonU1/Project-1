@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { db } from '../../data/db'
 import { useSession } from '../../state/session'
+import { useSyncState } from '../../data/sync/engine'
 import { Avatar, Spinner } from '../../components/ui'
 import { cx } from '../../lib/util'
 import { ROLE_LABEL } from '../../lib/labels'
@@ -15,20 +16,29 @@ import { ProjectCtx, buildLocName, type ProjectCtxValue } from './ProjectContext
 
 function SyncBadge() {
   const pending = useLiveQuery(() => db.outbox.where('status').equals('pending').count(), [], 0)
+  const sync = useSyncState()
   const [online, setOnline] = useState(navigator.onLine)
   useEffect(() => {
     const on = () => setOnline(true), off = () => setOnline(false)
     window.addEventListener('online', on); window.addEventListener('offline', off)
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
   }, [])
+
+  const view = !online
+    ? { cls: 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950', icon: <CloudOff size={13} />, label: 'לא מקוון', title: `${pending} שינויים ממתינים — יסונכרנו כשתחזור רשת` }
+    : sync.status === 'off'
+    ? { cls: 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950', icon: <CheckCircle2 size={13} />, label: 'נשמר מקומית', title: pending ? `${pending} שינויים בתור לסנכרון עתידי` : 'כל השינויים נשמרו מקומית' }
+    : sync.status === 'error'
+    ? { cls: 'text-red-700 dark:text-red-400 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950', icon: <CloudOff size={13} />, label: 'שגיאת סנכרון', title: sync.error ?? '' }
+    : sync.status === 'syncing' || pending > 0
+    ? { cls: 'text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950', icon: <CheckCircle2 size={13} className="animate-pulse" />, label: 'מסנכרן…', title: `${pending} בתור` }
+    : { cls: 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950', icon: <CheckCircle2 size={13} />, label: 'מסונכרן', title: 'כל המכשירים מעודכנים' }
+
   return (
-    <div className={cx('hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border',
-      online ? 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950'
-             : 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950')}
-      title={pending ? `${pending} שינויים בתור לסנכרון עתידי` : 'כל השינויים נשמרו מקומית'}>
-      {online ? <CheckCircle2 size={13} /> : <CloudOff size={13} />}
-      {online ? 'נשמר מקומית' : 'לא מקוון'}
-      {pending ? <span className="font-bold ltr-num">{pending}</span> : null}
+    <div className={cx('hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border', view.cls)} title={view.title}>
+      {view.icon}
+      {view.label}
+      {pending > 0 && sync.status !== 'off' ? <span className="font-bold ltr-num">{pending}</span> : null}
     </div>
   )
 }
