@@ -2,9 +2,10 @@
 // API זהה ל-window.storage: get / set / delete
 import { createClient } from "@supabase/supabase-js";
 
-const URL = import.meta.env.VITE_SUPABASE_URL;
+// ענן משותף עם מערכת BuildFlow — משתני סביבה גוברים על ברירת המחדל
+const URL = import.meta.env.VITE_SUPABASE_URL || "https://vkveqmdvkpyybpvaakfb.supabase.co";
 // שני שמות נתמכים — VITE_SUPABASE_ANON_KEY (הקאנוני) או VITE_SUPABASE_KEY (כפי שמוגדר ב-Vercel)
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_KEY;
+const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_KEY || "sb_publishable_CMS1chTpkfXpEWjA7GwADw_o2_kv0oG";
 const supa = URL && ANON ? createClient(URL, ANON) : null;
 
 const local = {
