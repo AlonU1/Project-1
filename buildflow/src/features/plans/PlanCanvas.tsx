@@ -14,7 +14,7 @@ export interface PlanPin {
 
 interface View { s: number; tx: number; ty: number }
 
-export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, onPick, focusPin, tempPin }: {
+export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, onPick, focusPin, tempPin, onHover, focusPoint }: {
   imgUrl: string
   width: number
   height: number
@@ -24,6 +24,10 @@ export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, 
   onPick?: (x: number, y: number) => void
   focusPin?: string | null
   tempPin?: { x: number; y: number } | null
+  /** תנועת סמן מעל התוכנית (ללא גרירה) — לקריאת קואורדינטות */
+  onHover?: (x: number, y: number) => void
+  /** מרכוז התצוגה על נקודה יחסית */
+  focusPoint?: { x: number; y: number } | null
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<View>({ s: 0.4, tx: 0, ty: 0 })
@@ -60,6 +64,16 @@ export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusPin, pins.length])
 
+  // מרכוז על נקודה (למשל "עבור לנ.צ.")
+  useEffect(() => {
+    if (!focusPoint) return
+    const el = wrapRef.current
+    if (!el) return
+    const s = clampS(Math.max(fitRef.current * 2, view.s))
+    setView({ s, tx: el.clientWidth / 2 - focusPoint.x * width * s, ty: el.clientHeight / 2 - focusPoint.y * height * s })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusPoint?.x, focusPoint?.y])
+
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
@@ -90,7 +104,16 @@ export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, 
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!pointers.current.has(e.pointerId) || !gesture.current) return
+    if (!pointers.current.has(e.pointerId) || !gesture.current) {
+      // תנועה ללא לחיצה — דיווח קואורדינטות
+      if (onHover && wrapRef.current) {
+        const rect = wrapRef.current.getBoundingClientRect()
+        const x = (e.clientX - rect.left - view.tx) / (view.s * width)
+        const y = (e.clientY - rect.top - view.ty) / (view.s * height)
+        if (x >= 0 && x <= 1 && y >= 0 && y <= 1) onHover(x, y)
+      }
+      return
+    }
     const start = pointers.current.get(e.pointerId)!
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     const g = gesture.current

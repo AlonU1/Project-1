@@ -80,6 +80,11 @@ export interface Plan extends Base {
   current_version_id?: string | null
 }
 
+/** נקודת עיגון: מיקום יחסי על התוכנית (0–1) ↔ קואורדינטה אמיתית במטרים */
+export interface GeoRefPoint { px: number; py: number; e: number; n: number }
+/** עיגון התוכנית לרשת קואורדינטות — SPEC §7.6 */
+export interface GeoRef { points: GeoRefPoint[]; crs: string }
+
 export interface PlanVersion extends Base {
   plan_id: string
   version_number: number
@@ -89,6 +94,7 @@ export interface PlanVersion extends Base {
   page_number?: number
   width_px: number
   height_px: number
+  georef?: GeoRef | null
   notes?: string
   is_current: boolean
 }
