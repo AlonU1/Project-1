@@ -1,8 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Camera, ChevronDown, MapPin, X } from 'lucide-react'
+import { Camera, ChevronDown, MapPin, Trash2, X } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../data/db'
 import { useProject } from '../shell/ProjectContext'
 import { LocationPicker } from '../../components/LocationPicker'
+import { PinPicker } from '../plans/PinPicker'
 import { Btn, Card, Input, Label, Select, TextArea } from '../../components/ui'
 import { DEFECT_TYPES, SEVERITY_LABEL } from '../../lib/labels'
 import { isoDaysFromNow } from '../../lib/date'
@@ -11,7 +14,7 @@ import { cx } from '../../lib/util'
 import type { Severity } from '../../data/types'
 
 export function NewDefectPage() {
-  const { project, me, href, locations, contractors, users, locName } = useProject()
+  const { project, me, href, locations, locMap, contractors, users, locName } = useProject()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -28,7 +31,32 @@ export function NewDefectPage() {
   const [files, setFiles] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
 
-  const pinX = params.get('px'), pinY = params.get('py'), pinV = params.get('pv')
+  // נעיצה על התוכנית — מאותחלת מפרמטרים אם הגענו מצופה התוכניות
+  const [pin, setPin] = useState<{ x: number; y: number; versionId: string } | null>(() => {
+    const px = params.get('px'), py = params.get('py'), pv = params.get('pv')
+    return px && py && pv ? { x: parseFloat(px), y: parseFloat(py), versionId: pv } : null
+  })
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  // התוכנית של המיקום הנבחר — עולים בעץ עד צומת עם תוכנית משויכת
+  const planId = useMemo(() => {
+    let cur = locationId ? locMap.get(locationId) : undefined
+    while (cur) {
+      if (cur.plan_id) return cur.plan_id
+      cur = cur.parent_id ? locMap.get(cur.parent_id) : undefined
+    }
+    return null
+  }, [locationId, locMap])
+
+  // אם המיקום השתנה לתוכנית אחרת — הנעיצה הישנה לא רלוונטית
+  const pinVersion = useLiveQuery(
+    async () => (pin ? await db.plan_versions.get(pin.versionId) : undefined),
+    [pin?.versionId],
+  )
+  useEffect(() => {
+    if (pin && pinVersion && planId && pinVersion.plan_id !== planId) setPin(null)
+  }, [pin, pinVersion, planId])
+
   const companyUsers = users.filter(u => u.company_id === companyId)
 
   const previews = useMemo(() => files.map(f => ({ f, url: URL.createObjectURL(f) })), [files])
@@ -44,9 +72,9 @@ export function NewDefectPage() {
         title: title.trim(),
         description: desc || undefined,
         location_id: locationId,
-        pin_x: pinX ? parseFloat(pinX) : null,
-        pin_y: pinY ? parseFloat(pinY) : null,
-        plan_version_id: pinV || null,
+        pin_x: pin?.x ?? null,
+        pin_y: pin?.y ?? null,
+        plan_version_id: pin?.versionId ?? null,
         dtype: dtype || undefined,
         severity,
         assigned_company_id: companyId || null,
@@ -91,12 +119,26 @@ export function NewDefectPage() {
 
         <div><Label required>מיקום</Label>
           <LocationPicker locations={locations} value={locationId} onChange={setLocationId} />
-          {pinX && pinY ? (
-            <div className="mt-2 text-xs bg-st-closed/10 text-st-closed border border-st-closed/30 rounded-lg px-3 py-2 flex items-center gap-1.5">
-              <MapPin size={13} /> נעוץ על התוכנית ✓ <span className="ltr-num opacity-70">({(+pinX * 100).toFixed(0)}%, {(+pinY * 100).toFixed(0)}%)</span>
+          {pin ? (
+            <div className="mt-2 text-xs bg-st-closed/10 text-st-closed border border-st-closed/30 rounded-lg px-3 py-2 flex items-center gap-2">
+              <MapPin size={13} /> נעוץ על התוכנית ✓
+              <span className="ltr-num opacity-70">({(pin.x * 100).toFixed(0)}%, {(pin.y * 100).toFixed(0)}%)</span>
+              <div className="flex-1" />
+              {planId && (
+                <button type="button" onClick={() => setPickerOpen(true)} className="font-bold hover:underline">שנה</button>
+              )}
+              <button type="button" onClick={() => setPin(null)} className="text-st-open hover:underline flex items-center gap-0.5">
+                <Trash2 size={12} /> הסר
+              </button>
             </div>
+          ) : planId ? (
+            <Btn className="mt-2 w-full border-dashed" onClick={() => setPickerOpen(true)}>
+              <MapPin size={15} /> נעץ על התוכנית
+            </Btn>
+          ) : locationId ? (
+            <p className="text-[11px] text-slate-400 mt-1.5">למיקום הזה אין תוכנית משויכת — אפשר לשמור בלי נעיצה, או לשייך תוכנית במסך "מבנה הפרויקט".</p>
           ) : (
-            <p className="text-[11px] text-slate-400 mt-1.5">טיפ: נעיצה מדויקת על תוכנית — דרך מסך "תוכניות" ← "נעץ ליקוי".</p>
+            <p className="text-[11px] text-slate-400 mt-1.5">בחר מיקום כדי לאפשר נעיצה על התוכנית.</p>
           )}
         </div>
 
@@ -167,6 +209,15 @@ export function NewDefectPage() {
         </div>
         {locationId && <p className="text-[11px] text-slate-400 text-center">ישמר תחת: {locName(locationId)}</p>}
       </Card>
+
+      {pickerOpen && planId && (
+        <PinPicker
+          planId={planId}
+          initial={pin}
+          onConfirm={r => { setPin({ x: r.x, y: r.y, versionId: r.planVersionId }); setPickerOpen(false) }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   )
 }

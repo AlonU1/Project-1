@@ -172,7 +172,7 @@ export interface ActivityRow extends Base {
   project_id: string
   entity_type: EntityType
   entity_id: string
-  action: 'created' | 'status_changed' | 'assigned' | 'commented' | 'attachment_added' | 'due_changed' | 'closed' | 'reopened'
+  action: 'created' | 'status_changed' | 'assigned' | 'commented' | 'attachment_added' | 'due_changed' | 'pin_changed' | 'closed' | 'reopened'
   old_value?: string | null
   new_value?: string | null
   at: string

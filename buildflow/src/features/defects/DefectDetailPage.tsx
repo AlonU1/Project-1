@@ -3,20 +3,23 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowRight, Camera, FileText, History, MapPin, Pencil, Send, X } from 'lucide-react'
 import { db } from '../../data/db'
+import { dl } from '../../data/layer'
 import { useProject } from '../shell/ProjectContext'
 import { Avatar, Badge, Btn, Card, Spinner, TextArea } from '../../components/ui'
 import { BlobImg } from '../../components/BlobImg'
 import { AnnotateDialog, AnnotatedImg } from '../photos/Annotate'
+import { PinPicker } from '../plans/PinPicker'
 import { SEVERITY_DOT, SEVERITY_LABEL, STATUS_BADGE, STATUS_LABEL } from '../../lib/labels'
 import { allowedTransitions, isOverdue } from '../../lib/status'
 import { addComment, addPhotos, changeStatus } from './defectService'
 import { daysUntil, fmtDate, fmtDateTime, fmtRel } from '../../lib/date'
 import { cx } from '../../lib/util'
-import type { DefectStatus } from '../../data/types'
+import type { Defect, DefectStatus } from '../../data/types'
 
 export function DefectDetailPage() {
   const { defectId = '' } = useParams()
-  const { me, href, userMap, companyMap, locName } = useProject()
+  const { me, href, userMap, companyMap, locMap, locName } = useProject()
+  const [pinPickerOpen, setPinPickerOpen] = useState(false)
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
   const [comment, setComment] = useState('')
@@ -46,6 +49,27 @@ export function DefectDetailPage() {
   const transitions = allowedTransitions(me, d)
   const lightbox = lightboxId ? data.attachments.find(a => a.id === lightboxId) : null
   const annotating = annotateId ? data.attachments.find(a => a.id === annotateId) : null
+
+  // התוכנית של מיקום הליקוי — לנעיצה/עדכון נעיצה
+  const locPlanId = (() => {
+    let cur = locMap.get(d.location_id)
+    while (cur) {
+      if (cur.plan_id) return cur.plan_id
+      cur = cur.parent_id ? locMap.get(cur.parent_id) : undefined
+    }
+    return null
+  })()
+  const canPin = me.role !== 'contractor'
+
+  async function savePin(r: { x: number; y: number; planVersionId: string }) {
+    await dl.update<Defect>('defects', d!.id, { pin_x: r.x, pin_y: r.y, plan_version_id: r.planVersionId }, me)
+    await dl.create('activity', {
+      project_id: d!.project_id, entity_type: 'defect', entity_id: d!.id,
+      action: 'pin_changed', old_value: d!.pin_x != null ? 'update' : null, new_value: null,
+      at: new Date().toISOString(),
+    }, me)
+    setPinPickerOpen(false)
+  }
 
   async function doTransition(to: DefectStatus, withNote?: string) {
     if (!d || busy) return
@@ -83,6 +107,11 @@ export function DefectDetailPage() {
             <MapPin size={13} /> {locName(d.location_id)}
             {data.planId && d.pin_x != null && (
               <Link to={href(`plans/${data.planId}?focus=${d.id}`)} className="text-brand font-medium hover:underline">· הצג בתוכנית</Link>
+            )}
+            {canPin && locPlanId && (
+              <button onClick={() => setPinPickerOpen(true)} className="text-brand font-medium hover:underline">
+                · {d.pin_x != null ? 'עדכן נעיצה' : 'נעץ על תוכנית'}
+              </button>
             )}
           </div>
         </div>
@@ -194,6 +223,7 @@ export function DefectDetailPage() {
               a.action === 'status_changed' ? `שינה סטטוס: ${STATUS_LABEL[a.old_value as DefectStatus] ?? a.old_value} ← ${STATUS_LABEL[a.new_value as DefectStatus] ?? a.new_value}` :
               a.action === 'assigned' ? `הקצה ל${companyMap.get(a.new_value ?? '')?.name ?? 'קבלן'}` :
               a.action === 'commented' ? 'הגיב' :
+              a.action === 'pin_changed' ? (a.old_value ? 'עדכן את הנעיצה על התוכנית' : 'נעץ את הליקוי על התוכנית') :
               a.action === 'attachment_added' ? `הוסיף ${a.new_value} תמונות` : a.action
             return (
               <div key={a.id} className="flex items-center gap-2 text-xs">
@@ -221,6 +251,14 @@ export function DefectDetailPage() {
       )}
       {annotating && (
         <AnnotateDialog att={annotating} me={me} onClose={() => setAnnotateId(null)} />
+      )}
+      {pinPickerOpen && locPlanId && (
+        <PinPicker
+          planId={locPlanId}
+          initial={d.pin_x != null ? { x: d.pin_x, y: d.pin_y! } : null}
+          onConfirm={savePin}
+          onClose={() => setPinPickerOpen(false)}
+        />
       )}
     </div>
   )
