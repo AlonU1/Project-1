@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Bell, CalendarDays, FileText, Image as ImageIcon, ListTree, Settings, Users } from 'lucide-react'
+import { Bell, CalendarDays, Coins, FileText, Image as ImageIcon, ListTree, Settings, Users } from 'lucide-react'
 import { Card } from '../../components/ui'
 import { useProject } from './ProjectContext'
+import { BUDGET_APP_URL } from './ProjectLayout'
 
 export function MorePage() {
   const { href } = useProject()
@@ -24,6 +25,12 @@ export function MorePage() {
           </Card>
         </Link>
       ))}
+      <a href={BUDGET_APP_URL} target="_blank" rel="noopener">
+        <Card className="p-5 flex flex-col items-center gap-2 text-slate-600 dark:text-slate-300">
+          <Coins size={22} />
+          <span className="text-sm font-medium">בקרה תקציבית ↗</span>
+        </Card>
+      </a>
     </div>
   )
 }

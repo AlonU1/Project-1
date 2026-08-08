@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  Bell, Building2, CalendarDays, ClipboardList, FileText, Image as ImageIcon,
+  Bell, Building2, CalendarDays, ClipboardList, Coins, ExternalLink, FileText, Image as ImageIcon,
   LayoutDashboard, ListTodo, ListTree, LogOut, Map as MapIcon, Menu, Moon,
   Settings, Sun, Users, CloudOff, CheckCircle2, ChevronRight,
 } from 'lucide-react'
+
+/** אפליקציית הבקרה התקציבית — מערכת אחות על אותו ענן */
+export const BUDGET_APP_URL = 'https://cost-managment-flame.vercel.app'
 import { db } from '../../data/db'
 import { useSession } from '../../state/session'
 import { useSyncState } from '../../data/sync/engine'
@@ -168,6 +171,11 @@ export function ProjectLayout() {
                 {item.icon}{item.label}
               </NavLink>
             ))}
+            <a href={BUDGET_APP_URL} target="_blank" rel="noopener"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 mt-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+              <Coins size={18} /> בקרה תקציבית
+              <ExternalLink size={12} className="ms-auto opacity-50" />
+            </a>
           </aside>
 
           {/* תוכן */}
