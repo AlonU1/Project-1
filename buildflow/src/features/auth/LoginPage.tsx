@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { HardHat } from 'lucide-react'
 import { db } from '../../data/db'
 import { useSession } from '../../state/session'
+import { ICON } from '../../lib/brand'
 import { Avatar, Card, Spinner } from '../../components/ui'
 import { ROLE_LABEL } from '../../lib/labels'
 
@@ -15,7 +16,7 @@ export function LoginPage() {
     <div className="min-h-full bg-navy flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/icons/icon.svg" alt="" className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-lg" />
+          <img src={ICON} alt="" className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-lg" />
           <h1 className="text-3xl font-extrabold text-white">BuildFlow</h1>
           <p className="text-slate-400 mt-1">ניהול פרויקטי בנייה — מהשטח ועד המשרד</p>
         </div>

@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowRight, Printer } from 'lucide-react'
 import { db } from '../../../data/db'
 import { useSession } from '../../../state/session'
+import { ICON } from '../../../lib/brand'
 import { buildLocName } from '../../shell/ProjectContext'
 import { STATUS_HEX, STATUS_LABEL } from '../../../lib/labels'
 import { fmtDateTime } from '../../../lib/date'
@@ -71,7 +72,7 @@ export function PrintShell({ project, me, title, subtitle, children }: {
           </div>
           <div className="text-end text-xs text-slate-500 leading-relaxed">
             <div className="flex items-center gap-2 justify-end font-extrabold text-navy text-base">
-              BuildFlow <img src="/icons/icon.svg" alt="" className="w-6 h-6 rounded" />
+              BuildFlow <img src={ICON} alt="" className="w-6 h-6 rounded" />
             </div>
             <div className="font-bold text-slate-700">{project.name} · <span className="ltr-num">{project.code}</span></div>
             <div>הופק: <span className="ltr-num">{fmtDateTime(new Date().toISOString())}</span> · ע"י {me.full_name}</div>

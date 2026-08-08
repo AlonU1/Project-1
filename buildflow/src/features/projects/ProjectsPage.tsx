@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { AlertTriangle, Building2, LogOut, Plus } from 'lucide-react'
 import { db } from '../../data/db'
 import { useSession } from '../../state/session'
+import { ICON } from '../../lib/brand'
 import { Avatar, Badge, Btn, Card, Spinner } from '../../components/ui'
 import { PROJECT_STATUS_LABEL, PROJECT_TYPE_LABEL } from '../../lib/labels'
 import { can } from '../../lib/permissions'
@@ -40,7 +41,7 @@ export function ProjectsPage() {
     <div className="min-h-full">
       <header className="bg-navy text-white">
         <div className="max-w-5xl mx-auto px-4 py-6 flex items-center gap-4">
-          <img src="/icons/icon.svg" alt="" className="w-12 h-12 rounded-xl" />
+          <img src={ICON} alt="" className="w-12 h-12 rounded-xl" />
           <div className="flex-1">
             <h1 className="text-xl font-extrabold">{myCompany?.name ?? 'BuildFlow'}</h1>
             <p className="text-sm opacity-70">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { ICON } from '../lib/brand'
+import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { seedIfNeeded } from '../data/seed'
 import { useSession } from '../state/session'
 import { LoginPage } from '../features/auth/LoginPage'
@@ -31,6 +32,9 @@ function RequireAuth() {
   return <Outlet />
 }
 
+// בבניית קובץ-יחיד (אירוח כעמוד בודד) אין נתיבי שרת — משתמשים בניתוב hash
+const Router = import.meta.env.VITE_SINGLE_FILE ? HashRouter : BrowserRouter
+
 export function App() {
   const [ready, setReady] = useState(false)
   const theme = useSession(s => s.theme)
@@ -49,14 +53,14 @@ export function App() {
   if (!ready) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4">
-        <img src="/icons/icon.svg" alt="" className="w-16 h-16" />
+        <img src={ICON} alt="" className="w-16 h-16" />
         <div className="text-slate-500 text-sm">BuildFlow — טוען…</div>
       </div>
     )
   }
 
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>
@@ -86,6 +90,6 @@ export function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   )
 }
