@@ -7,7 +7,7 @@ export const SUPABASE_URL: string =
 
 export const SUPABASE_ANON_KEY: string =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
-  '' // ← יוזן כשיתקבל המפתח
+  'sb_publishable_CMS1chTpkfXpEWjA7GwADw_o2_kv0oG'
 
 export const syncEnabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
 
