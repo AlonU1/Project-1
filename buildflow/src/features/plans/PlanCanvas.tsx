@@ -14,7 +14,7 @@ export interface PlanPin {
 
 interface View { s: number; tx: number; ty: number }
 
-export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, onPick, focusPin, tempPin, onHover, focusPoint }: {
+export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, onPick, focusPin, tempPin, onHover, focusPoint, me }: {
   imgUrl: string
   width: number
   height: number
@@ -28,6 +28,8 @@ export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, 
   onHover?: (x: number, y: number) => void
   /** מרכוז התצוגה על נקודה יחסית */
   focusPoint?: { x: number; y: number } | null
+  /** המיקום שלי (GPS): נקודה יחסית + רדיוס דיוק בפיקסלים של התוכנית */
+  me?: { x: number; y: number; accPx: number } | null
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<View>({ s: 0.4, tx: 0, ty: 0 })
@@ -186,6 +188,29 @@ export function PlanCanvas({ imgUrl, width, height, pins, onPinClick, pickMode, 
             </svg>
           </button>
         ))}
+        {me && (
+          <>
+            {/* עיגול דיוק — בקנה מידה אמיתי של התוכנית */}
+            <div className="absolute pointer-events-none rounded-full"
+              style={{
+                left: `${me.x * 100}%`, top: `${me.y * 100}%`,
+                width: me.accPx * 2, height: me.accPx * 2,
+                transform: 'translate(-50%, -50%)',
+                background: 'rgba(37,99,235,0.12)',
+                border: '1.5px solid rgba(37,99,235,0.4)',
+              }} />
+            {/* הנקודה הכחולה — גודל קבוע במסך */}
+            <div className="absolute pointer-events-none rounded-full" data-testid="me-dot"
+              style={{
+                left: `${me.x * 100}%`, top: `${me.y * 100}%`,
+                width: 16, height: 16,
+                transform: `translate(-50%, -50%) scale(${pinScale})`,
+                background: '#2563eb',
+                border: '2.5px solid #ffffff',
+                animation: 'me-pulse 2s ease-in-out infinite',
+              }} />
+          </>
+        )}
         {tempPin && (
           <div className="absolute pointer-events-none" style={{ left: `${tempPin.x * 100}%`, top: `${tempPin.y * 100}%`, transform: `translate(-50%, -100%) scale(${pinScale})`, transformOrigin: '50% 100%' }}>
             <svg width="34" height="44" viewBox="0 0 34 44" className="drop-shadow-lg">

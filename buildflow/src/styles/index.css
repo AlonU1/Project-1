@@ -42,6 +42,11 @@ body {
   50% { transform: translate(-50%, -100%) scale(calc(var(--pin-scale, 1) * 1.35)); }
 }
 
+@keyframes me-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35); }
+  50% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0.12); }
+}
+
 /* דוחות מודפסים */
 @media print {
   @page { size: A4; margin: 12mm; }

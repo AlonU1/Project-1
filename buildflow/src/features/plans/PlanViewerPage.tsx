@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRight, Check, Crosshair, LocateFixed, MapPin, X } from 'lucide-react'
+import { ArrowRight, Check, Crosshair, LocateFixed, MapPin, Navigation, X } from 'lucide-react'
 import { db } from '../../data/db'
 import { dl } from '../../data/layer'
 import { useBlobUrl } from '../../data/blobs'
@@ -12,6 +12,7 @@ import { STATUS_BADGE, STATUS_HEX, STATUS_LABEL } from '../../lib/labels'
 import { can, visibleToUser } from '../../lib/permissions'
 import { OPEN_STATUSES } from '../../lib/status'
 import { fmtCoord, makeTransform } from '../../lib/geo'
+import { wgs84ToItm } from '../../lib/itm'
 import { BlobImg } from '../../components/BlobImg'
 import type { DefectStatus, GeoRefPoint, PlanVersion } from '../../data/types'
 
@@ -39,6 +40,17 @@ export function PlanViewerPage() {
   const [gotoN, setGotoN] = useState('')
   const [marker, setMarker] = useState<{ x: number; y: number } | null>(null)
   const [focusReq, setFocusReq] = useState<{ x: number; y: number } | null>(null)
+
+  // ---- "המיקום שלי" — GPS על גבי התוכנית ----
+  const [tracking, setTracking] = useState(false)
+  const [myPos, setMyPos] = useState<{ x: number; y: number; e: number; n: number; acc: number } | null>(null)
+  const [geoMsg, setGeoMsg] = useState<string | null>(null)
+  const watchRef = useRef<number | null>(null)
+  const firstFixRef = useRef(true)
+
+  useEffect(() => () => {
+    if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current)
+  }, [])
 
   const data = useLiveQuery(async () => {
     const plan = await db.plans.get(planId)
@@ -115,6 +127,52 @@ export function PlanViewerPage() {
 
   const gotoClean = (s: string) => s.replace(/,/g, '').trim()
 
+  function stopTracking() {
+    if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current)
+    watchRef.current = null
+    setTracking(false)
+    setMyPos(null)
+    setGeoMsg(null)
+  }
+
+  function startTracking() {
+    if (!transform) return
+    if (!('geolocation' in navigator)) {
+      setGeoMsg('הדפדפן לא תומך באיתור מיקום')
+      return
+    }
+    setTracking(true)
+    setGeoMsg('מאתר…')
+    firstFixRef.current = true
+    watchRef.current = navigator.geolocation.watchPosition(
+      pos => {
+        const { e, n } = wgs84ToItm(pos.coords.latitude, pos.coords.longitude)
+        const p = transform.toPlan(e, n)
+        const inBounds = p.px >= -0.08 && p.px <= 1.08 && p.py >= -0.08 && p.py <= 1.08
+        if (inBounds) {
+          const clamped = { x: Math.min(1, Math.max(0, p.px)), y: Math.min(1, Math.max(0, p.py)) }
+          setMyPos({ ...clamped, e, n, acc: pos.coords.accuracy })
+          setGeoMsg(null)
+          if (firstFixRef.current) {
+            firstFixRef.current = false
+            setFocusReq(clamped)
+          }
+        } else {
+          const c = transform.toWorld(0.5, 0.5)
+          const dist = Math.hypot(e - c.e, n - c.n)
+          setMyPos(null)
+          setGeoMsg(`אתה מחוץ לגבולות התוכנית — כ-${dist < 10000 ? Math.round(dist) + ' מ\'' : (dist / 1000).toFixed(1) + ' ק"מ'} ממרכזה`)
+        }
+      },
+      err => {
+        setGeoMsg(err.code === err.PERMISSION_DENIED
+          ? 'הגישה למיקום נדחתה — אשר הרשאת מיקום לאתר בהגדרות הדפדפן'
+          : 'לא הצלחתי לקבל מיקום — ודא ש-GPS פעיל ונסה שוב')
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 },
+    )
+  }
+
   function goToCoord() {
     if (!transform) return
     const e = parseFloat(gotoClean(gotoE)), n = parseFloat(gotoClean(gotoN))
@@ -155,6 +213,13 @@ export function PlanViewerPage() {
             </Chip>
           ))}
         </div>
+        {transform && (
+          <Btn size="sm" variant={tracking ? 'primary' : 'default'}
+            onClick={() => (tracking ? stopTracking() : startTracking())}
+            title="הצג את המיקום שלי (GPS) על התוכנית">
+            <Navigation size={14} /> המיקום שלי
+          </Btn>
+        )}
         {transform && (
           <Btn size="sm" onClick={() => { setGotoOpen(o => !o); setMarker(null) }} title="עבור לקואורדינטה">
             <Crosshair size={14} /> נ.צ.
@@ -204,6 +269,26 @@ export function PlanViewerPage() {
         </div>
       )}
 
+      {tracking && (
+        <div className="px-4 py-2 bg-blue-50 dark:bg-blue-950 border-b border-blue-300 dark:border-blue-800 flex items-center gap-3 text-sm flex-wrap">
+          <Navigation size={15} className="text-blue-600 animate-pulse" />
+          {myPos ? (
+            <>
+              <span className="ltr-num font-mono text-xs">E {fmtCoord(myPos.e)} · N {fmtCoord(myPos.n)}</span>
+              <span className="text-xs text-slate-500 ltr-num">±{Math.round(myPos.acc)} מ'</span>
+              {!/itm|ישראל/i.test(transform?.crs ?? '') && (
+                <span className="text-xs text-amber-600">שים לב: התוכנית מכוילת ל"{transform?.crs}" — GPS מניח רשת ישראל</span>
+              )}
+            </>
+          ) : (
+            <span className="text-xs">{geoMsg ?? 'מאתר…'}</span>
+          )}
+          <div className="flex-1" />
+          {myPos && <Btn size="sm" variant="ghost" onClick={() => setFocusReq({ x: myPos.x, y: myPos.y })}>מרכז אליי</Btn>}
+          <Btn size="sm" onClick={stopTracking}><X size={14} /> הפסק</Btn>
+        </div>
+      )}
+
       {marker && markerCoord && (
         <div className="px-4 py-2 bg-accent/10 border-b border-accent/30 flex items-center gap-3 text-sm flex-wrap">
           <Crosshair size={15} className="text-accent" />
@@ -232,6 +317,7 @@ export function PlanViewerPage() {
             onPick={onPick}
             onHover={transform ? (x, y) => setHover({ x, y }) : undefined}
             onPinClick={id => { if (!pickMode && !calibActive && !id.startsWith('calib-')) setSelected(cur => (cur === id ? null : id)) }}
+            me={myPos && transform ? { x: myPos.x, y: myPos.y, accPx: Math.max(6, myPos.acc / transform.metersPerPixel) } : null}
           />
         ) : <Spinner />}
 
