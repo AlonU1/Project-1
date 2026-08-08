@@ -3,6 +3,8 @@
 מערכת לניהול פרויקטי בנייה והנדסה — מהשטח ועד המשרד.
 **Local-first PWA**: עובדת במלואה ללא שרת וללא רשת; הנתונים נשמרים במכשיר (IndexedDB) ומוכנים לסנכרון ענן עתידי.
 
+### 🌐 גרסה חיה: **[buildflow-indol.vercel.app](https://buildflow-indol.vercel.app)**
+
 > האפיון המלא: [SPEC.md](./SPEC.md) · הוראות פיתוח: [CLAUDE.md](./CLAUDE.md)
 
 ## הרצה
@@ -52,3 +54,9 @@ npm run preview    # הרצת גרסת ה-build
 ## סטאק
 
 React 18 + TypeScript + Vite · Tailwind CSS v4 · Dexie (IndexedDB) · Zustand · React Router · vite-plugin-pwa
+
+## פריסה
+
+**Vercel** — [buildflow-indol.vercel.app](https://buildflow-indol.vercel.app). הפרויקט ב-Vercel מריץ סקריפט דק שמושך את הריפו הציבורי מ-GitHub ובונה את `buildflow/`, כך שכל פריסה מחדש לוקחת את הקוד העדכני מהענף. לחיבור אוטומטי (deploy על כל push) יש לקשר את הריפו ב-Vercel Dashboard → Project → Settings → Git, עם **Root Directory = `buildflow`**.
+
+**קובץ יחיד** — `npx vite build --config vite.artifact.config.ts` יוצר `dist-artifact/index.html` שמכיל את כל האפליקציה (כולל מנוע ה-PDF) בקובץ אחד, עם ניתוב hash. שימושי לשליחה במייל או לפתיחה offline בדאבל-קליק.
