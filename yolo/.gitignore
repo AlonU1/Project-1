@@ -1,0 +1,12 @@
+# Downloaded model weights
+*.pt
+*.onnx
+
+# Training / prediction outputs
+runs/
+
+# Local datasets
+my_dataset/
+datasets/
+
+__pycache__/

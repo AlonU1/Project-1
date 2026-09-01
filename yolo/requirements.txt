@@ -1,0 +1,5 @@
+# YOLO starter — dependencies
+# Install with:  pip install -r requirements.txt
+#
+# ultralytics pulls in torch, torchvision, opencv-python and numpy automatically.
+ultralytics>=8.3.0

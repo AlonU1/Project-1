@@ -1,0 +1,24 @@
+# Example dataset config for train.py
+#
+# Expected folder layout (YOLO format — one .txt per image, same basename):
+#
+#   my_dataset/
+#   ├── images/
+#   │   ├── train/  img001.jpg ...
+#   │   └── val/    img101.jpg ...
+#   └── labels/
+#       ├── train/  img001.txt ...
+#       └── val/    img101.txt ...
+#
+# Each label line is:  <class_id> <x_center> <y_center> <width> <height>
+# with all four coordinates normalised to 0-1 relative to the image size.
+
+path: ../my_dataset   # dataset root, relative to this file
+train: images/train
+val: images/val
+
+# Class ids must match the numbers used in the label files.
+names:
+  0: crack
+  1: spalling
+  2: corrosion
